@@ -1,0 +1,10 @@
+#stage { --ground:#0E1626; --main:#4FB3FF; --second:#E8EEF7; --accent:#FFB547; color:var(--second); font-family:var(--sans, system-ui, sans-serif) }
+.ground { position:absolute; inset:0; background:var(--ground); overflow:hidden }
+.words { position:absolute; margin:0; display:flex; flex-direction:column; gap:20px } .words > * { margin:0 }
+.line { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-size:120px; line-height:1.04; font-weight:700 } .sub { font-size:44px; line-height:1.25 }
+.say { font-size:88px }
+#stage { --steel:color-mix(in srgb, var(--main) 38%, var(--ground)); --steel-lit:color-mix(in srgb, var(--main) 72%, var(--second)); --steel-dark:color-mix(in srgb, var(--main) 18%, var(--ground)); --rubber:color-mix(in srgb, var(--ground) 84%, var(--second)); --paint:color-mix(in srgb, var(--main) 86%, var(--ground)); --paint-lit:color-mix(in srgb, var(--main) 70%, var(--second)); --wall:color-mix(in srgb, var(--main) 26%, var(--ground)); --wall-lit:color-mix(in srgb, var(--main) 50%, var(--ground)); --glass:color-mix(in srgb, var(--ground) 72%, var(--main)); --land:color-mix(in srgb, var(--ground) 84%, var(--main)); --glow:color-mix(in srgb, var(--accent) 24%, transparent); --shade:rgba(0,0,0,.3) }
+.art { position:absolute; left:0; top:0; width:100%; height:100% }
+.lamp { position:absolute; left:-420px; top:-460px; width:1700px; height:1300px; border-radius:50%; background:radial-gradient(closest-side, color-mix(in srgb, var(--accent) 13%, transparent), transparent) }
+.calm { position:absolute; left:0; top:0; width:1180px; height:100%; background:linear-gradient(90deg, var(--ground) 40%, color-mix(in srgb, var(--ground) 78%, transparent) 72%, transparent) }
+.edge { position:absolute; inset:0; background:radial-gradient(95% 90% at 50% 50%, transparent 58%, rgba(0,0,0,.36)) }

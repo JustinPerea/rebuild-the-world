@@ -1,0 +1,27 @@
+# OS and editors
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Node (validator, tools)
+node_modules/
+dist/
+*.log
+
+# Python (render scripts)
+__pycache__/
+*.pyc
+.venv/
+
+# Blender autosaves and backups
+*.blend1
+*.blend2
+
+# Local scratch and build output
+.cache/
+tmp/
+out/
+.env
+.env.*
+!.env.example
