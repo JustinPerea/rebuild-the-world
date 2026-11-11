@@ -3,4 +3,5 @@
 if (Number(process.versions.node.split('.')[0]) >= 21) {
   await import('./flow.test.mjs');
   await import('./http.test.mjs');
+  await import('./boundary.test.mjs');
 }

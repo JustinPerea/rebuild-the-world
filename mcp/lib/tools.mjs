@@ -174,6 +174,8 @@ export const TOOL_DEFS = [
   },
 ];
 
+// "message" is the server's own words plus values the server has checked (ids, handles, states,
+// numbers). Anything read from a contributor's file, and any error text from outside, goes in "data".
 const fail = (message, data = {}) => ({ isError: true, instructions: { error: message }, data });
 
 export function createTools({ repo, handle, workspace, trust = 0 }) {
@@ -272,7 +274,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const filled = slots.filter((s) => s.state === 'Reused' || s.state === 'Merged').length;
     return {
       instructions: {
-        summary: `${bp.blueprint.object_id ?? a.object_id}: ${filled} of ${slots.length} slot(s) filled.`,
+        summary: `${a.object_id}: ${filled} of ${slots.length} slot(s) filled.`,
         next: 'For an Open slot with a task_id, call find_atoms and then claim. A slot with no task_id has no task yet; leave_feedback or tell the contributor.',
       },
       data: { blueprint: bp.blueprint, slots },
@@ -292,7 +294,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       const bp = store.getBlueprint(a.object_id);
       if (bp.error) return fail(bp.error);
       slot = (bp.blueprint.slots || []).find((s) => s.slot === a.slot);
-      if (!slot) return fail(`object ${a.object_id} has no slot "${a.slot}"`);
+      if (!slot) return fail(`object ${a.object_id} has no slot with that name; get_object lists its slots`);
     }
     const base = requirementFor({ task, slot });
     const req = {
@@ -324,9 +326,12 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const existing = store.getClaim(task.task_id);
     const st = store.stateOf(task, existing, now);
     if (st.state === 'Claimed' || st.state === 'In review' || st.state === 'Changes requested') {
-      return fail(st.builder === handle ? `you already hold ${task.task_id} (${st.state}); see my_work` : `${task.task_id} is ${st.state} (builder: ${st.builder})`);
+      return st.builder === handle
+        ? fail(`you already hold ${task.task_id} (${st.state}); see my_work`)
+        : fail(`${task.task_id} is ${st.state} by another builder, named in data.builder`, { builder: st.builder, expires_at: st.expires_at ?? null });
     }
-    if (st.state !== 'Open') return fail(`${task.task_id} is ${st.state}${st.waiting_on ? `, waiting on ${st.waiting_on.join(', ')}` : ''}; only Open tasks can be claimed`);
+    if (st.claim_invalid) return fail(`the claim file tasks/claims/${task.task_id}.json is malformed, so ${task.task_id} cannot be claimed until a maintainer repairs it`, { problem: existing.problem });
+    if (st.state !== 'Open') return fail(`${task.task_id} is ${st.state}${st.waiting_on ? `, waiting on ${st.waiting_on.length} task(s) listed in data.waiting_on` : ''}; only Open tasks can be claimed`, st.waiting_on ? { waiting_on: st.waiting_on } : {});
     if (task.min_trust_level > trust) return fail(`${task.task_id} needs trust level ${task.min_trust_level}; yours is ${trust}`);
     const cool = store.cooldownLeft(task, handle, now);
     if (cool > 0) return fail(`your previous claim on ${task.task_id} expired; you cannot reclaim it for another ${humanDuration(cool)}`);
@@ -447,7 +452,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const roots = [realish(workspace), realish(store.assetsDir)];
     const candidates = path.isAbsolute(input) ? [path.resolve(input)] : [path.resolve(workspace, input), path.resolve(repo, input)];
     const existing = candidates.find((c) => fs.existsSync(c));
-    if (!existing) return { error: `no folder found for asset_path "${input}" in the workspace or the repo` };
+    if (!existing) return { error: 'no folder found for that asset_path in the workspace or the repo' };
     const real = realish(existing);
     const inside = roots.some((r) => real !== r && isInside(r, real));
     if (!inside) return { error: 'asset_path must be a folder inside the workspace or the repo assets/ folder; the server does not read anywhere else' };
@@ -488,7 +493,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       const { validate } = await loadValidator();
       report = await validate(r.dir, { task: t.task, registry: path.join(repo, 'registry', 'connectors.json'), library: store.assetsDir });
     } catch (e) {
-      return fail(`the validator could not run: ${e.message}`);
+      return fail('the validator could not run; the error text is in data.error', { error: String(e?.message ?? e) });
     }
     const failing = report.checks.filter((c) => c.status === 'FAIL').map((c) => ({ check: c.name, messages: c.messages }));
     if (!report.summary.ok) {
@@ -536,12 +541,12 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const docs = documentList(spec);
     if (!a.document) return { instructions: { summary: 'Documents you can read. Pass one as "document", and a heading as "heading".', documents: docs }, data: {} };
     const entry = resolveDocument(spec, a.document);
-    if (!entry) return fail(`no document matches "${a.document}". Available: ${docs.map((d) => d.document).join(', ')}`);
+    if (!entry) return fail(`no document matches that name. Available: ${docs.map((d) => d.document).join(', ')}`);
     let body;
     try {
       body = readDoc(repo, entry);
     } catch (e) {
-      return fail(`cannot read ${entry.path}: ${e.message}`);
+      return fail(`cannot read ${entry.path}; the error text is in data.error`, { error: String(e?.message ?? e) });
     }
     const fileVersion = headerVersion(body);
     const notes = [];
@@ -556,7 +561,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       return { instructions: { document: entry.document, version: entry.version, notes, headings: headings.map((h) => `${'#'.repeat(h.level)} ${h.title}`), summary: 'Pass one of these as "heading" to read that section.' }, data: {} };
     }
     const sec = getSection(body, a.heading);
-    if (!sec.found) return fail(`no heading matching "${a.heading}" in ${entry.document}. Headings: ${sec.headings.join(' | ')}`);
+    if (!sec.found) return fail(`no heading matching that text in ${entry.document}. Headings: ${sec.headings.join(' | ')}`);
     return { instructions: { document: entry.document, path: entry.path, version: entry.version, heading: sec.heading, notes, section: sec.text }, data: {} };
   }
 
@@ -602,7 +607,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       fs.writeFileSync(file, body, { flag: 'wx' });
     } catch (e) {
       if (e.code === 'EEXIST') return fail(`feedback/${name} already exists; choose a different slug. Notes are never overwritten.`);
-      return fail(`could not write the note: ${e.message}`);
+      return fail('could not write the note; the error text is in data.error', { error: String(e?.message ?? e) });
     }
     return {
       instructions: { summary: `Wrote feedback/${name}.`, next: 'The note is an uncommitted file. A maintainer reads it after you commit and push it. Do not put secrets or personal data in it.' },

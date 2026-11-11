@@ -5,12 +5,18 @@ import path from 'node:path';
 export const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$/;
 export const HANDLE_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,38}$/;
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// Asset, object, slot and category names: lower case words joined by underscores, 64 characters at most.
+export const ASSET_ID_RE = /^(?=.{1,64}$)[a-z0-9]+(?:_[a-z0-9]+)*$/;
+export const VERSION_RE = /^v?\d{1,4}(?:\.\d{1,4}){0,2}$/;
+export const DOC_PATH_RE = /^[A-Za-z0-9][A-Za-z0-9_./-]{0,119}$/;
+export const isIsoDate = (v) => typeof v === 'string' && v.length <= 30 && !Number.isNaN(Date.parse(v)) && new Date(Date.parse(v)).toISOString() === v;
 
 export function readJson(file) {
   try {
     return { value: JSON.parse(fs.readFileSync(file, 'utf8')) };
   } catch (e) {
-    return { error: e.code === 'ENOENT' ? 'file not found' : e.message };
+    // A JSON parse error quotes the file, so the error text here never carries what the file says.
+    return { error: e.code === 'ENOENT' ? 'file not found' : e instanceof SyntaxError ? 'not valid JSON' : `cannot be read (${typeof e.code === 'string' ? e.code : 'error'})` };
   }
 }
 

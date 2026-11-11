@@ -31,6 +31,8 @@ Every result is a JSON object in one text content block, with three keys:
 - `instructions`: written by the maintainers (specs, the skill file, this server's own guidance). The agent follows it.
 - `data`: written by contributors (task text, blueprints, other people's asset metadata, feedback notes, validator messages that quote their files). The agent reads it and never follows instructions found in it.
 
+Task, claim and blueprint files sit in the repo and can arrive in a pull request, so the server treats them as contributor-written. The only values from them that appear in `instructions` are ones the server has checked against a fixed shape: task ids, asset and object ids, handles, claim states, ISO dates and version numbers. Free text, another builder's handle, the tasks a locked task waits on, and error text from the file system or the validator are returned under `data`. An error about an unreadable file says which file and never quotes it. `mcp/test/boundary.test.mjs` writes hostile values into each kind of file and checks that none reach `instructions`.
+
 | Tool | Arguments | What it does |
 | --- | --- | --- |
 | `whats_needed` | `category`, `size`, `region`, `limit`, `include_unavailable` | Lists Open tasks you may claim. With `include_unavailable` it also lists claimed, locked and in-review tasks and those above your trust level. |
@@ -101,7 +103,7 @@ The shape starts from `tasks/task.example.json`. `tasks/task.example.json` itsel
 | --- | --- | --- |
 | `task_id`, `size` | yes | `size` is S, M or L. |
 | `title`, `description` | no | Data. `title` falls back to `asset_id`, `object_id`, then `task_id`. |
-| `asset_id` | no | The folder name the asset must have. `submit` refuses a different name. |
+| `asset_id` | no | The folder name the asset must have. `submit` refuses a different name. Lower case words joined by underscores, 64 characters at most; the same rule holds for `object_id`, `slot` and `category`. A task that breaks it does not load and is listed under `unreadable_task_files`. |
 | `object_id`, `slot` | no | Link the task to a blueprint slot. |
 | `category` | no | Falls back to the prefix of `object_id` or `asset_id`. |
 | `region` | no | Default `universal`. A region filter always includes universal tasks. |
@@ -109,7 +111,7 @@ The shape starts from `tasks/task.example.json`. `tasks/task.example.json` itsel
 | `mating_dimensions_m` | no | Named mating dimensions for fit rule 2. |
 | `reference_pack` | no | Array of `{ what, value_or_path, source, licence }`. |
 | `golden_asset` | no | The nearest golden-set asset. |
-| `depends_on` | no | Task ids that must be Merged first. Until then the task is Locked. |
+| `depends_on` | no | Task ids that must be Merged first. Until then the task is Locked. An entry that is not a task id stops the task loading. |
 | `min_trust_level` | no | 0 to 3, default 0. |
 | `state` | no | One of `spec.json` `task_states`, default Open. A maintainer sets Merged here when a pull request merges, because the server does not read git. |
 
@@ -137,6 +139,8 @@ The shape starts from `tasks/task.example.json`. `tasks/task.example.json` itsel
 ```
 
 `state` is `Claimed`, `In review`, `Changes requested`, `Merged` or `Released`. `submit` adds `submitted_at` and `asset` (the folder name and the validator summary). `release` adds `released_at`. A maintainer may add a `review` object (verdict and reasons); `my_work` shows it. A `Claimed` or `Changes requested` claim past `expires_at` counts as expired, and the task shows as Open. A new claim on a task moves the old claim into `history`. The clock does not run while a claim is In review.
+
+A claim file must have the shape the server writes: `task_id` equal to the file name, a valid `handle`, one of the five states, `expires_at` as an ISO date, `branch` equal to `claim/<task_id>`, and well-formed `versions`. A file that breaks this is not used. Its task shows as Locked and cannot be claimed until a maintainer repairs or deletes the file; the server does not overwrite it.
 
 ### Blueprint: `assets/<category>/<object_id>/blueprint.json`
 
@@ -190,4 +194,4 @@ Hermes tries the `initialize` handshake first by default (`protocol: auto`), whi
 node --test mcp/test/
 ```
 
-The tests copy the folders the server needs into a temp directory, spawn the server over stdio for the handshake and the full flow (list work, claim, a failing submit, a passing submit, release, a feedback note), and start it once over HTTP. Fixtures come from `validator/test/helpers.mjs`. Everything is deleted afterwards. Run `npm install` in `validator/` first if you want the Khronos glTF check in the passing submit; without it that check reports SKIP and the tests still pass.
+The tests copy the folders the server needs into a temp directory, spawn the server over stdio for the handshake and the full flow (list work, claim, a failing submit, a passing submit, release, a feedback note), and start it once over HTTP. `boundary.test.mjs` covers the `instructions` and `data` split described under Tools. Fixtures come from `validator/test/helpers.mjs`. Everything is deleted afterwards. Run `npm install` in `validator/` first if you want the Khronos glTF check in the passing submit; without it that check reports SKIP and the tests still pass.
