@@ -1,0 +1,10 @@
+{
+  "id": "tokyo-sumida-oshiage-2",
+  "name": "Oshiage 2, Sumida, Tokyo",
+  "body": "earth",
+  "origin": { "lat": 35.71216, "lon": 139.81199, "note": "Centre of the square. Heights are metres above sea level as the source gives them." },
+  "square_m": 300,
+  "start_block": { "x_m": [-150, 0], "z_m": [0, 150], "note": "The south-west quarter: the first 150 m block to build." },
+  "accuracy_level": "A0",
+  "sources": ["plateau-13107-sumida-2023"]
+}
