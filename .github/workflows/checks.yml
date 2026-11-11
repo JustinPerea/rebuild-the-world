@@ -1,0 +1,71 @@
+# Runs the validator and the contributor server on the three systems a contributor may use.
+# Contributors build on their own machines, so a check that passes only on the maintainer's Mac proves little.
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tools:
+    name: ${{ matrix.os }}, Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the library's large files
+        run: git lfs pull --include="assets/**"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install the validator's dependency
+        working-directory: validator
+        run: npm ci
+      - name: Validator tests
+        run: node --test validator/test/
+      - name: Contributor server tests
+        run: node --test mcp/test/
+      - name: The two finished atoms pass with their tasks
+        shell: bash
+        run: |
+          node validator/cli.mjs assets/bld/bld_corner_post_01 --task tasks/task_bld_corner_post_01.json
+          node validator/cli.mjs assets/bld/bld_door_bay_01 --task tasks/task_bld_door_bay_01.json
+      - name: The server lists the open tasks
+        shell: bash
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"whats_needed","arguments":{"include_unavailable":true}}}' \
+            | node mcp/server.mjs --as ci > whats-needed.jsonl
+          node -e '
+            const lines = require("fs").readFileSync("whats-needed.jsonl", "utf8").trim().split("\n").map(JSON.parse);
+            const body = JSON.parse(lines.find((m) => m.id === 2).result.content[0].text);
+            for (const t of body.data.tasks) console.log(t.task_id, t.state);
+            if (body.data.unreadable_task_files.length) { console.error(JSON.stringify(body.data.unreadable_task_files)); process.exit(1); }
+            if (!body.data.tasks.length) { console.error("the server listed no tasks"); process.exit(1); }
+          '
+
+  repo:
+    name: spec data and large files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: spec.json matches the docs
+        run: node scripts/check-spec-sync.mjs
+      - name: Large files are stored with Git LFS
+        run: bash scripts/check-lfs.sh
