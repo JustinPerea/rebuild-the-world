@@ -170,9 +170,12 @@ An assembly is `assembly.json`, a list of atoms and the joints between them. It 
 }
 ```
 
+- Two connectors in a joint meet like this: their origins are at the same point, their +Z axes point in opposite directions (each points out of its own atom, into the other), and their +Y axes agree. A joint needs one side `a` and one side `b` of the same type.
+- Read each task's or atom's connector positions to see which edge is which. For the facade modules here, side `a` of `facade_edge` is the right-hand edge seen from outside and side `b` the left-hand edge, so a module's `a` joins the `b` of the module to its right. Side `a` of `storey_stack` is the top and joins the `b` at the bottom of the piece above.
 - Pin every atom to the exact version in its `asset.json`.
 - Every atom needs at least one joint. Add every joint that is physically there, including the one that closes a ring of walls: only a joint that closes a loop lets the validator measure whether the atoms really meet.
-- Write the manifest with a script kept in `source/`, and write `asset.json` beside it with `class`, `tier` and the summed `triangles`.
+- Write the manifest with a script kept in `source/`, and write `asset.json` beside it. It has the same fields as an atom's, with these differences: `kind` is still `"library"` or `"unique"` (the file `assembly.json` is what makes it an assembly), `triangles` is the sum over every placed atom, `dimensions_m` is the size of the whole object, `connectors` is `[]` unless the assembly exposes some, and `considered` is `[]`.
+- The validator's Assembly check reports the largest gap and angle among the joints it measured. Quote that line in your pull request.
 
 ## What never goes in an asset
 

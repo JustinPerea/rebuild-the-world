@@ -77,6 +77,7 @@ export function assembly(ctx) {
   const an = analyze(ctx);
   if (an.errors.length) return fail(an.errors);
   const notes = [`${an.entries.size} atom(s), ${an.joints.length} joint(s); ${an.joints.length - an.loopChecks} placed by mating, ${an.loopChecks} measured as loop closures`];
+  if (an.loopChecks > 0) notes.push(`measured joints: largest gap ${(an.worstGapM * 1000).toFixed(3)} mm (allowed ${ctx.profile.connector_position_tolerance_m * 1000} mm), largest angle ${an.worstAngleDeg.toFixed(3)} degrees (allowed ${ctx.profile.connector_direction_tolerance_deg})`);
   if (an.joints.length > an.loopChecks && an.loopChecks === 0 && an.entries.size > 1) notes.push('note: with no loop closure, joints mate by construction; position errors in a connector cannot show until a second joint ties the same atoms together');
   if (ctx.asset.manifest.states) notes.push('note: "states" are not checked');
   return pass(notes);

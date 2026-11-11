@@ -45,6 +45,7 @@ test('two atoms that mate: Assembly passes and the loop joint is measured', asyn
   const r = await run(build(lib), lib);
   passing(r, 'Assembly');
   assert.match(status(r, 'Assembly').messages[0], /1 measured as loop closures/);
+  assert.match(status(r, 'Assembly').messages[1], /^measured joints: largest gap \d+\.\d{3} mm \(allowed 1 mm\), largest angle \d+\.\d{3} degrees \(allowed 0\.5\)$/);
   for (const c of r.checks) assert.notEqual(c.status, 'FAIL', `${c.name}: ${c.messages.join(' | ')}`);
   assert.equal(r.kind, 'assembly');
   assert.equal(status(r, 'Triangle budget').status, 'PASS');

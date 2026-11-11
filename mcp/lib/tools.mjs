@@ -502,7 +502,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       instructions: {
         verdict: 'PASSED',
         summary: `All checks passed or skipped (${report.summary.pass} passed, ${report.summary.skip} skipped). The claim is now In review and its clock is paused.`,
-        next: `Next step is a pull request. The server does not run git: commit the asset folder to branch ${claim.branch}, push it, and open a pull request that names ${a.task_id}. A SKIP is not a pass: read the skipped checks in data.report.`,
+        next: `Next step is a pull request. The server does not run git: commit the asset folder to branch ${claim.branch}, push it, and open a pull request that names ${a.task_id}. Claim files under tasks/claims are this clone's own record and Git ignores them; leave them out. A SKIP is not a pass: read the skipped checks in data.report.`,
       },
       data: { report },
     };

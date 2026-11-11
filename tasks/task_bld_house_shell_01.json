@@ -38,7 +38,7 @@
     },
     {
       "what": "Joints",
-      "value_or_path": "Join every module to its neighbours in the ring with facade_edge, including the joint that closes the ring. Join every upper module and post to the one below it with storey_stack. The origin is the first module of the ground storey's front run.",
+      "value_or_path": "Join every module to its neighbours in the ring with facade_edge, including the joint that closes the ring. Going round the ring in the order front, right side, back, left side, each piece's facade_edge side a joins side b of the next piece; a corner post sits between two runs. Join every upper module and post to the one below it with storey_stack: side a on top of the lower piece joins side b under the upper piece. Hang the door leaf in the door module with door_hinge. The origin is the first module of the ground storey's front run. The finished walls are 5.3 m wide, 5.6 m high (two storeys of 2.8 m) and 7.3 m deep.",
       "source": "Project maintainers",
       "licence": "n/a"
     },
@@ -48,5 +48,10 @@
       "source": "Project maintainers",
       "licence": "n/a"
     }
+  ],
+  "dimensions_m": [
+    5.3,
+    5.6,
+    7.3
   ]
 }

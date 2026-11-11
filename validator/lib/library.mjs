@@ -52,7 +52,7 @@ function entryConnector(rec, entry, connName) {
 export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
   const { libDir, registry, profile } = ctx;
   const res = {
-    errors: [], entries: new Map(), poses: new Map(), exposed: new Map(), joints: [], triangles: 0, rootRef: null, loopChecks: 0,
+    errors: [], entries: new Map(), poses: new Map(), exposed: new Map(), joints: [], triangles: 0, rootRef: null, loopChecks: 0, worstGapM: 0, worstAngleDeg: 0,
   };
   const err = (m) => res.errors.push(m);
   if (stack.length > MAX_DEPTH) {
@@ -166,12 +166,15 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
         const wa = applyPose(pa, J.A.frame);
         const wb = applyPose(pb, J.B.frame);
         const dist = len(vsub(wa.p, wb.p));
-        if (dist > tolP) err(`${J.label}: positions differ by ${(dist * 1000).toFixed(2)} mm (allowed ${tolP * 1000} mm). ${J.A.ref}:${J.A.name} and ${J.B.ref}:${J.B.name} do not coincide once the atoms are placed through the other joints; move the connector node in the atom that is off`);
+        if (dist > res.worstGapM) res.worstGapM = dist;
+        if (dist > tolP) err(`${J.label}: positions differ by ${(dist * 1000).toFixed(2)} mm (allowed ${tolP * 1000} mm). ${J.A.ref}:${J.A.name} and ${J.B.ref}:${J.B.name} do not coincide once the atoms are placed through the other joints. Check the manifest first (the right connector on each side, the right neighbour, turn_deg); if the manifest is right, a connector node in one of the atoms is off`);
         const zang = angleDeg(wa.z, [-wb.z[0], -wb.z[1], -wb.z[2]]);
+        if (zang > res.worstAngleDeg) res.worstAngleDeg = zang;
         if (!(zang <= tolD)) err(`${J.label}: +Z axes are ${zang.toFixed(2)} degrees from opposite (allowed ${tolD}); the connectors must face each other`);
         if (J.sym !== Infinity) {
           const yExpect = rotateAbout(wa.y, wa.z, J.turn);
           const yang = angleDeg(yExpect, wb.y);
+          if (yang > res.worstAngleDeg) res.worstAngleDeg = yang;
           if (!(yang <= tolD)) err(`${J.label}: +Y axes differ by ${yang.toFixed(2)} degrees after turn_deg ${J.turn} (allowed ${tolD}); the up directions do not agree`);
         }
       } else if (pa || pb) {
