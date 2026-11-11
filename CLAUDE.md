@@ -1,6 +1,6 @@
 # Rebuild the World: project brief for Claude Code
 
-Working title: **Rebuild the World**. Public name: **Earth, Again** (owner, 2026-11-10). Status: step 1 (repo scaffold) committed to a local Git repo on `main`, with no remote; everything since is uncommitted. No validator, assets or public repo exist yet. Everything in `docs/` is a draft (v0.1 to v0.4) that the project owner has not yet confirmed line by line.
+Working title: **Rebuild the World**. Public name: **Earth, Again** (owner, 2026-11-10). Status: the specs are committed on `main` and the repo is public at github.com/JustinPerea/rebuild-the-world (owner, 2026-11-11). A validator is being built in `validator/`. No assets exist yet, and no licence has been chosen (`LICENSE.md`). Everything in `docs/` is a draft (v0.1 to v0.4) that the project owner has not yet confirmed line by line.
 
 Public so far (2026-11-10): the announcement film (`announce/film/`, 16:9; `announce/film-vertical/`, 9:16) was posted by the Good Machines social session with the owner's approval, and the waitlist page is live at goodmachines.ai/earth-again (`brand/`, `site/`, owned by the brand session).
 
@@ -92,3 +92,4 @@ Steps 2 to 5 are the real feasibility test: whether AI-made atoms from different
 - Confirm before anything irreversible or public (creating public repos, publishing, registering names).
 - "Rebuild the World" is the working title on the repo and docs; the public name is "Earth, Again". No domain, organisation or trademark is registered under either.
 - In this project, show the owner pages as claude.ai artifacts, not on the reviews site (owner, 2026-11-10).
+- The repo is public. Before every push, check that nothing personal goes with it: commits use the owner's GitHub no-reply address (set in this repo's Git config), `implementation-notes.md` and `data/raw/` are ignored and stay local, and `brand/` and `site/` are the brand session's and are not tracked.
