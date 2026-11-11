@@ -1,0 +1,181 @@
+{
+  "task_id": "task_bld_door_bay_01",
+  "asset_id": "bld_door_bay_01",
+  "title": "Wall module with a door opening, 1.0 m wide",
+  "description": "A rendered wall module with a door opening 0.8 m wide and 2.0 m high that starts at the floor, from x = 0.1 to x = 0.9. The front 7 cm of the opening, from z = -0.07 to z = 0, is clear to its full 0.8 m by 2.0 m, so the door leaf fits there. Behind it, from z = -0.15 to z = -0.07, a dark aluminium frame 3 cm wide lines the two sides and the top of the opening and is the stop the door closes against. The door leaf is a separate atom and is not part of this one. The module carries the frame side of a door hinge.",
+  "category": "bld",
+  "class": "Facade module",
+  "object_id": "bld_house_shell_01",
+  "slot": "door_bay",
+  "size": "S",
+  "min_trust_level": 0,
+  "dimensions_m": [
+    1.0,
+    2.8,
+    0.15
+  ],
+  "required_connectors": [
+    {
+      "type": "facade_edge",
+      "side": "a",
+      "count": 1
+    },
+    {
+      "type": "facade_edge",
+      "side": "b",
+      "count": 1
+    },
+    {
+      "type": "storey_stack",
+      "side": "a",
+      "count": 1
+    },
+    {
+      "type": "storey_stack",
+      "side": "b",
+      "count": 1
+    },
+    {
+      "type": "door_hinge",
+      "side": "a",
+      "count": 1
+    }
+  ],
+  "mating_m": {
+    "storey_height": 2.8,
+    "wall_thickness": 0.15,
+    "module_width": 1.0,
+    "leaf_width": 0.8,
+    "leaf_height": 2.0
+  },
+  "reference_pack": [
+    {
+      "what": "Sizes",
+      "value_or_path": "Typical sizes for a two-storey Tokyo house, chosen for this test. Not measured from a real building, so record dimension_source as \"estimated\".",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Materials",
+      "value_or_path": "Use only library materials from assets/mat/. Give each glTF material the library ID as its name and the values in that material.json. No custom materials and no textures in this test.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    },
+    {
+      "what": "Shape",
+      "value_or_path": "The module fills a box from x = 0 to its width, y = 0 to its height and z = -depth to 0. The outer face is the z = 0 plane and faces +Z. Nothing may reach outside the box.",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Connector frames",
+      "value_or_path": "See connector_frames in this task. Each gives a connector's position and the directions of its +Z and +Y, in the asset's own axes (+X right, +Y up, +Z front). The validator checks them.",
+      "source": "registry/connectors.json",
+      "licence": "n/a"
+    },
+    {
+      "what": "Materials by part",
+      "value_or_path": "Wall: mat_render_cream_01. Frame: mat_aluminium_dark_01.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    }
+  ],
+  "connector_frames": [
+    {
+      "name": "conn_facade_edge_a_01",
+      "position_m": [
+        1.0,
+        0,
+        0
+      ],
+      "z_axis": [
+        1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "conn_facade_edge_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        -1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "conn_storey_stack_a_01",
+      "position_m": [
+        0,
+        2.8,
+        0
+      ],
+      "z_axis": [
+        0,
+        1,
+        0
+      ],
+      "y_axis": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "conn_storey_stack_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        0,
+        -1,
+        0
+      ],
+      "y_axis": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "conn_door_hinge_a_01",
+      "position_m": [
+        0.1,
+        0,
+        -0.05
+      ],
+      "z_axis": [
+        1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ],
+      "limits_deg": [
+        -100,
+        0
+      ],
+      "rest_deg": 0,
+      "note": "The door opens outwards, towards +Z. A turn about the connector's +Y by a negative angle swings the leaf out."
+    }
+  ]
+}

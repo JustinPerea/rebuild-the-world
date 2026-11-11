@@ -1,0 +1,152 @@
+{
+  "task_id": "task_bld_corner_post_01",
+  "asset_id": "bld_corner_post_01",
+  "title": "Corner post, 0.15 m square",
+  "description": "A square rendered post that turns a facade through a right angle at an outside corner. It is one storey high and as thick as the wall modules. A run of modules ends on its left face, and the next run starts on the far face, turned a quarter turn.",
+  "category": "bld",
+  "class": "Facade module",
+  "object_id": "bld_house_shell_01",
+  "slot": "corner_post",
+  "size": "S",
+  "min_trust_level": 0,
+  "dimensions_m": [
+    0.15,
+    2.8,
+    0.15
+  ],
+  "required_connectors": [
+    {
+      "type": "facade_edge",
+      "side": "a",
+      "count": 1
+    },
+    {
+      "type": "facade_edge",
+      "side": "b",
+      "count": 1
+    },
+    {
+      "type": "storey_stack",
+      "side": "a",
+      "count": 1
+    },
+    {
+      "type": "storey_stack",
+      "side": "b",
+      "count": 1
+    }
+  ],
+  "mating_m": {
+    "storey_height": 2.8,
+    "wall_thickness": 0.15,
+    "module_width": 0.15
+  },
+  "reference_pack": [
+    {
+      "what": "Sizes",
+      "value_or_path": "Typical sizes for a two-storey Tokyo house, chosen for this test. Not measured from a real building, so record dimension_source as \"estimated\".",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Materials",
+      "value_or_path": "Use only library materials from assets/mat/. Give each glTF material the library ID as its name and the values in that material.json. No custom materials and no textures in this test.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    },
+    {
+      "what": "Shape",
+      "value_or_path": "The post fills a box from x = 0 to 0.15, y = 0 to 2.8 and z = -0.15 to 0. Its two outer faces are z = 0 (facing +Z) and x = 0.15 (facing +X).",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Connector frames",
+      "value_or_path": "See connector_frames in this task. Each gives a connector's position and the directions of its +Z and +Y, in the asset's own axes (+X right, +Y up, +Z front). The validator checks them.",
+      "source": "registry/connectors.json",
+      "licence": "n/a"
+    },
+    {
+      "what": "Material",
+      "value_or_path": "mat_render_cream_01 on every face.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    }
+  ],
+  "connector_frames": [
+    {
+      "name": "conn_facade_edge_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        -1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ],
+      "note": "Receives the run that ends at this corner."
+    },
+    {
+      "name": "conn_facade_edge_a_01",
+      "position_m": [
+        0.15,
+        0,
+        -0.15
+      ],
+      "z_axis": [
+        0,
+        0,
+        -1
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ],
+      "note": "Starts the next run, which faces +X and continues towards -Z."
+    },
+    {
+      "name": "conn_storey_stack_a_01",
+      "position_m": [
+        0,
+        2.8,
+        0
+      ],
+      "z_axis": [
+        0,
+        1,
+        0
+      ],
+      "y_axis": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "conn_storey_stack_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        0,
+        -1,
+        0
+      ],
+      "y_axis": [
+        0,
+        0,
+        1
+      ]
+    }
+  ]
+}

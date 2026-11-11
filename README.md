@@ -2,7 +2,7 @@
 
 Working title; the public name is Earth, Again. An open, community-built 3D model of Earth that becomes a playable multiplayer sandbox. Contributors build small modular atoms with their own AI tools and submit them by pull request; automated checks and a reviewer model verify each one; merged atoms are assembled procedurally onto real map layouts.
 
-Status: specs drafted (v0.1 to v0.4), announcement film posted, waitlist page live. No assets, validator or pipeline yet. Licence not chosen (see `LICENSE.md`).
+Status: specs drafted (v0.1 to v0.5), announcement film posted, waitlist page live. A validator, a contributor MCP server and a first data pack (Oshiage 2, Sumida, Tokyo) exist, and the first test of the system is set up in [`docs/first-test.md`](docs/first-test.md). No pipeline or review service yet. Licence not chosen (see `LICENSE.md`).
 
 ## Specs
 

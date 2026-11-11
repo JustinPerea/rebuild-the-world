@@ -1,6 +1,6 @@
 # Connector registry
 
-The list of connector types atoms may use (asset spec, "Connectors"). No types are registered yet.
+The list of connector types atoms may use (asset spec, "Connectors"), in `connectors.json`. Three trial types are registered for the first building test: `facade_edge`, `storey_stack` and `door_hinge`. A trial type may change without a migration.
 
 Each entry fixes:
 
@@ -12,6 +12,7 @@ Each entry fixes:
 | `symmetry` | `none`, a count, or `free` |
 | `motion` | `fixed`, `hinge`, `spin`, `ball` or `slide`. This is the default, and a joint in a manifest may state its own (asset spec, "Variation") |
 | `axis` | For a moving type, the connector axis the motion uses: `x`, `y` or `z` |
+| `frame` | For each side, where the connector sits on its atom and which way its +Z and +Y point |
 
 A connector node in an asset is named `conn_<type>_<side>_<index>` and is valid only if `<type>` is registered here. New types are added by pull request and approved by a maintainer before any asset uses them.
 

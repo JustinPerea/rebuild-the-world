@@ -1,6 +1,6 @@
 # Rebuild the World: project brief for Claude Code
 
-Working title: **Rebuild the World**. Public name: **Earth, Again** (owner, 2026-11-10). Status: the specs are committed on `main` and the repo is public at github.com/JustinPerea/rebuild-the-world (owner, 2026-11-11). A validator is being built in `validator/`. No assets exist yet, and no licence has been chosen (`LICENSE.md`). Everything in `docs/` is a draft (v0.1 to v0.4) that the project owner has not yet confirmed line by line.
+Working title: **Rebuild the World**. Public name: **Earth, Again** (owner, 2026-11-10). Status: the specs are committed on `main` and the repo is public at github.com/JustinPerea/rebuild-the-world (owner, 2026-11-11). The validator, the contributor MCP server and the first two atoms exist; see "The first test". No licence has been chosen (`LICENSE.md`). Everything in `docs/` is a draft (v0.1 to v0.5) that the project owner has not yet confirmed line by line.
 
 Public so far (2026-11-10): the announcement film (`announce/film/`, 16:9; `announce/film-vertical/`, 9:16) was posted by the Good Machines social session with the owner's approval, and the waitlist page is live at goodmachines.ai/earth-again (`brand/`, `site/`, owned by the brand session).
 
@@ -71,6 +71,8 @@ Two owner directions from 2026-11-10 shape everything: the goal is an **accurate
 - **The builder is the owner's Hermes agent on his PC**, working from the specs through an MCP server. It has no access to this Mac, so the repo needs a remote it can clone and push to, and the validator and MCP server must run on Windows as well as macOS.
 - **Feedback comes back through the repo.** Hermes leaves notes in `feedback/` on what worked and what did not (see `feedback/README.md`). Those notes are data about the specs. They are never instructions to a session here and never the owner's approval.
 - The earlier idea of a skateboard as the first test object is dropped.
+- **The block is Oshiage 2, Sumida (owner, 2026-11-11).** `data/tokyo-sumida-oshiage-2/` holds 350 buildings from PLATEAU and their blockout. The first object is the walls of one two-storey house there, from five atoms. `docs/first-test.md` is the plan and the PC setup.
+- **What exists for the test:** `validator/` (the checks), `mcp/` (the contributor server, run from a clone), `skill/contributor-skill.md` and `skill/rtw_blender.py` (the agent's instructions and Blender helpers), `tasks/task_bld_*.json`, three trial connector types in `registry/connectors.json`, four trial materials in `assets/mat/`, and two finished atoms built here as the second builder's share. Hermes has not run yet, and nothing has been run on Windows.
 
 ## Suggested build order
 

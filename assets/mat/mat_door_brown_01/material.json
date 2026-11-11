@@ -1,0 +1,19 @@
+{
+  "asset_id": "mat_door_brown_01",
+  "version": "0.1.0",
+  "status": "trial",
+  "description": "Brown factory-finished door panel",
+  "pbr": {
+    "base_color_factor": [
+      0.33,
+      0.22,
+      0.15,
+      1
+    ],
+    "metallic_factor": 0.0,
+    "roughness_factor": 0.55,
+    "alpha_mode": "OPAQUE"
+  },
+  "textures": null,
+  "note": "Trial material for the first building test: flat values and no textures, so the test can focus on shape and fit. To use it, give a glTF material this ID as its name and these values."
+}

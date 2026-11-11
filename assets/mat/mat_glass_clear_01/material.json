@@ -1,0 +1,19 @@
+{
+  "asset_id": "mat_glass_clear_01",
+  "version": "0.1.0",
+  "status": "trial",
+  "description": "Clear window glass",
+  "pbr": {
+    "base_color_factor": [
+      0.62,
+      0.72,
+      0.76,
+      0.35
+    ],
+    "metallic_factor": 0.0,
+    "roughness_factor": 0.08,
+    "alpha_mode": "BLEND"
+  },
+  "textures": null,
+  "note": "Trial material for the first building test: flat values and no textures, so the test can focus on shape and fit. To use it, give a glTF material this ID as its name and these values."
+}

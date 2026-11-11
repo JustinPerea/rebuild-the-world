@@ -1,0 +1,85 @@
+{
+  "task_id": "task_bld_door_leaf_01",
+  "asset_id": "bld_door_leaf_01",
+  "title": "Front door leaf, 0.8 m by 2.0 m",
+  "description": "A plain front door leaf, 0.8 m wide, 2.0 m high and 4 cm thick, with a lever handle on both faces near the edge away from the hinge, 1.0 m above the bottom. It hangs in the door module by a hinge along its left edge, seen from outside.",
+  "category": "bld",
+  "class": "Facade module",
+  "object_id": "bld_house_shell_01",
+  "slot": "door_leaf",
+  "size": "S",
+  "min_trust_level": 0,
+  "dimensions_m": [
+    0.8,
+    2.0,
+    0.16
+  ],
+  "required_connectors": [
+    {
+      "type": "door_hinge",
+      "side": "b",
+      "count": 1
+    }
+  ],
+  "mating_m": {
+    "leaf_width": 0.8,
+    "leaf_height": 2.0
+  },
+  "reference_pack": [
+    {
+      "what": "Sizes",
+      "value_or_path": "Typical sizes for a two-storey Tokyo house, chosen for this test. Not measured from a real building, so record dimension_source as \"estimated\".",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Materials",
+      "value_or_path": "Use only library materials from assets/mat/. Give each glTF material the library ID as its name and the values in that material.json. No custom materials and no textures in this test.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    },
+    {
+      "what": "Shape",
+      "value_or_path": "The leaf fills a box from x = 0 to 0.8, y = 0 to 2.0 and z = -0.02 to 0.02. Its origin is on the hinge line, at the bottom. The outer face faces +Z. The handles are the only parts allowed outside the box, by at most 6 cm on each face; the task's depth already counts them.",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Connector frames",
+      "value_or_path": "See connector_frames in this task. Each gives a connector's position and the directions of its +Z and +Y, in the asset's own axes (+X right, +Y up, +Z front). The validator checks them.",
+      "source": "registry/connectors.json",
+      "licence": "n/a"
+    },
+    {
+      "what": "Materials by part",
+      "value_or_path": "Leaf: mat_door_brown_01. Handles: mat_aluminium_dark_01.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    }
+  ],
+  "connector_frames": [
+    {
+      "name": "conn_door_hinge_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        -1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ],
+      "limits_deg": [
+        -100,
+        0
+      ],
+      "rest_deg": 0
+    }
+  ]
+}

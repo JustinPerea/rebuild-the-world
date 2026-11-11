@@ -2,8 +2,36 @@
   "task_id": "task_example_wheel_01",
   "asset_id": "veh_wheel_17in_01",
   "size": "S",
-  "dimensions_m": [0.65, 0.65, 0.225],
+  "dimensions_m": [
+    0.65,
+    0.65,
+    0.225
+  ],
   "required_connectors": [
-    { "type": "wheel_hub", "side": "b", "count": 1 }
+    {
+      "type": "wheel_hub",
+      "side": "b",
+      "count": 1
+    }
+  ],
+  "connector_frames": [
+    {
+      "name": "conn_wheel_hub_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ]
+    }
   ]
 }

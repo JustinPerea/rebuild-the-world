@@ -1,0 +1,85 @@
+{
+  "asset_id": "bld_corner_post_01",
+  "version": "0.1.0",
+  "task_id": "task_bld_corner_post_01",
+  "spec_version": "0.5",
+  "profile": "Profile 1 (2026)",
+  "style_version": "0.3",
+  "library": "Earth, Again",
+  "kind": "library",
+  "class": "Facade module",
+  "tier": 1,
+  "size": "S",
+  "dimensions_m": [
+    0.15,
+    2.8,
+    0.15
+  ],
+  "triangles": 12,
+  "connectors": [
+    {
+      "name": "conn_facade_edge_a_01",
+      "type": "facade_edge",
+      "side": "a",
+      "mating": {
+        "storey_height": 2.8,
+        "wall_thickness": 0.15
+      }
+    },
+    {
+      "name": "conn_facade_edge_b_01",
+      "type": "facade_edge",
+      "side": "b",
+      "mating": {
+        "storey_height": 2.8,
+        "wall_thickness": 0.15
+      }
+    },
+    {
+      "name": "conn_storey_stack_a_01",
+      "type": "storey_stack",
+      "side": "a",
+      "mating": {
+        "module_width": 0.15,
+        "wall_thickness": 0.15
+      }
+    },
+    {
+      "name": "conn_storey_stack_b_01",
+      "type": "storey_stack",
+      "side": "b",
+      "mating": {
+        "module_width": 0.15,
+        "wall_thickness": 0.15
+      }
+    }
+  ],
+  "mirror_safe": false,
+  "materials": {
+    "library": [
+      "mat_render_cream_01"
+    ],
+    "custom": []
+  },
+  "behaviours": [],
+  "description": "A square rendered post that turns a facade through a right angle at an outside corner. One storey high and as thick as the wall modules.",
+  "licence": "Not yet chosen for this project (see LICENSE.md)",
+  "sources": [],
+  "considered": [],
+  "provenance": {
+    "author": "claude-code-session",
+    "co_authors": [],
+    "tools": [
+      {
+        "name": "Claude Fable 5.2",
+        "used_for": "planning and the build script"
+      },
+      {
+        "name": "Blender 5.0.1",
+        "used_for": "geometry and export"
+      }
+    ],
+    "created": "2026-11-11",
+    "dimension_source": "estimated"
+  }
+}

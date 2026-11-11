@@ -1,0 +1,19 @@
+{
+  "asset_id": "mat_render_cream_01",
+  "version": "0.1.0",
+  "status": "trial",
+  "description": "Smooth cream mortar render, as on the outer walls of many Tokyo houses",
+  "pbr": {
+    "base_color_factor": [
+      0.86,
+      0.82,
+      0.74,
+      1
+    ],
+    "metallic_factor": 0.0,
+    "roughness_factor": 0.85,
+    "alpha_mode": "OPAQUE"
+  },
+  "textures": null,
+  "note": "Trial material for the first building test: flat values and no textures, so the test can focus on shape and fit. To use it, give a glTF material this ID as its name and these values."
+}

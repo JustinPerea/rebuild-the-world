@@ -1,4 +1,4 @@
-# Rebuild the World: Asset Spec (Draft v0.4)
+# Rebuild the World: Asset Spec (Draft v0.5)
 
 Nov 11, 2026
 
@@ -25,6 +25,8 @@ Changed in v0.2: numeric limits moved to the capability profile, connectors gain
 Changed in v0.3, after the first object was rebuilt as atoms under this contract (a robot of 21 atoms in the Frontier Colony library): the contract now serves more than one library; connectors gained ball and slide motion, a motion axis and limits; assemblies gained an origin, mirrored atoms, recorded orientations and named states; and the spec gained sections on moving assemblies, animation clips, and effect and light markers.
 
 Changed in v0.4 (owner, 2026-11-11): an atom may vary where it does not meet another atom. A placed atom or assembly may be scaled, an atom may stretch or repeat along a marked span, a joint may state its own motion, a material slot may be left open, and an assembly may expose named connectors so that it is placed as one piece. See "Variation".
+
+Changed in v0.5, from building the validator and the first two atoms: the registry states where each side of a connector sits, a task may fix each connector's frame, the shapes of `asset.json` and the task file are written down, and the spec says what an assembly check can and cannot measure. See "File shapes".
 
 ## Libraries
 
@@ -111,12 +113,15 @@ Each type is defined once in the connector registry:
 | `symmetry` | `none` (one valid rotation), a count such as `4` (four valid rotations), or `free` (any rotation, as on a wheel hub) |
 | `motion` | `fixed`, `hinge`, `spin`, `ball` or `slide`: how the mated atom may move about the connector |
 | `axis` | For a moving type, the connector axis the motion uses: `x`, `y` or `z`. A hinge or a spin turns about it, and a slide moves along it |
+| `frame` | For each side, where the connector sits on its atom and which way its +Z and +Y point, in words |
 
 - A `ball` connector turns about its position on all three axes and names no axis.
 - A moving connector records its limits (the smallest and largest angle or travel) and its rest position in the atom's metadata. Without limits an engine cannot tell an elbow from a door.
 - The type's motion and the atom's limits are defaults. A joint in a manifest may state its own (see "Variation").
 
 A new type is added to the registry by pull request and approved by a maintainer before any asset uses it.
+
+A type and a side do not say where on an atom a connector goes, and two builders will choose differently. So the registry's `frame` says it in words, and a task states it in numbers as `connector_frames`: each connector's position and the directions of its +Z and +Y, in the atom's own axes. The validator checks the file against them, within the connector tolerance.
 
 Building grid: facade modules are sized in multiples of 0.5 m horizontally. Storey height is set per building kit and recorded in its metadata.
 
@@ -144,6 +149,7 @@ An assembly is a manifest, not a mesh: a list of merged atoms and the connector 
 
 - Every atom is pinned to an exact version of a merged asset.
 - Every atom is joined to the rest by at least one joint. No atom is placed by hand-typed coordinates.
+- A manifest states every joint that is physically there, including the one that closes a ring. A joint that only places an atom cannot be measured, because the atom is put where the joint says. Positions are measured only where joints close a loop.
 - The manifest names an `origin`: the root atom, and where the assembly's own origin sits relative to it. Joints fix the atoms relative to each other, and the origin fixes the whole.
 - `"mirror": true` reflects an atom in its own X before it is placed, so one door or one arm serves both sides. It is allowed only when the atom's metadata marks it `mirror_safe`, and an atom that carries text or a handed detail is not.
 - Where a connector type's symmetry allows more than one orientation, the joint records the one chosen as `turn_deg`, a rotation about the connector's Z. A manifest must rebuild the same way every time. A generator that picks each atom's orientation alone can seat it turned away from its own children.
@@ -388,6 +394,38 @@ Unique assets add:
 
 Stand-ins for held subjects add `stands_in_for`: what real thing the asset replaces until it is cleared (accuracy and data policy).
 
+## File shapes
+
+These are the shapes the validator reads. They were chosen while building it, where earlier versions of this spec gave only field names. `skill/contributor-skill.md` has a complete `asset.json`.
+
+| Field or file | Shape |
+| --- | --- |
+| `dimensions_m` | `[width, height, depth]` along X, Y and Z, in metres |
+| `connectors` | One entry per connector node: `{ "name", "type", "side", "mating" }`, plus `"limits": [min, max]` and `"rest"` for a moving type, in degrees or metres. `mating` is `{ dimension: metres }` for the mating dimensions the type lists |
+| `materials` | `{ "library": [ids], "custom": [names] }` |
+| `size` | `S`, `M` or `L`, the task's size |
+| `thin` | `true` for a sheet that cannot be a closed shell |
+| `considered` | `[{ "asset": "<id>@<version>", "reason": "why it does not fit" }]`, or `[]` |
+| `provenance.tools` | `[{ "name", "used_for" }]` |
+| A library material in a model | A glTF material whose name is the library material's ID |
+| A reference's licence note | `refs/<file>.licence.txt` beside the file |
+| Blueprint slot | `connectors` as `[{ "type", "side" }]`, and `dimensions_m` as `{ name: metres }`, where `width`, `height` and `depth` are the atom's size and any other name is a mating dimension |
+| `exposes` in an assembly | `{ "name": "<atom ref>:<connector name>" }` |
+
+A task is one file, `tasks/<task_id>.json`:
+
+| Task field | Content |
+| --- | --- |
+| `task_id`, `asset_id`, `title`, `description` | What to build |
+| `object_id`, `slot` | The object and blueprint slot it fills, if any |
+| `category`, `class`, `size`, `min_trust_level` | Where it is filed, its budget class, its size and who may claim it |
+| `dimensions_m` | The bounding box the atom must match |
+| `required_connectors` | `[{ "type", "side", "count" }]` |
+| `connector_frames` | `[{ "name", "position_m", "z_axis", "y_axis" }]`, and `limits_deg` and `rest_deg` for a moving type |
+| `mating_m` | `{ dimension: metres }` for every mating dimension the atom's connectors use |
+| `reference_pack` | `[{ "what", "value_or_path", "source", "licence" }]` |
+| `depends_on` | Tasks that must be merged first |
+
 ## Provenance
 
 Every asset at every level, from a material to a structure, records who and what made it and when. Half is declared by the contributor and half is stamped by the service, because only the second half can be trusted.
@@ -433,7 +471,7 @@ The validator runs on every pull request and names each failing check. Contribut
 | Transforms | The root node has no translation, rotation or scale | Contract |
 | Triangle budget | LOD0 is within the class budget | Profile |
 | Mesh health | No zero-area or duplicate faces, and solid meshes are watertight | Profile |
-| Connectors | Every connector the task requires is present, with a registered type and a valid up direction, and every moving connector states its limits | Contract |
+| Connectors | Every connector the task requires is present, with a registered type and a valid up direction, every moving connector states its limits, and every connector whose frame the task fixes sits in that frame | Contract |
 | Assembly | Every atom is a merged version, an origin is named, every joint mates in its recorded orientation, no atom is unjoined, and every connector reached on a placed assembly is one it exposes | Contract |
 | Variation | Every declared range passes the other checks at both of its ends, and every scale, span, motion and material a manifest chooses is within what was declared | Contract |
 | Blueprint | Every slot names its connectors and dimensions, and is filled by a fitting atom or marked `new` | Contract |
@@ -476,6 +514,10 @@ A merged asset is never edited in place. A fix or upgrade is published as a new 
 - [ ] How is a clip named and filed, and who registers clip names?
 - [ ] May an effect be a mesh atom of its own, or only a marker the engine fills? One library built three effect atoms.
 - [ ] Mirrored copies in the first build differed from a true mirror by up to 0.039 mm. What tolerance does a vertex-exact comparison use?
+- [ ] Does an object's folder hold `blueprint.json` and `assembly.json` together, or is the assembly a second asset?
+- [ ] What is a library material's own file layout? The first test uses `assets/mat/<id>/material.json` with flat values and no textures.
+- [ ] A clip has no file format or location yet, so the Clip check cannot run.
+- [ ] Several profile rules cannot be read from the files by a script: smallest feature, UV overlap, hidden faces, pixels per metre and ground contact. Do they move to review, or get a definition a script can test?
 - [ ] Spans are proposed and unbuilt. Which object tests them first: a beam, a stair or a window bay?
 - [ ] How does a stretch span treat a surface that does not tile, such as a decal or a panel line?
 - [ ] May a joint widen an atom's limits with no check that the atoms do not pass through each other?

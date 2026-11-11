@@ -28,7 +28,7 @@
       "name": "Durable contract",
       "question": "What must every asset obey forever?",
       "doc": "docs/asset-spec.md",
-      "version": "v0.4",
+      "version": "v0.5",
       "status": "revised",
       "summary": "Units, axes, pivots, connectors, blueprints, assembly manifests, variation, moving assemblies, clips, files and metadata. Shared by every library and meant to stay fixed for decades."
     },
@@ -64,7 +64,7 @@
       "name": "Contributor service",
       "question": "How does a contributor's agent get work and the current rules?",
       "doc": "docs/contributor-service.md",
-      "version": "v0.1",
+      "version": "v0.2",
       "status": "new",
       "summary": "A work order with pinned versions for every claim, an MCP server for asking what needs building, and a strict split between instructions and data."
     },
@@ -85,7 +85,7 @@
     },
     {
       "name": "Contributor skill file",
-      "why": "The instructions a contributor's model follows. Planned for build step 6."
+      "why": "A first version is in skill/contributor-skill.md. No outside agent has built from it yet."
     },
     {
       "name": "Behaviour registry",
@@ -93,7 +93,7 @@
     },
     {
       "name": "Connector registry",
-      "why": "The format exists in the asset spec. No types are registered yet."
+      "why": "Three trial types are registered for the first building test. None is final."
     },
     {
       "name": "Clip registry",
@@ -348,7 +348,8 @@
       "mating_dimensions",
       "symmetry",
       "motion",
-      "axis"
+      "axis",
+      "frame"
     ],
     "tolerance": "Position within 1 mm, direction within 0.5°",
     "motions": [
@@ -594,6 +595,10 @@
     {
       "tool": "send_review",
       "what": "Records the review's verdict and reasons"
+    },
+    {
+      "tool": "leave_feedback",
+      "what": "Files a note on a rule that was unclear, missing or impossible to meet"
     }
   ],
   "service_rules": [

@@ -1,0 +1,52 @@
+{
+  "task_id": "task_bld_house_shell_01",
+  "asset_id": "bld_house_shell_01",
+  "title": "Assemble the walls of a two-storey house",
+  "description": "Write the assembly manifest for the walls of a two-storey house, 5.3 m wide and 7.3 m deep, from the five atoms in its blueprint. It dresses one real building in Oshiage 2 to accuracy level A1: typical walls, windows and a door on a box close to the real outline. There is no roof in this test.",
+  "category": "bld",
+  "class": "Facade module",
+  "object_id": "bld_house_shell_01",
+  "slot": null,
+  "size": "M",
+  "min_trust_level": 0,
+  "depends_on": [
+    "task_bld_wall_panel_01",
+    "task_bld_window_bay_01",
+    "task_bld_door_bay_01",
+    "task_bld_door_leaf_01",
+    "task_bld_corner_post_01"
+  ],
+  "reference_pack": [
+    {
+      "what": "The real building",
+      "value_or_path": {
+        "place_id": "plateau:bldg_3ca6c476-db0e-4d4c-837c-b5ede5c8654a",
+        "outline_m": "5.29 by 7.39",
+        "height_m": 8.1,
+        "storeys": 2,
+        "usage": "house",
+        "data": "data/tokyo-sumida-oshiage-2/places.json"
+      },
+      "source": "3D City Model (Project PLATEAU), Sumida ward, fiscal 2023, edited",
+      "licence": "Public Data License 1.0 (compatible with CC BY 4.0)"
+    },
+    {
+      "what": "Layout",
+      "value_or_path": "Each storey is a ring: 5 modules along the front, a corner post, 7 along the right side, a corner post, 5 along the back, a corner post, 7 along the left side, a corner post. That is 24 modules and 4 posts a storey. Ground storey: 1 door module in the middle of the front, 6 window modules, 17 plain modules. Upper storey: 8 window modules, 16 plain modules. One door leaf hangs in the door module.",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Joints",
+      "value_or_path": "Join every module to its neighbours in the ring with facade_edge, including the joint that closes the ring. Join every upper module and post to the one below it with storey_stack. The origin is the first module of the ground storey's front run.",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "What is not known",
+      "value_or_path": "The source has no facades, so where the real windows and door are is not known. Any sensible arrangement is accepted.",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    }
+  ]
+}

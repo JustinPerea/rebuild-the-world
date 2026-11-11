@@ -1,5 +1,61 @@
 {
-  "registry_version": "0.1.0",
-  "note": "No types are registered yet. Fields are defined in docs/asset-spec.md, \"Connectors\".",
-  "types": []
+  "registry_version": "0.2.0",
+  "note": "Three trial types for the first building test. Fields are defined in docs/asset-spec.md, \"Connectors\". A trial type may change without a migration.",
+  "types": [
+    {
+      "type": "facade_edge",
+      "status": "trial",
+      "sides": {
+        "a": "Right edge of a facade module, seen from outside",
+        "b": "Left edge of a facade module, seen from outside"
+      },
+      "frame": {
+        "a": "At the bottom of the outer face, on the right edge. +Z points along the facade, away from the module. +Y points up.",
+        "b": "At the bottom of the outer face, on the left edge. +Z points along the facade, away from the module. +Y points up."
+      },
+      "mating_dimensions": [
+        "storey_height",
+        "wall_thickness"
+      ],
+      "symmetry": "none",
+      "motion": "fixed"
+    },
+    {
+      "type": "storey_stack",
+      "status": "trial",
+      "sides": {
+        "a": "Top of a facade module",
+        "b": "Bottom of a facade module"
+      },
+      "frame": {
+        "a": "At the top of the outer face, on the left edge seen from outside. +Z points up. +Y points out of the facade.",
+        "b": "At the bottom of the outer face, on the left edge seen from outside. +Z points down. +Y points out of the facade."
+      },
+      "mating_dimensions": [
+        "module_width",
+        "wall_thickness"
+      ],
+      "symmetry": "none",
+      "motion": "fixed"
+    },
+    {
+      "type": "door_hinge",
+      "status": "trial",
+      "sides": {
+        "a": "The frame a door hangs in",
+        "b": "The door leaf"
+      },
+      "frame": {
+        "a": "On the hinge line, at the bottom of the opening. +Z points across the opening, towards the leaf. +Y points up.",
+        "b": "On the hinge line, at the bottom of the leaf. +Z points away from the leaf. +Y points up."
+      },
+      "mating_dimensions": [
+        "leaf_width",
+        "leaf_height"
+      ],
+      "symmetry": "none",
+      "motion": "hinge",
+      "axis": "y"
+    }
+  ]
 }

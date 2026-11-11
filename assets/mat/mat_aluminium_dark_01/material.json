@@ -1,0 +1,19 @@
+{
+  "asset_id": "mat_aluminium_dark_01",
+  "version": "0.1.0",
+  "status": "trial",
+  "description": "Dark bronze anodised aluminium, as on window and door frames",
+  "pbr": {
+    "base_color_factor": [
+      0.16,
+      0.14,
+      0.13,
+      1
+    ],
+    "metallic_factor": 1.0,
+    "roughness_factor": 0.45,
+    "alpha_mode": "OPAQUE"
+  },
+  "textures": null,
+  "note": "Trial material for the first building test: flat values and no textures, so the test can focus on shape and fit. To use it, give a glTF material this ID as its name and these values."
+}

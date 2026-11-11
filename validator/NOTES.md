@@ -20,7 +20,7 @@ Each item says what the spec leaves open and what the validator does until it is
 10. **Where `considered` lives.** The Reuse check needs the list of library atoms a new atom considered. The spec says "its metadata lists" them without a field name. The validator reads `asset.json` `considered: [{ "asset": "<id>@<version>", "reason": "..." }]`. An empty array is valid; a missing field fails.
 11. **Recorded versus measured dimensions.** The spec says dimensions are "recomputed" and does not give a tolerance. The validator allows 1 mm (`dimension_record_tolerance_m`).
 12. **100 MB.** Read as 100,000,000 bytes.
-13. **Task file shape.** The spec defers it. The validator reads `{ task_id, asset_id, size, dimensions_m: [w, h, d], required_connectors: [{ type, side, count }] }`. Only `dimensions_m`, `required_connectors` and `size` are used. See `tasks/task.example.json`.
+13. **Task file shape.** The spec defers it. The validator reads `{ task_id, asset_id, size, dimensions_m: [w, h, d], required_connectors: [{ type, side, count }] }`. `dimensions_m`, `required_connectors`, `size` and `connector_frames` are used. `connector_frames` was added after the first atom was built: each entry fixes one connector's position and the directions of its +Z and +Y, and the Connectors check compares the file with it. Asset spec v0.5 now lists the task fields under "File shapes". See `tasks/task.example.json`.
 14. **Ground contact.** The scale table says assets that stand on the ground rest on Y = 0. Which assets stand is not in the metadata, so the validator does not check it.
 
 ### Assemblies

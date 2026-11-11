@@ -44,6 +44,25 @@ export function connectors(ctx) {
       const have = [...found.values()].filter((c) => c.type === r.type && c.side === r.side).length;
       if (have < want) msgs.push(`task requires ${want} connector(s) of type "${r.type}" side "${r.side}", the file has ${have}; add node(s) named conn_${r.type}_${r.side}_<index>`);
     }
+    // Where the task fixes a connector's frame, the file must match it. This is what lets
+    // atoms made by different people meet: each is checked against the same stated frame.
+    const frames = ctx.task.connector_frames;
+    if (frames !== undefined && !Array.isArray(frames)) msgs.push('task file "connector_frames" must be an array of { name, position_m, z_axis, y_axis }');
+    else for (const f of frames || []) {
+      const c = found.get(f.name);
+      if (!c) { msgs.push(`task fixes the frame of connector "${f.name}", and the file has no node of that name`); continue; }
+      const tolP = ctx.profile.connector_position_tolerance_m;
+      const fmt = (v) => `[${v.map((x) => Number(x.toFixed(4))).join(', ')}]`;
+      if (Array.isArray(f.position_m)) {
+        const d = Math.hypot(...f.position_m.map((x, k) => x - c.rawFrame.p[k]));
+        if (d > tolP) msgs.push(`connector "${f.name}": position is ${fmt(c.rawFrame.p)}, the task asks for ${fmt(f.position_m)} (${(d * 1000).toFixed(1)} mm apart; allowed ${tolP * 1000} mm)`);
+      }
+      for (const [axis, want] of [['z', f.z_axis], ['y', f.y_axis]]) {
+        if (!Array.isArray(want)) continue;
+        const ang = angleDeg(c.rawFrame[axis], want);
+        if (!(ang <= tolD)) msgs.push(`connector "${f.name}": +${axis.toUpperCase()} points along ${fmt(c.rawFrame[axis])}, the task asks for ${fmt(want)} (${Number.isNaN(ang) ? 'degenerate' : ang.toFixed(2) + ' degrees'} apart; allowed ${tolD} degrees). Axes are the asset's: +X right, +Y up, +Z front`);
+      }
+    }
   }
   return msgs.length ? fail(msgs) : pass([`${found.size} connector(s)${ctx.task ? '' : '; no --task, so required connectors were not checked'}`]);
 }

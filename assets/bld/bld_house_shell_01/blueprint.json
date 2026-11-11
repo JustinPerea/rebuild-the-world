@@ -1,0 +1,160 @@
+{
+  "object_id": "bld_house_shell_01",
+  "version": "0.1.0",
+  "description": "The walls of a two-storey Tokyo house, 5.3 m wide and 7.3 m deep, built from one-metre facade modules. No roof.",
+  "slots": [
+    {
+      "slot": "wall_panel",
+      "count": 33,
+      "connectors": [
+        {
+          "type": "facade_edge",
+          "side": "a"
+        },
+        {
+          "type": "facade_edge",
+          "side": "b"
+        },
+        {
+          "type": "storey_stack",
+          "side": "a"
+        },
+        {
+          "type": "storey_stack",
+          "side": "b"
+        }
+      ],
+      "dimensions_m": {
+        "width": 1.0,
+        "height": 2.8,
+        "depth": 0.15,
+        "storey_height": 2.8,
+        "wall_thickness": 0.15,
+        "module_width": 1.0
+      },
+      "description": "A plain rendered wall module",
+      "atom": "new"
+    },
+    {
+      "slot": "window_bay",
+      "count": 14,
+      "connectors": [
+        {
+          "type": "facade_edge",
+          "side": "a"
+        },
+        {
+          "type": "facade_edge",
+          "side": "b"
+        },
+        {
+          "type": "storey_stack",
+          "side": "a"
+        },
+        {
+          "type": "storey_stack",
+          "side": "b"
+        }
+      ],
+      "dimensions_m": {
+        "width": 1.0,
+        "height": 2.8,
+        "depth": 0.15,
+        "storey_height": 2.8,
+        "wall_thickness": 0.15,
+        "module_width": 1.0
+      },
+      "description": "A rendered wall module with one window",
+      "atom": "new"
+    },
+    {
+      "slot": "door_bay",
+      "count": 1,
+      "connectors": [
+        {
+          "type": "facade_edge",
+          "side": "a"
+        },
+        {
+          "type": "facade_edge",
+          "side": "b"
+        },
+        {
+          "type": "storey_stack",
+          "side": "a"
+        },
+        {
+          "type": "storey_stack",
+          "side": "b"
+        },
+        {
+          "type": "door_hinge",
+          "side": "a"
+        }
+      ],
+      "dimensions_m": {
+        "width": 1.0,
+        "height": 2.8,
+        "depth": 0.15,
+        "storey_height": 2.8,
+        "wall_thickness": 0.15,
+        "module_width": 1.0,
+        "leaf_width": 0.8,
+        "leaf_height": 2.0
+      },
+      "description": "A rendered wall module with a door opening and the frame side of a hinge",
+      "atom": "new"
+    },
+    {
+      "slot": "door_leaf",
+      "count": 1,
+      "connectors": [
+        {
+          "type": "door_hinge",
+          "side": "b"
+        }
+      ],
+      "dimensions_m": {
+        "width": 0.8,
+        "height": 2.0,
+        "depth": 0.16,
+        "leaf_width": 0.8,
+        "leaf_height": 2.0
+      },
+      "description": "A front door leaf with lever handles",
+      "atom": "new"
+    },
+    {
+      "slot": "corner_post",
+      "count": 8,
+      "connectors": [
+        {
+          "type": "facade_edge",
+          "side": "a"
+        },
+        {
+          "type": "facade_edge",
+          "side": "b"
+        },
+        {
+          "type": "storey_stack",
+          "side": "a"
+        },
+        {
+          "type": "storey_stack",
+          "side": "b"
+        }
+      ],
+      "dimensions_m": {
+        "width": 0.15,
+        "height": 2.8,
+        "depth": 0.15,
+        "storey_height": 2.8,
+        "wall_thickness": 0.15,
+        "module_width": 0.15
+      },
+      "description": "A square post that turns a facade through a right angle",
+      "atom": "new"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-# Rebuild the World: Contributor Service (Draft v0.1)
+# Rebuild the World: Contributor Service (Draft v0.2)
 
-Nov 10, 2026
+Nov 11, 2026
 
 A contributor's agent connects to one service that hands out work with the current rules attached, so nobody builds from stale instructions. The same service feeds the board on the website, and an MCP server lets a contributor ask their agent what needs building.
 
@@ -41,6 +41,9 @@ The server exposes the claim system as tools, so the agent reads live state on e
 | `get_rules` | Returns any section of the specs at a given version |
 | `next_review` | Hands a level 2 contributor an atom to review, chosen at random |
 | `send_review` | Records the review's verdict and reasons |
+| `leave_feedback` | Files a note on a rule that was unclear, missing or impossible to meet |
+
+A first version of the server is in `mcp/`. It runs on the contributor's own machine from a clone of the repository, keeps tasks and claims as files under `tasks/`, and implements every tool except the two for reviews. Its `submit` runs the validator on the asset folder.
 
 - Sign-in is by GitHub account, with the same permissions as the website. Reading what is needed requires no sign-in.
 - The website's board and the MCP server read the same service, so they never disagree.

@@ -1,0 +1,150 @@
+{
+  "task_id": "task_bld_window_bay_01",
+  "asset_id": "bld_window_bay_01",
+  "title": "Wall module with a window, 1.0 m wide",
+  "description": "A rendered wall module with one window: an opening 0.7 m wide and 1.1 m high whose sill is 0.9 m above the floor, centred in the width. A dark aluminium frame 4 cm wide sits in the opening and holds one pane of glass, set back 5 cm from the outer face. Same box, connectors and thickness as the plain wall module, so the two are interchangeable.",
+  "category": "bld",
+  "class": "Facade module",
+  "object_id": "bld_house_shell_01",
+  "slot": "window_bay",
+  "size": "S",
+  "min_trust_level": 0,
+  "dimensions_m": [
+    1.0,
+    2.8,
+    0.15
+  ],
+  "required_connectors": [
+    {
+      "type": "facade_edge",
+      "side": "a",
+      "count": 1
+    },
+    {
+      "type": "facade_edge",
+      "side": "b",
+      "count": 1
+    },
+    {
+      "type": "storey_stack",
+      "side": "a",
+      "count": 1
+    },
+    {
+      "type": "storey_stack",
+      "side": "b",
+      "count": 1
+    }
+  ],
+  "mating_m": {
+    "storey_height": 2.8,
+    "wall_thickness": 0.15,
+    "module_width": 1.0
+  },
+  "reference_pack": [
+    {
+      "what": "Sizes",
+      "value_or_path": "Typical sizes for a two-storey Tokyo house, chosen for this test. Not measured from a real building, so record dimension_source as \"estimated\".",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Materials",
+      "value_or_path": "Use only library materials from assets/mat/. Give each glTF material the library ID as its name and the values in that material.json. No custom materials and no textures in this test.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    },
+    {
+      "what": "Shape",
+      "value_or_path": "The module fills a box from x = 0 to its width, y = 0 to its height and z = -depth to 0. The outer face is the z = 0 plane and faces +Z. Nothing may reach outside the box. The window does not stand proud of the outer face.",
+      "source": "Project maintainers",
+      "licence": "n/a"
+    },
+    {
+      "what": "Connector frames",
+      "value_or_path": "See connector_frames in this task. Each gives a connector's position and the directions of its +Z and +Y, in the asset's own axes (+X right, +Y up, +Z front). The validator checks them.",
+      "source": "registry/connectors.json",
+      "licence": "n/a"
+    },
+    {
+      "what": "Materials by part",
+      "value_or_path": "Wall: mat_render_cream_01. Frame: mat_aluminium_dark_01. Pane: mat_glass_clear_01.",
+      "source": "assets/mat/",
+      "licence": "n/a"
+    }
+  ],
+  "connector_frames": [
+    {
+      "name": "conn_facade_edge_a_01",
+      "position_m": [
+        1.0,
+        0,
+        0
+      ],
+      "z_axis": [
+        1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "conn_facade_edge_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        -1,
+        0,
+        0
+      ],
+      "y_axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "conn_storey_stack_a_01",
+      "position_m": [
+        0,
+        2.8,
+        0
+      ],
+      "z_axis": [
+        0,
+        1,
+        0
+      ],
+      "y_axis": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "conn_storey_stack_b_01",
+      "position_m": [
+        0,
+        0,
+        0
+      ],
+      "z_axis": [
+        0,
+        -1,
+        0
+      ],
+      "y_axis": [
+        0,
+        0,
+        1
+      ]
+    }
+  ]
+}
