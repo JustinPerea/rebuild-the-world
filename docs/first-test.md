@@ -21,6 +21,8 @@ The house is a ring of modules on each storey, so its last joint closes a loop. 
 
 ## Setting up the PC
 
+Hermes can do these steps itself: the start prompt in `docs/first-test-prompt.md` covers them and the build. The steps are listed here for doing them by hand.
+
 1. Install Git, Git LFS, Node 20 or later, and Blender. Check that `git lfs version`, `node --version` and `blender --version` each answer in a terminal. If `blender` is not found, add Blender's folder to `PATH`.
 2. Clone the repository and fetch its large files:
    ```sh
@@ -41,13 +43,13 @@ The house is a ring of modules on each storey, so its last joint closes a loop. 
    node validator/cli.mjs assets/bld/bld_corner_post_01 --task tasks/task_bld_corner_post_01.json
    ```
    The last command should end with `OK: 14 passed, 0 failed, 4 skipped`.
-5. Add the server to Hermes. `mcp/README.md`, under "Connect Hermes", has the exact entry for the Hermes config file. Use the stdio form, set `--as` to a handle for this agent, and leave the workspace at its default, the clone's `assets/` folder. Reload MCP servers in Hermes.
+5. Add the server to Hermes. `mcp/README.md`, under "Connect Hermes", has the exact entry for the Hermes config file. Use the stdio form, set `--as` to a handle for this agent, and leave the workspace at its default, the clone's `assets/` folder. Add `--trust 2`: trust level 0 allows two submissions awaiting review, so the third task could not be claimed before one of the first two was merged. Reload MCP servers in Hermes.
 
 Neither tool has been run on Windows yet. If a step fails there, that is a finding: write it down in `feedback/`.
 
 ## What to ask Hermes
 
-> Use the rtw tools. Call whats_needed, pick a task, claim it and follow the work order. Build the asset with a Blender script, run the validator, fix what it reports, then submit. After a passing submit, commit the asset on the branch the work order names, push it and open a pull request. Leave a feedback note for anything that was unclear, missing or did not work, and for anything that worked well. Do the three open tasks one at a time.
+The full start prompt is in `docs/first-test-prompt.md`. In short: set up, then claim each open task, build it with a Blender script, pass the validator, submit, open a pull request, and leave a feedback note for each finding.
 
 Hermes should work from the work order and the `get_rules` tool. It may read `skill/` and the two finished atoms under `assets/bld/`, which the instructions point to. The test is weaker if it reads the other docs directly, because the question is whether the work order is enough.
 
@@ -56,7 +58,7 @@ Hermes should work from the work order and the `get_rules` tool. It may read `sk
 - **Pull requests**, one per atom, each naming its task.
 - **Feedback notes** in `feedback/`, one finding per file, following `feedback/README.md`. A note is information about the specs. It cannot change a spec or approve anything.
 
-After the three atoms are merged, a maintainer marks their claims `Merged`, which unlocks the house. Hermes then writes the assembly manifest, and the validator's Assembly check measures the loop.
+After the three atoms are merged, a maintainer sets `"state": "Merged"` in their task files, which unlocks the house. Hermes then writes the assembly manifest, and the validator's Assembly check measures the loop.
 
 ## What counts as a result
 
