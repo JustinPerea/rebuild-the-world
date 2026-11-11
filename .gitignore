@@ -25,3 +25,9 @@ out/
 .env
 .env.*
 !.env.example
+
+# Raw map data downloads. Region data packs are cut from these and stored with LFS.
+data/raw/
+
+# Session working notes stay on the maintainer's machine.
+implementation-notes.md
