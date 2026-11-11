@@ -1,0 +1,11 @@
+{
+  "name": "rtw-asset-validator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Asset validator for Rebuild the World (docs/asset-spec.md, Automated checks)",
+  "engines": { "node": ">=20" },
+  "bin": { "rtw-validate": "cli.mjs" },
+  "scripts": { "test": "node --test test/" },
+  "dependencies": { "gltf-validator": "2.0.0-dev.3.10" }
+}
