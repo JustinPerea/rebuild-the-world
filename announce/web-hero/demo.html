@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earth, Again: hero demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --night-0: #0d1530; --night-1: #1c2850; --night-2: #3a4674; --cream: #f4f1ea; --mist: #c9cfdf; --ink: #0b1020; --dot: #8fa6d6; --lit: #ffb056; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Inter", system-ui, sans-serif; color: var(--cream); background: var(--night-2); -webkit-font-smoothing: antialiased; }
+  .hero { position: relative; min-height: 100svh; overflow: hidden; display: grid; align-items: center; background: linear-gradient(180deg, var(--night-0) 0%, var(--night-1) 55%, var(--night-2) 100%); }
+  .hero .inner { width: min(1280px, 100%); margin: 0 auto; padding: 96px clamp(20px, 6.9vw, 132px); position: relative; z-index: 1; pointer-events: none; }
+  .hero .inner > * { pointer-events: auto; }
+  h1 { margin: 0; font-size: clamp(64px, 7.8vw, 150px); font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+  .lede { margin: 28px 0 0; max-width: 20em; font-size: clamp(19px, 2.3vw, 30px); line-height: 1.25; color: var(--mist); }
+  .cta { display: inline-block; margin-top: 44px; padding: 0 44px; height: 68px; line-height: 68px; border-radius: 12px; background: var(--cream); color: var(--ink); font-size: 22px; font-weight: 700; letter-spacing: -0.01em; text-decoration: none; transition: transform .5s linear(0, 0.72 12.9%, 1.02 18%, 1.16 27%, 1.13 33%, 1.02 43%, 0.975 55%, 1 100%); }
+  .cta:active { transform: scale(0.96); }
+  .globe { position: absolute; right: clamp(-120px, 4vw, 96px); top: 50%; width: min(86vh, 62vw, 900px); aspect-ratio: 1; transform: translateY(-50%); }
+  .globe canvas { width: 100%; height: 100%; display: block; }
+  @media (max-width: 760px) {
+    .hero { align-items: end; }
+    .hero .inner { padding-top: 60vw; padding-bottom: 56px; }
+    .globe { right: -24vw; top: -6vw; width: 112vw; transform: none; }
+  }
+</style>
+</head>
+<body>
+<section class="hero">
+  <div class="globe"><canvas id="globe" aria-label="A globe of dots, with lit clusters where building has started"></canvas></div>
+  <div class="inner">
+    <h1>Earth,<br>Again.</h1>
+    <p class="lede">An accurate 3D model of the whole planet, built in the open</p>
+    <a class="cta" href="#join">Join the waitlist</a>
+  </div>
+</section>
+<script src="land.js"></script>
+<script type="module">
+  import { mountEarthGlobe } from "./earth-globe.js";
+  const g = mountEarthGlobe(document.getElementById("globe"), window.RTW_LAND);
+  if (new URLSearchParams(location.search).has("still")) g.settle(-0.25);
+  window.__globe = g;
+</script>
+</body>
+</html>

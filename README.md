@@ -1,12 +1,17 @@
 # Rebuild the World
 
-Working title. An open, community-built 3D model of Earth that becomes a playable multiplayer sandbox. Contributors build small modular parts with their own AI tools and submit them by pull request; automated checks and a reviewer model verify each one; merged parts are assembled procedurally onto real map layouts.
+Working title; the public name is Earth, Again. An open, community-built 3D model of Earth that becomes a playable multiplayer sandbox. Contributors build small modular atoms with their own AI tools and submit them by pull request; automated checks and a reviewer model verify each one; merged atoms are assembled procedurally onto real map layouts.
 
-Status: scaffold only. No assets, validator or pipeline yet. Licence not chosen (see `LICENSE.md`).
+Status: specs drafted (v0.1 to v0.4), announcement film posted, waitlist page live. No assets, validator or pipeline yet. Licence not chosen (see `LICENSE.md`).
 
 ## Specs
 
-- [`docs/asset-spec.md`](docs/asset-spec.md): glTF conventions, connectors, budgets, materials, folders, metadata, automated checks.
+- [`docs/vision.md`](docs/vision.md): the goal, what must stay fixed, how the specs fit together. Start here.
+- [`docs/world-model.md`](docs/world-model.md): levels of scale, library and unique assets, accuracy levels, categories, behaviours.
+- [`docs/asset-spec.md`](docs/asset-spec.md): the durable contract, shared by every library: glTF conventions, connectors and their motion, blueprints, assembly manifests, moving assemblies, animation clips, materials, folders, metadata, automated checks.
+- [`docs/capability-profiles.md`](docs/capability-profiles.md): the budgets, tolerances and mesh rules enforced today.
+- [`docs/contributor-service.md`](docs/contributor-service.md): work orders with pinned versions, and the MCP server contributors' agents connect to.
+- [`docs/accuracy-and-data.md`](docs/accuracy-and-data.md): what may match the real world, and allowed data sources.
 - [`docs/claim-system-spec.md`](docs/claim-system-spec.md): tasks, claims, trust levels, review pipeline, strikes, region unlocks.
 - [`docs/art-style-guide.md`](docs/art-style-guide.md): grounded realism, fidelity tiers, golden set, render scene, self-check.
 
@@ -14,16 +19,23 @@ Status: scaffold only. No assets, validator or pipeline yet. Licence not chosen 
 
 ```text
 assets/<category>/<asset_id>/   one folder per asset (asset.glb, asset.json, preview/, source/, refs/)
-  veh bld prop veg gnd mat      categories from the asset spec; mat = shared library materials
+  veh bld prop veg gnd mat      categories from the world model; mat = shared library materials
+  ter int obj chr               terrain, interiors, everyday objects, characters (added in the drafts)
 registry/                       connector registry (types, sides, mating dimensions)
 tasks/                          task records the coordinator hands out
 tools/validator/                CLI implementing the asset spec's automated checks
 tools/render/                   standard Blender render scene and one-command render script
 skill/                          contributor skill file (instructions for a contributor's model)
 data/                           region data packs from open map data, each with source and licence
-scripts/                        repo maintenance checks (e.g. check-lfs.sh)
+spec/spec.json                  the specs' tables as data, read by the visualizer (and later the validator)
+tools/spec-visualizer/          interactive map of the specs, built from spec/spec.json
+scripts/                        repo maintenance checks (check-lfs.sh, check-spec-sync.mjs)
 docs/                           specs
 film/                           pitch film source (reference only)
+announce/film/                  announcement film, 16:9 (HyperFrames)
+announce/film-vertical/         the same film re-laid out for 9:16
+announce/web-hero/              the live globe used on the waitlist page
+brand/, site/                   brand work and the waitlist page
 ```
 
 ## Setup
@@ -39,4 +51,4 @@ scripts/check-lfs.sh          # fails if a binary slipped into plain Git
 
 - Never derive anything from Google Maps content (tiles, Photorealistic 3D Tiles, Street View).
 - Use open data (OpenStreetMap, Overture Maps, government open data such as PLATEAU, Mapillary) and record the source and licence of everything ingested.
-- No real brands, logos, recognisable product designs, licence plates or people in assets.
+- Real places, terrain, buildings and landmarks are modelled accurately. Logos, brand names and specific product designs are held for legal review. No real people or readable licence plates. See `docs/accuracy-and-data.md`.

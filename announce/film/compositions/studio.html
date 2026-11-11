@@ -1,0 +1,1100 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #cdc8c0;
+      font-family: "Inter", sans-serif;
+      color: #14161b;
+    }
+    #s-canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      display: block;
+    }
+    .s-title {
+      position: absolute;
+      left: 124px;
+      top: 104px;
+      font-size: 104px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .s-stage {
+      position: absolute;
+      left: 130px;
+      top: 232px;
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #5b5f69;
+      white-space: nowrap;
+    }
+    /* claim tag */
+    #s-tag {
+      position: absolute;
+      left: 130px;
+      top: 270px;
+      width: 520px;
+      height: 196px;
+    }
+    #s-tag-box {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      padding: 24px 30px;
+      background: #14161b;
+      color: #f4f1ea;
+      border-radius: 8px;
+    }
+    #s-tag-name {
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    #s-tag-status {
+      position: relative;
+      margin-top: 16px;
+      height: 58px;
+    }
+    .s-st {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 58px;
+      padding: 0 18px;
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 54px;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+    #s-st-open {
+      border: 2px dashed #f4f1ea;
+    }
+    #s-st-claimed {
+      border: 2px solid #ff9a3d;
+      background: #ff9a3d;
+      color: #1a1408;
+      opacity: 0;
+    }
+    /* checks */
+    #s-checks {
+      position: absolute;
+      left: 1130px;
+      top: 330px;
+      width: 660px;
+      height: 560px;
+    }
+    .s-row {
+      position: absolute;
+      left: 0;
+      width: 660px;
+      height: 96px;
+      padding: 0 28px 0 110px;
+      font-size: 54px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 96px;
+      background: #f1eee8;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .s-tick {
+      position: absolute;
+      left: 26px;
+      top: 22px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #1f9d55;
+    }
+    .s-tick svg {
+      position: absolute;
+      left: 9px;
+      top: 9px;
+      width: 34px;
+      height: 34px;
+    }
+    #s-merged {
+      position: absolute;
+      left: 0;
+      top: 452px;
+      width: 660px;
+      height: 104px;
+      font-size: 60px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 104px;
+      text-align: center;
+      background: #ff9a3d;
+      color: #1a1408;
+      border-radius: 8px;
+    }
+    .s-cell { position: absolute; height: 54px; }
+    .s-cell-in { height: 54px; padding: 0 16px; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; line-height: 54px; background: #14161b; color: #f4f1ea; border-radius: 6px; white-space: nowrap; opacity: 0; }
+    .s-photo { position: absolute; overflow: hidden; }
+    .s-photo img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+    .s-cell { z-index: 3; }
+    #s-concept { position: absolute; right: 60px; top: 128px; height: 58px; }
+    #s-concept-in { height: 58px; padding: 0 18px; font-size: 34px; font-weight: 700; line-height: 58px; background: #ff9a3d; color: #1a1408; border-radius: 6px; white-space: nowrap; opacity: 0; }
+    /* spec rows */
+    #s-spec { position: absolute; left: 1090px; top: 330px; width: 700px; height: 440px; }
+    .s-srow { position: absolute; left: 0; width: 700px; height: 96px; padding: 0 28px 0 86px; font-size: 52px; font-weight: 700; letter-spacing: -0.02em; line-height: 96px; background: #f1eee8; border-radius: 8px; white-space: nowrap; }
+    .s-bul { position: absolute; left: 30px; top: 34px; width: 28px; height: 28px; background: #ff9a3d; border-radius: 4px; }
+    #s-dim { position: absolute; left: 0; top: 0; }
+    #s-dim-pos { position: absolute; left: 0; top: 0; }
+    #s-dim-box { position: absolute; left: 22px; top: -36px; height: 72px; padding: 0 20px; font-size: 48px; font-weight: 900; letter-spacing: -0.02em; line-height: 72px; background: #14161b; color: #f4f1ea; border-radius: 6px; white-space: nowrap; }
+    /* trust level labels */
+    .s-lv { position: absolute; left: 0; top: 0; }
+    .s-lv-pos { position: absolute; left: 0; top: 0; }
+    .s-lv-box { position: absolute; left: -210px; bottom: 0; width: 420px; text-align: center; }
+    .s-lv-name { font-size: 48px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.05; white-space: nowrap; }
+    .s-lv-need { display: inline-block; margin-top: 10px; height: 46px; padding: 0 14px; font-size: 30px; font-weight: 700; line-height: 46px; background: #ff9a3d; color: #1a1408; border-radius: 5px; white-space: nowrap; }
+    .s-lv-get { margin-top: 10px; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: #4a4e58; white-space: nowrap; }
+  </style>
+
+  <div id="root" data-composition-id="studio" data-width="1920" data-height="1080" data-duration="28.6">
+    <canvas id="s-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+
+    <div id="s-t1" class="clip s-title" data-start="0" data-duration="1.8" data-track-index="2"><div id="s-t1-in">Claim a part</div></div>
+    <div id="s-t2" class="clip s-title" data-start="1.8" data-duration="3.7" data-track-index="2"><div id="s-t2-in">Build it with your own AI</div></div>
+    <div id="s-t3" class="clip s-title" data-start="15.8" data-duration="2.6" data-track-index="2"><div id="s-t3-in">Automated checks review it</div></div>
+    <div id="s-t4" class="clip s-title" data-start="18.4" data-duration="2.2" data-track-index="2"><div id="s-t4-in">It snaps onto other parts</div></div>
+
+    <div id="s-g1" class="clip s-stage" data-start="1.9" data-duration="1.5" data-track-index="3"><div id="s-g1-in">Mesh</div></div>
+    <div id="s-g2" class="clip s-stage" data-start="3.4" data-duration="1.9" data-track-index="3"><div id="s-g2-in">Materials</div></div>
+
+    <div id="s-tag" class="clip" data-start="0" data-duration="1.8" data-track-index="4">
+      <div id="s-tag-box">
+        <div id="s-tag-name">Wheel</div>
+        <div id="s-tag-status" data-layout-allow-overlap>
+          <div id="s-st-open" class="s-st" data-layout-allow-overlap>Open task</div>
+          <div id="s-st-claimed" class="s-st" data-layout-allow-overlap>Claimed</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="s-checks" class="clip" data-start="15.8" data-duration="2.6" data-track-index="4">
+      <div id="s-r1" class="s-row" style="top: 0px"><div class="s-tick" id="s-k1"><svg viewBox="0 0 34 34"><path d="M7 18l7 7 13-15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" /></svg></div>Scale</div>
+      <div id="s-r2" class="s-row" style="top: 112px"><div class="s-tick" id="s-k2"><svg viewBox="0 0 34 34"><path d="M7 18l7 7 13-15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" /></svg></div>Triangle budget</div>
+      <div id="s-r3" class="s-row" style="top: 224px"><div class="s-tick" id="s-k3"><svg viewBox="0 0 34 34"><path d="M7 18l7 7 13-15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" /></svg></div>Connectors</div>
+      <div id="s-r4" class="s-row" style="top: 336px"><div class="s-tick" id="s-k4"><svg viewBox="0 0 34 34"><path d="M7 18l7 7 13-15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" /></svg></div>Materials</div>
+      <div id="s-merged">Merged</div>
+    </div>
+
+    <div id="s-t7" class="clip s-title" data-start="7.6" data-duration="3.7" data-track-index="2"><div id="s-t7-in">Everyone builds something different</div></div>
+    <div id="s-t8" class="clip s-title" data-start="11.3" data-duration="4.5" data-track-index="2"><div id="s-t8-in">This is what we’re aiming for</div></div>
+    <div id="s-p1" class="clip s-photo" data-start="11.3" data-duration="4.5" data-track-index="5" style="left: 60.0px; top: 236.0px; width: 586.7px; height: 390.0px" data-layout-allow-overflow><img id="s-p1-img" src="assets/gen/car.jpg" alt="" /></div>
+    <div id="s-p2" class="clip s-photo" data-start="11.3" data-duration="4.5" data-track-index="5" style="left: 666.7px; top: 236.0px; width: 586.7px; height: 390.0px" data-layout-allow-overflow><img id="s-p2-img" src="assets/gen/fuji.jpg" alt="" /></div>
+    <div id="s-p3" class="clip s-photo" data-start="11.3" data-duration="4.5" data-track-index="5" style="left: 1273.3px; top: 236.0px; width: 586.7px; height: 390.0px" data-layout-allow-overflow><img id="s-p3-img" src="assets/gen/eiffel.jpg" alt="" /></div>
+    <div id="s-p4" class="clip s-photo" data-start="11.3" data-duration="4.5" data-track-index="5" style="left: 60.0px; top: 646.0px; width: 586.7px; height: 390.0px" data-layout-allow-overflow><img id="s-p4-img" src="assets/gen/house.jpg" alt="" /></div>
+    <div id="s-p5" class="clip s-photo" data-start="11.3" data-duration="4.5" data-track-index="5" style="left: 666.7px; top: 646.0px; width: 586.7px; height: 390.0px" data-layout-allow-overflow><img id="s-p5-img" src="assets/gen/computer.jpg" alt="" /></div>
+    <div id="s-p6" class="clip s-photo" data-start="11.3" data-duration="4.5" data-track-index="5" style="left: 1273.3px; top: 646.0px; width: 586.7px; height: 390.0px" data-layout-allow-overflow><img id="s-p6-img" src="assets/gen/skateboard.jpg" alt="" /></div>
+    <div id="s-concept" class="clip" data-start="11.3" data-duration="4.5" data-track-index="6"><div id="s-concept-in">Concept images</div></div>
+    <div id="s-c1" class="clip s-cell" data-start="7.6" data-duration="8.2" data-track-index="6" style="left: 76px; top: 556px"><div id="s-c1-in" class="s-cell-in">Car</div></div>
+    <div id="s-c2" class="clip s-cell" data-start="7.6" data-duration="8.2" data-track-index="6" style="left: 683px; top: 556px"><div id="s-c2-in" class="s-cell-in">Mount Fuji</div></div>
+    <div id="s-c3" class="clip s-cell" data-start="7.6" data-duration="8.2" data-track-index="6" style="left: 1289px; top: 556px"><div id="s-c3-in" class="s-cell-in">Eiffel Tower</div></div>
+    <div id="s-c4" class="clip s-cell" data-start="7.6" data-duration="8.2" data-track-index="6" style="left: 76px; top: 966px"><div id="s-c4-in" class="s-cell-in">House interior</div></div>
+    <div id="s-c5" class="clip s-cell" data-start="7.6" data-duration="8.2" data-track-index="6" style="left: 683px; top: 966px"><div id="s-c5-in" class="s-cell-in">Computer</div></div>
+    <div id="s-c6" class="clip s-cell" data-start="7.6" data-duration="8.2" data-track-index="6" style="left: 1289px; top: 966px"><div id="s-c6-in" class="s-cell-in">Skateboard</div></div>
+
+    <div id="s-t5" class="clip s-title" data-start="20.6" data-duration="2.4" data-track-index="2"><div id="s-t5-in">One spec, so every part fits</div></div>
+    <div id="s-t6" class="clip s-title" data-start="23" data-duration="5.6" data-track-index="2"><div id="s-t6-in">Contribute more, unlock more</div></div>
+
+    <div id="s-spec" class="clip" data-start="20.6" data-duration="2.4" data-track-index="4">
+      <div id="s-s1" class="s-srow" style="top: 0px"><div class="s-bul"></div>glTF 2.0, in metres</div>
+      <div id="s-s2" class="s-srow" style="top: 112px"><div class="s-bul"></div>Named connectors</div>
+      <div id="s-s3" class="s-srow" style="top: 224px"><div class="s-bul"></div>Triangle budgets</div>
+      <div id="s-s4" class="s-srow" style="top: 336px"><div class="s-bul"></div>Shared materials</div>
+    </div>
+    <div id="s-dim" class="clip" data-start="20.9" data-duration="2.1" data-track-index="5" data-layout-allow-overflow>
+      <div id="s-dim-pos"><div id="s-dim-box">0.68 m</div></div>
+    </div>
+
+    <div id="s-lv1" class="clip s-lv" data-start="23" data-duration="5.6" data-track-index="5" data-layout-allow-overflow>
+      <div id="s-lv1-pos" class="s-lv-pos"><div id="s-lv1-box" class="s-lv-box"><div class="s-lv-name">New</div><div class="s-lv-get">Single parts</div></div></div>
+    </div>
+    <div id="s-lv2" class="clip s-lv" data-start="23" data-duration="5.6" data-track-index="5" data-layout-allow-overflow>
+      <div id="s-lv2-pos" class="s-lv-pos"><div id="s-lv2-box" class="s-lv-box"><div class="s-lv-name">Contributor</div><div class="s-lv-need">3 merged tasks</div><div class="s-lv-get">Kits of parts</div></div></div>
+    </div>
+    <div id="s-lv3" class="clip s-lv" data-start="23" data-duration="5.6" data-track-index="5" data-layout-allow-overflow>
+      <div id="s-lv3-pos" class="s-lv-pos"><div id="s-lv3-box" class="s-lv-box"><div class="s-lv-name">Trusted</div><div class="s-lv-need">15 merged tasks</div><div class="s-lv-get">Whole cars and buildings</div></div></div>
+    </div>
+    <div id="s-lv4" class="clip s-lv" data-start="23" data-duration="5.6" data-track-index="5" data-layout-allow-overflow>
+      <div id="s-lv4-pos" class="s-lv-pos"><div id="s-lv4-box" class="s-lv-box"><div class="s-lv-name">Maintainer</div><div class="s-lv-need">By invitation</div><div class="s-lv-get">Review work,<br />shape the specs</div></div></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+    import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+    import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
+    import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
+    import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+
+    const W = 1920,
+      H = 1080,
+      DUR = 28.6;
+    // local seconds
+    const T_CLAIM = 0.95,
+      T_WIRE = 1.85,
+      T_CLAY = 2.5,
+      T_MAT = 3.5,
+      T_LIGHT = 5.3,
+      T_CHECK = 15.8,
+      T_SNAP = 18.4,
+      T_HIT = 19.45,
+      T_SPEC = 20.6,
+      T_UNLOCK = 23.0;
+
+    const clamp01 = (x) => Math.min(1, Math.max(0, x));
+    const lerp = (a, b, k) => a + (b - a) * k;
+    const smooth = (a, b, x) => {
+      const k = clamp01((x - a) / (b - a));
+      return k * k * (3 - 2 * k);
+    };
+
+    const canvas = document.getElementById("s-canvas");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(1);
+    renderer.setSize(W, H, false);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.localClippingEnabled = true;
+
+    const BG = new THREE.Color("#cdc8c0");
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(BG, 5, 16);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+    const camera = new THREE.PerspectiveCamera(30, W / H, 0.05, 60);
+
+    const key = new THREE.DirectionalLight("#fff3e2", 3);
+    key.position.set(2.2, 3.4, 2.6);
+    key.castShadow = true;
+    key.shadow.mapSize.set(4096, 4096);
+    key.shadow.camera.left = -2.9;
+    key.shadow.camera.right = 2.9;
+    key.shadow.camera.top = 1.6;
+    key.shadow.camera.bottom = -1.6;
+    key.shadow.camera.near = 0.5;
+    key.shadow.camera.far = 9;
+    key.shadow.bias = -0.0004;
+    key.shadow.normalBias = 0.004;
+    key.shadow.radius = 5;
+    scene.add(key);
+    const rim = new THREE.DirectionalLight("#bcd2ff", 1.2);
+    rim.position.set(-2.5, 1.6, -2.2);
+    scene.add(rim);
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: "#b9b4ac", roughness: 0.7, metalness: 0 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // ---------- textures ----------
+    const treadTex = (() => {
+      const c = document.createElement("canvas");
+      c.width = 2048;
+      c.height = 256;
+      const g = c.getContext("2d");
+      g.fillStyle = "#909090";
+      g.fillRect(0, 0, c.width, c.height);
+      const y0 = 0.33 * 256,
+        y1 = 0.67 * 256;
+      // tread blocks stand proud, grooves are cut in
+      g.fillStyle = "#c8c8c8";
+      g.fillRect(0, y0, c.width, y1 - y0);
+      g.strokeStyle = "#1c1c1c";
+      g.lineWidth = 7;
+      for (const f of [0.2, 0.42, 0.58, 0.8]) {
+        const y = lerp(y0, y1, f);
+        g.beginPath();
+        g.moveTo(0, y);
+        g.lineTo(c.width, y);
+        g.stroke();
+      }
+      g.lineWidth = 4;
+      const N = 84;
+      for (let i = 0; i < N; i++) {
+        const x = (i / N) * c.width;
+        g.beginPath();
+        g.moveTo(x, y0 - 4);
+        g.lineTo(x + 12, lerp(y0, y1, 0.2));
+        g.moveTo(x + 6, lerp(y0, y1, 0.2));
+        g.lineTo(x + 20, lerp(y0, y1, 0.42));
+        g.moveTo(x + 20, lerp(y0, y1, 0.58));
+        g.lineTo(x + 6, lerp(y0, y1, 0.8));
+        g.moveTo(x + 12, lerp(y0, y1, 0.8));
+        g.lineTo(x, y1 + 4);
+        g.stroke();
+      }
+      // sidewall ribs
+      g.strokeStyle = "#a8a8a8";
+      g.lineWidth = 2;
+      for (const y of [0.1, 0.13, 0.26, 0.74, 0.87, 0.9]) {
+        g.beginPath();
+        g.moveTo(0, y * 256);
+        g.lineTo(c.width, y * 256);
+        g.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = THREE.RepeatWrapping;
+      t.anisotropy = 8;
+      return t;
+    })();
+    const discTex = (() => {
+      const c = document.createElement("canvas");
+      c.width = c.height = 512;
+      const g = c.getContext("2d");
+      g.fillStyle = "#808080";
+      g.fillRect(0, 0, 512, 512);
+      g.strokeStyle = "#8c8c8c";
+      for (let r = 20; r < 256; r += 3) {
+        g.lineWidth = 1;
+        g.globalAlpha = 0.25 + 0.5 * (((r * 7) % 5) / 5);
+        g.beginPath();
+        g.arc(256, 256, r, 0, Math.PI * 2);
+        g.stroke();
+      }
+      return new THREE.CanvasTexture(c);
+    })();
+
+    // ---------- geometry (wheel axis = X, outboard = +X) ----------
+    const toX = (g) => g.rotateZ(-Math.PI / 2);
+    const cylX = (r, len, x0, seg = 48, r2 = r) => toX(new THREE.CylinderGeometry(r2, r, len, seg).translate(0, x0 + len / 2, 0));
+    function lathe(ctrl, n, seg) {
+      const curve = new THREE.CatmullRomCurve3(
+        ctrl.map(([r, x]) => new THREE.Vector3(r, x, 0)),
+        false,
+        "catmullrom",
+        0.35,
+      );
+      const pts = curve.getSpacedPoints(n).map((p) => new THREE.Vector2(p.x, p.y));
+      return toX(new THREE.LatheGeometry(pts, seg));
+    }
+    function buildWheel(q) {
+      const S = q ? 160 : 28;
+      const parts = [];
+      // tyre
+      parts.push({
+        m: "tyre",
+        g: lathe(
+          [
+            [0.231, -0.103], [0.243, -0.113], [0.272, -0.121], [0.303, -0.119], [0.324, -0.106], [0.334, -0.086],
+            [0.337, -0.05], [0.338, 0], [0.337, 0.05],
+            [0.334, 0.086], [0.324, 0.106], [0.303, 0.119], [0.272, 0.121], [0.243, 0.113], [0.231, 0.103],
+          ],
+          q ? 64 : 12,
+          S,
+        ),
+      });
+      // rim barrel with lips
+      parts.push({
+        m: "alloy",
+        g: lathe(
+          [
+            [0.222, 0.1], [0.236, 0.104], [0.239, 0.098], [0.232, 0.09], [0.214, 0.082], [0.2, 0.06],
+            [0.196, 0], [0.2, -0.06], [0.214, -0.082], [0.232, -0.09], [0.239, -0.098], [0.236, -0.104], [0.222, -0.1],
+          ],
+          q ? 40 : 10,
+          S,
+        ),
+      });
+      // spokes: five pairs
+      const sh = new THREE.Shape();
+      sh.moveTo(-0.02, 0.045);
+      sh.lineTo(0.02, 0.045);
+      sh.lineTo(0.0125, 0.214);
+      sh.lineTo(-0.0125, 0.214);
+      sh.closePath();
+      const spoke = new THREE.ExtrudeGeometry(sh, { depth: 0.02, bevelEnabled: true, bevelSize: 0.005, bevelThickness: 0.006, bevelSegments: q ? 3 : 1 });
+      const spokes = [];
+      for (let i = 0; i < 5; i++)
+        for (const off of [-0.19, 0.19]) {
+          const g = spoke.clone().rotateZ((i * Math.PI * 2) / 5 + off);
+          g.rotateY(Math.PI / 2).translate(0.05, 0, 0);
+          spokes.push(g);
+        }
+      parts.push({ m: "alloy", g: mergeGeometries(spokes) });
+      // hub
+      parts.push({ m: "alloy", g: cylX(0.072, 0.05, 0.034, q ? 64 : 16, 0.066) });
+      const cap = new THREE.SphereGeometry(0.036, q ? 40 : 10, q ? 20 : 6).scale(0.3, 1, 1).translate(0.086, 0, 0);
+      parts.push({ m: "cap", g: cap });
+      const nuts = [];
+      for (let i = 0; i < 5; i++) {
+        const a = (i * Math.PI * 2) / 5 + 0.31;
+        nuts.push(cylX(0.0105, 0.02, 0.078, 6).translate(0, Math.cos(a) * 0.052, Math.sin(a) * 0.052));
+      }
+      parts.push({ m: "nut", g: mergeGeometries(nuts) });
+      return parts;
+    }
+    function buildHub() {
+      const parts = [];
+      parts.push({ m: "disc", g: cylX(0.168, 0.026, -0.03, 96) });
+      parts.push({ m: "steel", g: cylX(0.078, 0.062, -0.03, 48) });
+      const studs = [];
+      for (let i = 0; i < 5; i++) {
+        const a = (i * Math.PI * 2) / 5 + 0.31;
+        studs.push(cylX(0.0058, 0.05, 0.03, 12).translate(0, Math.cos(a) * 0.052, Math.sin(a) * 0.052));
+      }
+      parts.push({ m: "nut", g: mergeGeometries(studs) });
+      parts.push({ m: "steel", g: cylX(0.03, 0.42, -0.45, 32) });
+      parts.push({ m: "steel", g: cylX(0.052, 0.07, -0.1, 32, 0.04) });
+      // caliper: a ring sector that straddles the disc
+      const cs = new THREE.Shape();
+      const a0 = 0.35,
+        a1 = 1.45;
+      cs.absarc(0, 0, 0.19, a0, a1, false);
+      cs.absarc(0, 0, 0.105, a1, a0, true);
+      cs.closePath();
+      const cal = new THREE.ExtrudeGeometry(cs, { depth: 0.062, bevelEnabled: true, bevelSize: 0.006, bevelThickness: 0.006, bevelSegments: 3, curveSegments: 24 });
+      cal.rotateY(Math.PI / 2).translate(-0.048, 0, 0);
+      parts.push({ m: "caliper", g: cal });
+      return parts;
+    }
+
+    // ---------- materials ----------
+    const planeUp = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0); // keeps what is below its height
+    const planeDn = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // keeps what is above
+    const planeUp2 = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+    const planeDn2 = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const planeUp3 = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+    const REAL = {
+      tyre: new THREE.MeshStandardMaterial({ color: "#131416", roughness: 0.86, metalness: 0, bumpMap: treadTex, bumpScale: 4.5 }),
+      alloy: new THREE.MeshStandardMaterial({ color: "#d3d6db", roughness: 0.26, metalness: 1 }),
+      cap: new THREE.MeshStandardMaterial({ color: "#2a2c31", roughness: 0.35, metalness: 0.9 }),
+      nut: new THREE.MeshStandardMaterial({ color: "#8f9299", roughness: 0.22, metalness: 1 }),
+      disc: new THREE.MeshStandardMaterial({ color: "#a4a6ab", roughness: 0.42, metalness: 1, bumpMap: discTex, bumpScale: 1.2 }),
+      steel: new THREE.MeshStandardMaterial({ color: "#3b3e45", roughness: 0.5, metalness: 0.9 }),
+      caliper: new THREE.MeshStandardMaterial({ color: "#ff8a26", roughness: 0.38, metalness: 0.2 }),
+    };
+    for (const k of ["tyre", "alloy", "cap", "nut"]) {
+      REAL[k].clippingPlanes = [planeUp3];
+      REAL[k].clipShadows = true;
+    }
+    const clayMat = new THREE.MeshStandardMaterial({ color: "#bcb7ae", roughness: 0.95, metalness: 0, clippingPlanes: [planeUp2, planeDn2], clipShadows: true });
+    const wireMat = new THREE.MeshBasicMaterial({ color: "#1b1e25", wireframe: true, clippingPlanes: [planeUp, planeDn] });
+    const ghostMat = new THREE.MeshBasicMaterial({ color: "#1b1e25", wireframe: true, transparent: true, opacity: 0.16 });
+
+    // ---------- the wheel in its four states ----------
+    const R = 0.338;
+    const wheel = new THREE.Group();
+    wheel.position.y = R;
+    scene.add(wheel);
+    const hi = buildWheel(true),
+      lo = buildWheel(false);
+    const realG = new THREE.Group(),
+      clayG = new THREE.Group(),
+      wireG = new THREE.Group(),
+      ghostG = new THREE.Group();
+    for (const p of hi) {
+      const a = new THREE.Mesh(p.g, REAL[p.m]);
+      a.castShadow = a.receiveShadow = true;
+      realG.add(a);
+      const b = new THREE.Mesh(p.g, clayMat);
+      b.castShadow = b.receiveShadow = true;
+      clayG.add(b);
+    }
+    for (const p of lo) {
+      wireG.add(new THREE.Mesh(p.g, wireMat));
+      ghostG.add(new THREE.Mesh(p.g, ghostMat));
+    }
+    wheel.add(realG, clayG, wireG, ghostG);
+
+    // dashed outline for the open task
+    const dashMat = new LineMaterial({ color: 0x14161b, linewidth: 4, dashed: true, dashSize: 0.03, gapSize: 0.022, transparent: true, opacity: 1 });
+    dashMat.resolution.set(W, H);
+    {
+      const pos = [];
+      const ringAt = (r, x) => {
+        const n = 96;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2,
+            b = ((i + 1) / n) * Math.PI * 2;
+          pos.push(x, Math.cos(a) * r, Math.sin(a) * r, x, Math.cos(b) * r, Math.sin(b) * r);
+        }
+      };
+      ringAt(0.338, 0.05);
+      ringAt(0.338, -0.05);
+      ringAt(0.239, 0.1);
+      ringAt(0.072, 0.084);
+      const ls = new LineSegments2(new LineSegmentsGeometry().setPositions(pos), dashMat);
+      ls.computeLineDistances();
+      wheel.add(ls);
+    }
+
+    // ---------- the hub it snaps onto ----------
+    const hub = new THREE.Group();
+    hub.position.y = R;
+    for (const p of buildHub()) {
+      const m = new THREE.Mesh(p.g, REAL[p.m]);
+      m.castShadow = m.receiveShadow = true;
+      hub.add(m);
+    }
+    scene.add(hub);
+    const connMat = new THREE.MeshBasicMaterial({ color: new THREE.Color("#ff8a26").multiplyScalar(1.5), transparent: true, opacity: 0, depthTest: false });
+    const connA = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.0045, 12, 64).rotateY(Math.PI / 2), connMat);
+    connA.position.x = 0.034;
+    connA.renderOrder = 5;
+    hub.add(connA);
+    const connB = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.0045, 12, 64).rotateY(Math.PI / 2), connMat);
+    connB.position.set(0.034, R, 0);
+    connB.renderOrder = 5;
+    scene.add(connB);
+
+
+    // ---------- Clawd, built from the 12 x 8 pixel grid of the official front view ----------
+    // u = one pixel. Origin at the feet, front faces +Z.
+    function makeClawdGeo(u) {
+      const parts = [];
+      const box = (cx, cy, cz, w, h, d, col) => {
+        const g = new THREE.BoxGeometry(w * u, h * u, d * u).translate(cx * u, cy * u, cz * u).toNonIndexed();
+        const n = g.attributes.position.count, c = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) c.set(col, i * 3);
+        g.setAttribute("color", new THREE.BufferAttribute(c, 3));
+        parts.push(g);
+      };
+      const O = new THREE.Color("#cc7d5f").toArray(), K = new THREE.Color("#141414").toArray();
+      box(0, 5, 0, 8, 6, 5, O); // body: columns 2-9, rows 0-5
+      box(-5, 5, 0, 2, 2, 3, O); // arms: rows 2-3
+      box(5, 5, 0, 2, 2, 3, O);
+      for (const cx of [-3.5, -1.5, 1.5, 3.5]) for (const cz of [2, -2]) box(cx, 1, cz, 1, 2, 1, O); // legs: columns 2, 4, 7, 9
+      box(-2.5, 6.5, 2.5, 1, 1, 0.12, K); // eyes: row 1, columns 3 and 8
+      box(2.5, 6.5, 2.5, 1, 1, 0.12, K);
+      return mergeGeometries(parts);
+    }
+
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const CREW = 7;
+    const clawdGeo = makeClawdGeo(0.017);
+    const clawdMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
+    const crew = [];
+    for (let i = 0; i < CREW; i++) {
+      const m = new THREE.Mesh(clawdGeo, clawdMat);
+      m.castShadow = m.receiveShadow = true;
+      scene.add(m);
+      crew.push(m);
+    }
+    const pA = V(0, 0, 0), pB = V(0, 0, 0), pC = V(0, 0, 0);
+    function crewAt(t, hubX) {
+      const sweeping = smooth(T_WIRE - 0.2, T_WIRE + 0.2, t) * (1 - smooth(T_MAT + 1.4, T_MAT + 1.9, t));
+      const scatter = smooth(T_LIGHT + 0.1, T_LIGHT + 0.6, t);
+      const toB = smooth(T_CHECK - 0.45, T_CHECK + 0.05, t);
+      const toC = smooth(T_SNAP + 0.05, T_SNAP + 0.5, t);
+      const toD = smooth(T_SPEC, T_SPEC + 0.5, t);
+      for (let i = 0; i < CREW; i++) {
+        const m = crew[i];
+        // A: a ring walking round the wheel; it backs off for the close-up
+        const ang = (i / CREW) * Math.PI * 2 + 0.55 * t;
+        const rad = lerp(0.52, 1.5, scatter);
+        pA.set(Math.cos(ang) * rad, 0, Math.sin(ang) * rad);
+        let hop = Math.abs(Math.sin(t * 7.5 + i * 1.7)) * lerp(0.035, 0.13, sweeping);
+        // B: four line up for the checks, three wait by the wheel
+        if (i < 4) pB.set(0.5 + 0.21 * i, 0, 0.3 - 0.06 * i);
+        else pB.set(-0.52 + 0.2 * (i - 4), 0, 0.42);
+        // C: four carry the axle, three wait where the wheel is
+        if (i < 4) pC.set(hubX - 0.42 + 0.09 * i, 0, 0.0);
+        else pC.set(0.34 + 0.02 * (i - 4), 0, -0.3 + 0.3 * (i - 4));
+        m.position.copy(pA).lerp(pB, toB).lerp(pC, toC);
+        if (toD > 0) { pA.set(Math.cos(ang) * 0.56, 0, Math.sin(ang) * 0.56); m.position.lerp(pA, toD); }
+        if (toB > 0.5 && toC < 0.5) {
+          hop = 0;
+          if (i < 4) {
+            const j = t - (T_CHECK + 0.65 + i * 0.3);
+            if (j > 0 && j < 0.4) hop = 0.2 * Math.sin((j / 0.4) * Math.PI);
+          }
+          const all = t - (T_CHECK + 1.95);
+          if (all > 0 && all < 0.45) hop = 0.24 * Math.sin((all / 0.45) * Math.PI);
+        }
+        if (toC > 0.5 && toD < 0.5) {
+          hop = t < T_HIT ? Math.abs(Math.sin(t * 16 + i * 2.1)) * 0.03 : 0;
+          const j = t - T_HIT - 0.03 * i;
+          if (j > 0) hop = Math.abs(Math.sin(j * 7)) * 0.2 * Math.exp(-j * 1.1);
+        }
+        m.position.y = hop;
+        m.rotation.y = Math.atan2(camera.position.x - m.position.x, camera.position.z - m.position.z);
+        const born = clamp01((t - 0.15 - i * 0.07) / 0.3);
+        m.scale.setScalar(born <= 0 ? 0.0001 : 1 - Math.exp(-7 * born) * Math.cos(9 * born));
+        m.visible = true;
+      }
+    }
+
+
+    // ---------- spec: a real dimension on the wheel ----------
+    const dimMat = new LineMaterial({ color: 0x14161b, linewidth: 4, transparent: true, opacity: 0 });
+    dimMat.resolution.set(W, H);
+    const DIM = V(-0.36, 0, 0.25);
+    {
+      const x = DIM.x, z = DIM.z, a = 0.035, b = -0.024;
+      const pos = [x, 0.004, z, x, 2 * R, z, x - a, 0.004, z - b, x + a, 0.004, z + b, x - a, 2 * R, z - b, x + a, 2 * R, z + b];
+      scene.add(new LineSegments2(new LineSegmentsGeometry().setPositions(pos), dimMat));
+    }
+    const dimPos = document.getElementById("s-dim-pos");
+
+    // ---------- trust levels: three steps the crew climbs ----------
+    const STEP_X = [-2.25, -1.5, -0.5, 0.5, 1.5], STEP_H = [0, 0.13, 0.26, 0.39, 0.52];
+    const stairs = new THREE.Group();
+    const stepMat = new THREE.MeshStandardMaterial({ color: "#7d7972", roughness: 0.8 });
+    for (let k = 1; k <= 4; k++) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.94, STEP_H[k], 0.8).translate(STEP_X[k], STEP_H[k] / 2, 0), stepMat);
+      m.castShadow = m.receiveShadow = true;
+      stairs.add(m);
+    }
+    scene.add(stairs);
+    const FINAL = [1, 1, 1, 2, 2, 3, 4];
+    const lvPos = [1, 2, 3, 4].map((k) => document.getElementById(`s-lv${k}-pos`));
+    const prj = V(0, 0, 0);
+    const place = (el, x, y, z) => {
+      prj.set(x, y, z).project(camera);
+      el.style.transform = `translate(${((prj.x * 0.5 + 0.5) * W).toFixed(1)}px, ${((-prj.y * 0.5 + 0.5) * H).toFixed(1)}px)`;
+    };
+    function crewOnStairs(t) {
+      for (let i = 0; i < CREW; i++) {
+        const m = crew[i];
+        const lane = ((i % 3) - 1) * 0.2;
+        const xo = ((i * 37) % 7) / 7 * 0.5 - 0.25;
+        let x = STEP_X[0] + xo * 0.6, y = 0;
+        for (let k = 1; k <= FINAL[i]; k++) {
+          const p = clamp01((t - (T_UNLOCK + 0.3 + (k - 1) * 0.78 + i * 0.035)) / 0.42);
+          if (p <= 0) break;
+          const e = p * p * (3 - 2 * p);
+          x = lerp(STEP_X[k - 1] + xo * (k === 1 ? 0.6 : 1), STEP_X[k] + xo, e);
+          y = lerp(STEP_H[k - 1], STEP_H[k], e) + 0.3 * Math.sin(Math.PI * p);
+        }
+        const idle = t - (T_UNLOCK + 0.3 + (FINAL[i] - 1) * 0.78 + 0.5);
+        if (idle > 0 && FINAL[i] >= 3) y += Math.abs(Math.sin(idle * 8)) * 0.07;
+        m.position.set(x, y, lane);
+        m.rotation.y = Math.atan2(camera.position.x - x, camera.position.z - lane);
+        m.scale.setScalar(1.25);
+      }
+    }
+
+    // ---------- camera ----------
+    const CAM = [
+      [0.0, V(1.02, 0.52, 1.5), V(-0.24, 0.44, 0.16)],
+      [T_WIRE, V(1.12, 0.5, 1.42), V(-0.24, 0.44, 0.16)],
+      [T_LIGHT, V(1.42, 0.46, 1.1), V(-0.2, 0.44, 0.2)],
+      [T_LIGHT + 0.75, V(0.66, 0.4, 0.5), V(0.06, 0.37, 0.02)],
+      [T_LIGHT + 1.7, V(0.74, 0.36, 0.38), V(0.06, 0.36, 0.0)],
+      [T_CHECK - 0.4, V(0.74, 0.36, 0.38), V(0.06, 0.36, 0.0)],
+      [T_CHECK - 0.39, V(1.02, 0.5, 1.72), V(0.34, 0.45, -0.2)],
+      [T_SNAP, V(0.98, 0.52, 1.78), V(0.34, 0.45, -0.2)],
+      [T_SNAP + 0.5, V(-1.0, 0.5, 1.7), V(-0.16, 0.41, 0)],
+      [T_SPEC - 0.05, V(-0.86, 0.48, 1.74), V(-0.14, 0.41, 0)],
+      [T_SPEC + 0.5, V(1.25, 0.55, 1.85), V(0.36, 0.45, -0.2)],
+      [T_UNLOCK, V(1.2, 0.56, 1.9), V(0.36, 0.45, -0.2)],
+    ];
+    const cp = V(0, 0, 0),
+      ct = V(0, 0, 0);
+    function setCamera(t) {
+      let i = 0;
+      while (i < CAM.length - 2 && t >= CAM[i + 1][0]) i++;
+      const a = CAM[i],
+        b = CAM[i + 1];
+      const k = smooth(a[0], b[0], t);
+      cp.lerpVectors(a[1], b[1], k);
+      ct.lerpVectors(a[2], b[2], k);
+      if (t >= T_UNLOCK) {
+        const k = clamp01((t - T_UNLOCK) / (DUR - T_UNLOCK));
+        cp.set(lerp(-0.12, 0.12, k), lerp(1.05, 1.1, k), lerp(5.0, 4.8, k));
+        ct.set(0, 0.6, 0);
+      }
+      camera.position.copy(cp);
+      camera.lookAt(ct);
+    }
+
+    function renderAt(t) {
+      setCamera(t);
+      const TOP = 2 * R + 0.02;
+      // sweeps: wire rises, clay follows, materials follow
+      const hWire = TOP * smooth(T_WIRE, T_WIRE + 0.75, t);
+      const hClay = TOP * smooth(T_CLAY, T_CLAY + 0.85, t);
+      const hReal = TOP * smooth(T_MAT, T_MAT + 1.5, t);
+      planeUp.constant = hWire;
+      planeDn.constant = -hClay;
+      planeUp2.constant = hClay;
+      planeDn2.constant = -hReal;
+      planeUp3.constant = hReal;
+      wireG.visible = hWire > 0.001 && hClay < TOP - 0.001;
+      clayG.visible = hClay > 0.001 && hReal < TOP - 0.001;
+      realG.visible = hReal > 0.001;
+      const ghost = 1 - smooth(T_CLAY, T_CLAY + 0.85, t);
+      ghostG.visible = ghost > 0.01;
+      ghostMat.opacity = 0.16 * ghost;
+      dashMat.opacity = 1 - smooth(T_WIRE, T_WIRE + 0.6, t);
+
+      // light comes up, the wheel rolls
+      const L = smooth(T_LIGHT, T_LIGHT + 0.7, t);
+      key.intensity = lerp(0.9, 1.9, L);
+      rim.intensity = lerp(0.2, 1.4, L);
+      scene.environmentIntensity = lerp(0.42, 0.85, L);
+      renderer.toneMappingExposure = lerp(1.05, t >= T_UNLOCK ? 0.74 : 0.86, L);
+      const s = Math.max(0, t - T_LIGHT);
+      wheel.rotation.x = 5.2 * (1 - Math.exp(-s * 0.85)) + 0.12 * Math.max(0, t - T_CHECK) * 0;
+
+      // the hub slides in and seats
+      const k = clamp01((t - (T_SNAP + 0.35)) / (T_HIT - T_SNAP - 0.35));
+      const slide = k * k * k;
+      const settle = t > T_HIT ? 0.012 * Math.exp(-(t - T_HIT) * 9) * Math.cos((t - T_HIT) * 26) : 0;
+      hub.visible = t > T_SNAP + 0.3;
+      hub.position.x = lerp(-0.95, 0, slide) - settle;
+      wheel.position.x = settle * 0.6;
+      const c = smooth(T_SNAP + 0.3, T_SNAP + 0.6, t) * (1 - smooth(T_HIT + 0.35, T_HIT + 0.8, t));
+      connMat.opacity = c;
+      const pulse = t > T_HIT ? 1 + 0.7 * smooth(T_HIT, T_HIT + 0.45, t) : 1;
+      connA.scale.setScalar(pulse);
+      connB.scale.setScalar(pulse);
+      connB.visible = t > T_SNAP + 0.3 && t < T_HIT;
+      const unlock = t >= T_UNLOCK;
+      wheel.visible = !unlock;
+      hub.visible = hub.visible && !unlock;
+      stairs.visible = unlock;
+      dimMat.opacity = unlock ? 0 : smooth(T_SPEC + 0.35, T_SPEC + 0.6, t);
+      if (unlock) crewOnStairs(t);
+      else crewAt(t, hub.position.x);
+      renderer.autoClear = false;
+      renderer.setViewport(0, 0, W, H);
+      renderer.setScissorTest(false);
+      renderer.setClearColor(BG);
+      renderer.clear();
+      if (t >= T_GRID && t < T_GRID + GRID_LEN + 0.2) renderGrid(t);
+      else renderer.render(scene, camera);
+      place(dimPos, DIM.x, R, DIM.z);
+      for (let k = 1; k <= 4; k++) place(lvPos[k - 1], STEP_X[k], STEP_H[k] + 0.36, 0);
+    }
+
+
+    // =====================================================================
+    // GRID: six screens, six different builds
+    // =====================================================================
+    const T_GRID = 7.6, GRID_LEN = 8.0;
+    const GX = 60, GY = 236, GAP = 20, CW = (1800 - 2 * GAP) / 3, CH = (800 - GAP) / 2;
+    const cellRect = (i) => [GX + (i % 3) * (CW + GAP), GY + Math.floor(i / 3) * (CH + GAP), CW, CH];
+    const CELL_BG = new THREE.Color("#dbd7d0");
+    const springK = (k) => (k <= 0 ? 0 : k >= 1 ? 1 : 1 - Math.exp(-6.5 * k) * Math.cos(8.5 * k));
+    const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0, ...o });
+    const mesh = (geo, mat) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.castShadow = m.receiveShadow = true;
+      return m;
+    };
+    const boxM = (w, h, d, x, y, z, mat) => mesh(new THREE.BoxGeometry(w, h, d).translate(x, y, z), mat);
+    const mini = [];
+    function addMini(def) {
+      def.group = new THREE.Group();
+      def.group.visible = false;
+      def.parts.forEach((p) => def.group.add(p));
+      if (def.extra) def.extra.forEach((p) => def.group.add(p));
+      scene.add(def.group);
+      mini.push(def);
+    }
+    // parts pop in one after another
+    function popParts(def, p, from = 0) {
+      const n = def.parts.length;
+      def.parts.forEach((part, i) => {
+        const k = i < from ? 1 : clamp01((p * 1.02 - ((i - from) / (n - from)) * 0.86) / 0.14);
+        part.visible = k > 0;
+        const s = springK(k);
+        part.scale.setScalar(Math.max(0.001, 0.4 + 0.6 * s));
+        part.position.y = (1 - s) * 0.35;
+      });
+    }
+
+    // 1. the wheel becomes a car
+    {
+      const wheelAt = (x, z, flip) => {
+        const g = new THREE.Group();
+        for (const p of hi) {
+          const m = new THREE.Mesh(p.g, REAL[p.m]);
+          m.castShadow = true;
+          g.add(m);
+        }
+        g.rotation.y = flip ? -Math.PI / 2 : Math.PI / 2;
+        const holder = new THREE.Group();
+        g.position.set(x, R, z);
+        holder.add(g);
+        return holder;
+      };
+      const sh = new THREE.Shape();
+      [[-2.2, 0.3], [-2.2, 0.74], [-2.05, 0.86], [-1.25, 0.93], [-0.72, 1.4], [0.8, 1.4], [1.4, 0.96], [2.12, 0.88], [2.2, 0.7], [2.2, 0.3]].forEach(([x, y], i) => (i ? sh.lineTo(x, y) : sh.moveTo(x, y)));
+      const body = mesh(
+        new THREE.ExtrudeGeometry(sh, { depth: 1.5, bevelEnabled: true, bevelSize: 0.07, bevelThickness: 0.07, bevelSegments: 4 }).translate(0, 0, -0.75),
+        new THREE.MeshPhysicalMaterial({ color: "#b3362b", roughness: 0.35, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15 }),
+      );
+      const gs = new THREE.Shape();
+      [[-1.12, 0.97], [-0.68, 1.36], [0.74, 1.36], [1.26, 0.97]].forEach(([x, y], i) => (i ? gs.lineTo(x, y) : gs.moveTo(x, y)));
+      const glass = mesh(new THREE.ExtrudeGeometry(gs, { depth: 1.66, bevelEnabled: false }).translate(0, 0, -0.83), std("#11161d", { roughness: 0.08, metalness: 0.6 }));
+      const chassis = boxM(3.6, 0.14, 1.4, 0, 0.36, 0, std("#2a2c31", { metalness: 0.7, roughness: 0.5 }));
+      const lights = new THREE.Group();
+      for (const z of [-0.55, 0.55]) {
+        lights.add(boxM(0.06, 0.12, 0.3, 2.26, 0.72, z, new THREE.MeshBasicMaterial({ color: new THREE.Color("#fff2d0").multiplyScalar(1.6) })));
+        lights.add(boxM(0.06, 0.1, 0.3, -2.26, 0.74, z, new THREE.MeshBasicMaterial({ color: "#c0261c" })));
+      }
+      const def = { parts: [wheelAt(1.4, 0.8, false), wheelAt(-1.4, 0.8, false), wheelAt(1.4, -0.8, true), wheelAt(-1.4, -0.8, true), chassis, body, glass, lights], scale: 0.42, cam: [V(1.9, 0.95, 2.3), V(0, 0.26, 0)], crew: [[-1.25, 0.75], [1.2, 0.85], [0.1, 1.0]], label: 1 };
+      def.update = (p) => popParts(def, p, 1);
+      addMini(def);
+    }
+    // 2. Mount Fuji, sculpted
+    {
+      const prof = [[1.7, 0], [1.25, 0.1], [0.9, 0.28], [0.6, 0.52], [0.36, 0.78], [0.2, 0.95], [0.13, 1.0], [0.08, 0.97], [0, 0.95]].map(([r, y]) => new THREE.Vector2(r, y));
+      const geo = new THREE.LatheGeometry(new THREE.SplineCurve(prof).getPoints(40), 96);
+      const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+      const snow = new THREE.Color("#f3f4f6"), rock = new THREE.Color("#55617a"), low = new THREE.Color("#5d7355"), c = new THREE.Color();
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), a = Math.atan2(z, x);
+        const k = 1 + (0.05 * Math.sin(5 * a + y * 9) + 0.035 * Math.sin(11 * a + 2) + 0.02 * Math.sin(23 * a + y * 30)) * (1 - y * 0.5);
+        pos.setXYZ(i, x * k, y, z * k);
+        const line = 0.66 + 0.07 * Math.sin(7 * a) + 0.04 * Math.sin(17 * a + 1);
+        c.copy(y > line ? snow : y < 0.12 ? low : rock);
+        if (y <= line && y > 0.12) c.lerp(low, clamp01((0.3 - y) / 0.2) * 0.6);
+        col.set([c.r, c.g, c.b], i * 3);
+      }
+      geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+      geo.computeVertexNormals();
+      const mt = mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+      const def = { parts: [], extra: [mt], scale: 1, cam: [V(0.5, 0.7, 3.7), V(0, 0.42, 0)], crew: [[-1.1, 1.1], [1.15, 1.0], [0, 0]], label: 2 };
+      def.update = (p) => {
+        const steps = 7, q = p * steps, f = Math.floor(q);
+        const e = (f + springK(clamp01((q - f) / 0.5))) / steps;
+        mt.scale.y = 0.06 + 0.94 * Math.min(1, e);
+        def.topY = mt.scale.y * 0.97;
+      };
+      addMini(def);
+    }
+    // 3. the Eiffel Tower, built from the ground up
+    const planeE = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+    {
+      const HT = 2.05, w = (h) => 0.44 * Math.pow(1 - h, 2.3) + 0.014;
+      const iron = std("#6e5443", { metalness: 0.55, roughness: 0.5, clippingPlanes: [planeE], clipShadows: true });
+      const legs = [];
+      for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const pts = [];
+        for (let i = 0; i <= 24; i++) {
+          const h = (i / 24) * 0.97;
+          pts.push(V(sx * w(h), h * HT, sz * w(h)));
+        }
+        legs.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, 0.024, 6, false));
+      }
+      const tower = mesh(mergeGeometries(legs), iron);
+      const plats = new THREE.Group();
+      for (const h of [0.17, 0.35, 0.84]) plats.add(boxM(2 * w(h) + 0.09, 0.035, 2 * w(h) + 0.09, 0, h * HT, 0, iron));
+      plats.add(mesh(new THREE.CylinderGeometry(0.006, 0.014, 0.16, 8).translate(0, HT * 0.97 + 0.08, 0), iron));
+      const seg = [];
+      const L = 22;
+      for (let i = 0; i < L; i++) {
+        const h0 = (i / L) * 0.96, h1 = ((i + 1) / L) * 0.96, a = w(h0), b = w(h1), y0 = h0 * HT, y1 = h1 * HT;
+        const cs = [[1, 1], [1, -1], [-1, -1], [-1, 1]];
+        for (let k = 0; k < 4; k++) {
+          const [ax, az] = cs[k], [bx, bz] = cs[(k + 1) % 4];
+          seg.push(ax * a, y0, az * a, bx * b, y1, bz * b, bx * a, y0, bz * a, ax * b, y1, az * b, ax * a, y0, az * a, bx * a, y0, bz * a);
+        }
+      }
+      const lm = new LineMaterial({ color: 0x5b4636, linewidth: 1.6 });
+      lm.resolution.set(CW, CH);
+      const lg = new LineSegmentsGeometry().setPositions(seg);
+      const brace = new LineSegments2(lg, lm);
+      const total = seg.length / 6;
+      const def = { parts: [], extra: [tower, plats, brace], scale: 1, cam: [V(1.9, 1.1, 5.0), V(0, 1.06, 0)], crew: [[-0.75, 0.6], [0.8, 0.5], [0.15, 0.85]], label: 3 };
+      def.update = (p) => {
+        const e = clamp01(p * 1.08);
+        planeE.constant = 0.02 + e * (HT + 0.25);
+        lg.instanceCount = Math.max(1, Math.floor(total * e));
+      };
+      addMini(def);
+    }
+    // 4. the inside of a house
+    {
+      const wall = std("#e9e3d7", { roughness: 0.9 });
+      const wood = std("#b98d5e", { roughness: 0.6 });
+      const sofa = new THREE.Group();
+      const blue = std("#4d6a8a", { roughness: 0.9 });
+      sofa.add(boxM(1.0, 0.2, 0.42, 0.1, 0.16, -0.92, blue), boxM(1.0, 0.3, 0.1, 0.1, 0.41, -1.08, blue), boxM(0.1, 0.3, 0.42, -0.45, 0.25, -0.92, blue), boxM(0.1, 0.3, 0.42, 0.65, 0.25, -0.92, blue));
+      const table = new THREE.Group();
+      table.add(boxM(0.56, 0.04, 0.32, 0.1, 0.22, -0.3, std("#7a5a3c")), boxM(0.08, 0.2, 0.08, 0.1, 0.1, -0.3, std("#3a3d44")));
+      const lamp = new THREE.Group();
+      lamp.add(mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.9, 8).translate(0.95, 0.45, -0.95), std("#2c2e33")), mesh(new THREE.CylinderGeometry(0.08, 0.14, 0.16, 20, 1, true).translate(0.95, 0.95, -0.95), new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffd89a").multiplyScalar(1.5), side: THREE.DoubleSide })));
+      const shelf = new THREE.Group();
+      shelf.add(boxM(0.16, 0.95, 0.7, -1.08, 0.475, 0.2, std("#7a5a3c")));
+      [["#c0503a", 0.2], ["#3d6f6a", 0.45], ["#d9b24c", 0.7]].forEach(([c, y], i) => shelf.add(boxM(0.1, 0.16, 0.34, -1.0, y, 0.1 + i * 0.08, std(c))));
+      const plant = new THREE.Group();
+      plant.add(mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.16, 16).translate(-0.9, 0.08, -0.9), std("#c9764e")), mesh(new THREE.IcosahedronGeometry(0.2, 1).translate(-0.9, 0.36, -0.9), std("#4f7a52", { flatShading: true })));
+      const win = new THREE.Group();
+      win.add(boxM(0.7, 0.5, 0.02, -0.35, 0.85, -1.16, new THREE.MeshBasicMaterial({ color: "#a8cdf0" })), boxM(0.76, 0.03, 0.04, -0.35, 0.85, -1.15, wall), boxM(0.03, 0.56, 0.04, -0.35, 0.85, -1.15, wall));
+      const parts = [
+        boxM(2.5, 0.06, 2.5, 0, -0.03, 0, wood),
+        boxM(2.5, 1.35, 0.06, 0, 0.675, -1.22, wall),
+        boxM(0.06, 1.35, 2.5, -1.22, 0.675, 0, wall),
+        win,
+        mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.012, 40).translate(0.15, 0.006, -0.25), std("#c96a4a", { roughness: 1 })),
+        sofa, table, shelf, lamp, plant,
+      ];
+      const def = { parts, scale: 0.92, cam: [V(2.3, 1.8, 2.3), V(-0.1, 0.42, -0.25)], crew: [[0.75, 0.45], [-0.3, 0.55], [0.3, -0.75]], label: 4 };
+      def.update = (p) => popParts(def, p);
+      addMini(def);
+    }
+    // 5. the parts of a computer
+    {
+      const dark = std("#22252b", { roughness: 0.5, metalness: 0.4 }), silver = std("#b9bcc2", { roughness: 0.3, metalness: 1 });
+      const cooler = new THREE.Group();
+      cooler.add(mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.16, 32).translate(-0.2, 0.19, -0.15), dark), mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.012, 9).translate(-0.2, 0.275, -0.15), std("#ff8a26")));
+      const ram = new THREE.Group();
+      for (let i = 0; i < 4; i++) ram.add(boxM(0.035, 0.15, 0.62, 0.22 + i * 0.075, 0.115, -0.15, i % 2 ? dark : std("#3b6fd1", { roughness: 0.4 })));
+      const gpu = new THREE.Group();
+      gpu.add(boxM(1.0, 0.16, 0.36, -0.1, 0.12, 0.38, dark));
+      for (const x of [-0.38, 0.18]) gpu.add(mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.02, 24).translate(x, 0.21, 0.38), std("#3a3e46", { metalness: 0.6, roughness: 0.4 })));
+      const parts = [
+        boxM(1.7, 0.04, 1.4, 0, 0.02, 0, std("#1f5a3a", { roughness: 0.5 })),
+        boxM(0.3, 0.05, 0.3, -0.2, 0.065, -0.15, silver),
+        cooler, ram, gpu,
+        boxM(0.14, 0.2, 0.7, -0.74, 0.14, -0.2, silver),
+        boxM(0.4, 0.03, 0.12, 0.45, 0.055, 0.42, dark),
+      ];
+      const def = { parts, scale: 1, cam: [V(1.5, 1.75, 1.95), V(0, 0.06, 0.02)], crew: [[1.05, 0.2], [-1.05, 0.55], [0.3, 0.95]], label: 5 };
+      def.update = (p) => popParts(def, p);
+      addMini(def);
+    }
+    // 6. a skateboard, then someone rides it
+    {
+      const ds = new THREE.Shape();
+      ds.absarc(0.6, 0, 0.2, -Math.PI / 2, Math.PI / 2, false);
+      ds.absarc(-0.6, 0, 0.2, Math.PI / 2, (3 * Math.PI) / 2, false);
+      ds.closePath();
+      const flat = (g) => g.rotateX(-Math.PI / 2);
+      const deck = mesh(flat(new THREE.ExtrudeGeometry(ds, { depth: 0.026, bevelEnabled: true, bevelSize: 0.008, bevelThickness: 0.006, bevelSegments: 2, curveSegments: 24 })).translate(0, 0.17, 0), std("#c8a26b", { roughness: 0.5 }));
+      const grip = mesh(flat(new THREE.ExtrudeGeometry(ds, { depth: 0.004, bevelEnabled: false, curveSegments: 24 })).scale(0.985, 1, 0.97).translate(0, 0.203, 0), std("#17181b", { roughness: 1 }));
+      const metal = std("#b9bcc2", { roughness: 0.3, metalness: 1 });
+      const trucks = new THREE.Group();
+      const wheels = new THREE.Group();
+      for (const x of [-0.5, 0.5]) {
+        trucks.add(boxM(0.12, 0.07, 0.2, x, 0.13, 0, metal), mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.46, 12).rotateX(Math.PI / 2).translate(x, 0.075, 0), metal));
+        for (const z of [-0.21, 0.21]) wheels.add(mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.07, 28).rotateX(Math.PI / 2).translate(x, 0.075, z), std("#f1e8d6", { roughness: 0.45 })));
+      }
+      const board = new THREE.Group();
+      const def = { parts: [deck, grip, trucks, wheels], scale: 1.05, cam: [V(0.7, 0.62, 2.05), V(0, 0.2, 0)], crew: [[0, 0], [-1.1, -0.7], [1.15, -0.6]], label: 6 };
+      def.update = (p) => {
+        popParts(def, Math.min(1, p / 0.6));
+        const ride = clamp01((p - 0.66) / 0.34);
+        def.rideX = ride > 0 ? -0.9 * Math.sin(Math.PI * Math.min(1, ride * 1.0)) * (1 - ride) * 2.2 : 0;
+        def.group.position.x = def.rideX * def.scale;
+      };
+      addMini(def);
+    }
+    for (const d of mini) d.group.scale.setScalar(d.scale);
+
+    const cellCam = new THREE.PerspectiveCamera(30, CW / CH, 0.05, 60);
+    function setRect(x, y, w, h) {
+      renderer.setViewport(x, H - y - h, w, h);
+      renderer.setScissor(x, H - y - h, w, h);
+    }
+    const MAIN = () => [wheel, hub, stairs, connB];
+    function renderGrid(t) {
+      const g = t - T_GRID;
+      const p = clamp01((g - 0.55) / 3.0);
+      renderer.setScissorTest(true);
+      // the wheel shot shrinks into the first screen
+      const k0 = smooth(0, 0.5, g);
+      const [x0, y0, w0, h0] = cellRect(0);
+      if (g < 0.5) {
+        setRect(lerp(0, x0, k0), lerp(0, y0, k0), lerp(W, w0, k0), lerp(H, h0, k0));
+        renderer.setClearColor(BG.clone().lerp(CELL_BG, k0));
+        renderer.clear();
+        renderer.render(scene, camera);
+      }
+      const saved = MAIN().map((o) => o.visible);
+      MAIN().forEach((o) => (o.visible = false));
+      mini.forEach((d, i) => {
+        if (i === 0 && g < 0.5) return;
+        const grow = i === 0 ? 1 : springK(clamp01((g - 0.36 - i * 0.04) / 0.4));
+        if (grow <= 0) return;
+        const [x, y, w, h] = cellRect(i);
+        setRect(x + (w * (1 - grow)) / 2, y + (h * (1 - grow)) / 2, w * grow, h * grow);
+        renderer.setClearColor(CELL_BG);
+        renderer.clear();
+        d.group.visible = true;
+        d.update(p, t);
+        // three Clawds work on each screen
+        crew.forEach((m, j) => {
+          m.visible = j < 3;
+          if (j >= 3) return;
+          const [cx, cz] = d.crew[j];
+          let x = cx, y = 0, z = cz;
+          if (d.label === 2 && j === 2) y = d.topY;
+          if (d.label === 6 && j === 0) { x = d.rideX * d.scale; y = 0.21 * d.scale; z = 0; }
+          const hop = Math.abs(Math.sin(t * 8 + j * 1.9 + i)) * (d.label === 6 && j === 0 ? 0.0 : 0.07);
+          m.position.set(x, y + hop * (p < 1 ? 1 : 0.5), z);
+          m.scale.setScalar(d.label === 2 || d.label === 3 ? 1.15 : 1);
+        });
+        const a = 0.25 * Math.sin(t * 0.5 + i);
+        const [cp0, ct0] = d.cam;
+        cellCam.position.set(cp0.x * Math.cos(a) + cp0.z * Math.sin(a), cp0.y, -cp0.x * Math.sin(a) + cp0.z * Math.cos(a));
+        cellCam.lookAt(ct0);
+        crew.forEach((m) => (m.rotation.y = Math.atan2(cellCam.position.x - m.position.x, cellCam.position.z - m.position.z)));
+        renderer.render(scene, cellCam);
+        d.group.visible = false;
+      });
+      MAIN().forEach((o, i) => (o.visible = saved[i]));
+      crew.forEach((m) => (m.visible = true));
+      renderer.setScissorTest(false);
+      renderer.setViewport(0, 0, W, H);
+    }
+
+    // ---------- timeline ----------
+    const tl = gsap.timeline({ paused: true });
+    const clock = { t: 0 };
+    tl.fromTo(clock, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => renderAt(clock.t) }, 0);
+
+    const title = (sel, at, len) => {
+      tl.fromTo(sel, { opacity: 0, x: -40, filter: "blur(10px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.22, ease: "expo.out" }, at + 0.02);
+      tl.to(sel, { opacity: 0, filter: "blur(8px)", duration: 0.12, ease: "power2.in" }, at + len - 0.14);
+    };
+    title("#s-t1-in", 0, 1.8);
+    title("#s-t2-in", 1.8, 3.7);
+    title("#s-t3-in", 15.8, 2.6);
+    title("#s-t7-in", 7.6, 3.7);
+    title("#s-t8-in", 11.3, 4.5);
+    title("#s-t4-in", 18.4, 2.2);
+    title("#s-t5-in", 20.6, 2.4);
+    title("#s-t6-in", 23, 5.6);
+    ["#s-s1", "#s-s2", "#s-s3", "#s-s4"].forEach((sel, i) => tl.fromTo(sel, { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.3, ease: "expo.out" }, T_SPEC + 0.3 + i * 0.12));
+    tl.fromTo("#s-dim-box", { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, T_SPEC + 0.5);
+    [1, 2, 3, 4].forEach((k) => tl.fromTo(`#s-lv${k}-box`, { opacity: 0, scale: 0.75, transformOrigin: "50% 100%" }, { opacity: 1, scale: 1, duration: 0.32, ease: "back.out(1.9)" }, T_UNLOCK + 0.62 + (k - 1) * 0.78));
+    const stage = (sel, at, len) => {
+      tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: 0.15, ease: "power2.out" }, at);
+      tl.to(sel, { opacity: 0, duration: 0.1 }, at + len - 0.1);
+    };
+    stage("#s-g1-in", 1.9, 1.5);
+    stage("#s-g2-in", 3.4, 1.9);
+
+    [1, 2, 3, 4, 5, 6].forEach((k) => tl.fromTo(`#s-c${k}-in`, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" }, 7.6 + 0.5 + k * 0.05));
+    [1, 2, 3, 4, 5, 6].forEach((k) => tl.fromTo(`#s-p${k}-img`, { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" }, 11.4 + k * 0.14));
+    tl.fromTo("#s-concept-in", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.3, ease: "expo.out" }, 11.6);
+    tl.fromTo("#s-tag-box", { opacity: 0, scale: 0.9, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 0.05);
+    tl.to("#s-st-open", { opacity: 0, duration: 0.08 }, T_CLAIM - 0.08);
+    tl.fromTo("#s-st-claimed", { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, T_CLAIM);
+    tl.to("#s-tag-box", { opacity: 0, duration: 0.12 }, 1.66);
+
+    ["#s-r1", "#s-r2", "#s-r3", "#s-r4"].forEach((sel, i) => {
+      tl.fromTo(sel, { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.3, ease: "expo.out" }, T_CHECK + 0.15 + i * 0.07);
+      tl.fromTo(`#s-k${i + 1}`, { scale: 0 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)" }, T_CHECK + 0.65 + i * 0.3);
+    });
+    tl.fromTo("#s-merged", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, T_CHECK + 1.95);
+    tl.to("#s-checks", { opacity: 0, duration: 0.12 }, T_SNAP - 0.14);
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines["studio"] = tl;
+    renderAt(0);
+  </script>
+</template>

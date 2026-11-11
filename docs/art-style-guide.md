@@ -1,8 +1,10 @@
-# Rebuild the World: Art Style Guide (Draft v0.1)
+# Rebuild the World: Art Style Guide (Draft v0.3)
 
 Nov 10, 2026
 
 The target is grounded realism: each asset looks like the real object under neutral light, at true scale, with physically based materials. Style lives in lighting and rendering, never in the asset.
+
+This guide is the look of the Earth, Again library. Another library on the same contract sets its own look: Frontier Colony keeps a cel look, and this guide does not apply to it (owner, 2026-11-10).
 
 ## Principles
 
@@ -12,12 +14,12 @@ Six rules decide whether an asset fits, and reviewers cite them by number.
 2. **Physically based materials.** Surfaces use real-world values. A surface is either metal or not, and its roughness varies.
 3. **Neutral assets.** No lighting, shadows, weather, season or time of day is built into an asset. Those belong to the scene.
 4. **Motivated wear.** The default is a maintained object about five years old. Dirt and damage appear where water, hands and tyres would cause them.
-5. **Generic, not branded.** No real logos, brand names, product designs, licence plates or people. Signs use invented names.
+5. **True to the real place.** Real terrain, buildings and landmarks are modelled as they are. Logos, brand names and specific product designs are held for legal review and built as marked stand-ins until cleared. No real people or readable licence plates. The accuracy and data policy has the full rule.
 6. **Detail matches size.** Small objects are not over-modelled and large ones are not left bare. The fidelity tier sets the threshold.
 
 ## Fidelity tiers
 
-Assets are built to Tier 1 today, and the tiers above it let the library improve without being redone. A higher-tier version replaces a lower one under the same asset ID and connectors.
+Assets are built to Tier 1 today, and the tiers above it let the library improve without being redone. A higher-tier version replaces a lower one under the same asset ID and connectors. The current capability profile says which tier the validator enforces.
 
 | Tier | Holds up at | Smallest modelled feature | Texture resolution | Status |
 | --- | --- | --- | --- | --- |
@@ -83,7 +85,7 @@ Before submitting, the contributor's model renders the asset and compares it wit
 3. Place the renders beside the golden asset named in the task. Compare proportions, colour, roughness and amount of detail.
 4. Check scale against the human silhouette and the ruler.
 5. Go through the six principles and note any that the asset bends.
-6. Look for brands, readable real-world text, licence plates and faces, and remove them.
+6. Look for logos, brand names, maker-specific product styling, licence plates and faces. Remove people and plates, and replace the rest with marked stand-ins.
 7. View the asset from 2 m, 10 m and 50 m. The silhouette should read correctly at each distance.
 8. Write a short self-assessment in the pull request: what matches, what deviates, and why.
 
@@ -91,7 +93,7 @@ The self-check helps honest contributors pass first time. It is not evidence for
 
 ## Common rejections
 
-Most rejected assets fail in one of seven ways. Reviewers name the failure and the principle it breaks.
+Most rejected assets fail in one of eight ways. Reviewers name the failure and the principle it breaks.
 
 | Failure | What it looks like | Principle |
 | --- | --- | --- |
@@ -100,7 +102,8 @@ Most rejected assets fail in one of seven ways. Reviewers name the failure and t
 | Painted-in lighting | Shadows or highlights in the base colour | 3 |
 | Plastic surfaces | One flat roughness value everywhere | 2 |
 | Random wear | Even scratches or dirt with no cause | 4 |
-| Real brands | Logos, recognisable product designs, readable real signage | 5 |
+| Held subjects left in | Logos, brand names or maker-specific product styling not yet cleared, or any real person or readable plate | 5 |
+| Invented place | A real building or landmark changed, simplified or made up where references exist | 1, 5 |
 | Mismatched detail | Tiny modelled screws on an otherwise bare object | 6 |
 
 ## Region look sheets
@@ -122,6 +125,6 @@ A look sheet adds local facts. It never overrides the six principles.
 - [ ] Who builds the golden set, and how is that work funded?
 - [ ] Is overcast the right default light, or should the clear-sun variant lead?
 - [ ] Is "maintained, about five years old" the right default wear, or should it vary by region?
-- [ ] How are signs and shopfronts written: invented names in the local language, or left blank?
+- [ ] What does a stand-in sign or shopfront show until brands are cleared: a neutral blank face, or generic wording in the local language?
 - [ ] Does the first demo need seasonal vegetation variants?
 - [ ] Should a stylised render mode be offered later as an option, built on the same assets?

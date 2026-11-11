@@ -1,0 +1,934 @@
+{
+  "meta": {
+    "title": "Rebuild the World",
+    "status": "Draft. Nothing here is confirmed line by line, and every number is an untested starting value.",
+    "updated": "2026-11-11"
+  },
+  "layers": [
+    {
+      "id": "vision",
+      "name": "Vision",
+      "question": "What are we building, and for when?",
+      "doc": "docs/vision.md",
+      "version": "v0.3",
+      "status": "revised",
+      "summary": "An accurate, playable model of Earth, built in the open and specified for future tools. One contract can serve more than one library."
+    },
+    {
+      "id": "world",
+      "name": "World model",
+      "question": "How does Earth break down into things people can build?",
+      "doc": "docs/world-model.md",
+      "version": "v0.3",
+      "status": "revised",
+      "summary": "Nine levels of scale, library and unique assets, accuracy levels A0 to A3, categories, and behaviours with settings."
+    },
+    {
+      "id": "contract",
+      "name": "Durable contract",
+      "question": "What must every asset obey forever?",
+      "doc": "docs/asset-spec.md",
+      "version": "v0.4",
+      "status": "revised",
+      "summary": "Units, axes, pivots, connectors, blueprints, assembly manifests, variation, moving assemblies, clips, files and metadata. Shared by every library and meant to stay fixed for decades."
+    },
+    {
+      "id": "profile",
+      "name": "Capability profile",
+      "question": "How much is asked today?",
+      "doc": "docs/capability-profiles.md",
+      "version": "v0.3",
+      "status": "revised",
+      "summary": "Profile 1 (2026): triangle budgets, mesh rules, tolerances and texture limits. Replaced as tools improve."
+    },
+    {
+      "id": "look",
+      "name": "Look",
+      "question": "What should it look like?",
+      "doc": "docs/art-style-guide.md",
+      "version": "v0.3",
+      "status": "revised",
+      "summary": "The look of the Earth, Again library: grounded realism, six principles, three fidelity tiers, a golden set of 20 assets and one standard render scene."
+    },
+    {
+      "id": "process",
+      "name": "Process",
+      "question": "Who builds what, and how is it checked?",
+      "doc": "docs/claim-system-spec.md",
+      "version": "v0.2",
+      "status": "revised",
+      "summary": "Objects built atom by atom from a blueprint, the board, claims, trust levels, review gates, strikes and region unlocks."
+    },
+    {
+      "id": "service",
+      "name": "Contributor service",
+      "question": "How does a contributor's agent get work and the current rules?",
+      "doc": "docs/contributor-service.md",
+      "version": "v0.1",
+      "status": "new",
+      "summary": "A work order with pinned versions for every claim, an MCP server for asking what needs building, and a strict split between instructions and data."
+    },
+    {
+      "id": "data",
+      "name": "Accuracy and data",
+      "question": "What may be copied from the real world, and from which sources?",
+      "doc": "docs/accuracy-and-data.md",
+      "version": "v0.2",
+      "status": "revised",
+      "summary": "For the Earth, Again library: real places are accurate, brands and specific products are held for legal review, people and plates stay out. Open data only."
+    }
+  ],
+  "missing": [
+    {
+      "name": "Placement rules",
+      "why": "How library assets are placed on map data. Half of the library, with no spec yet."
+    },
+    {
+      "name": "Contributor skill file",
+      "why": "The instructions a contributor's model follows. Planned for build step 6."
+    },
+    {
+      "name": "Behaviour registry",
+      "why": "What an asset must provide to be openable, drivable or rideable."
+    },
+    {
+      "name": "Connector registry",
+      "why": "The format exists in the asset spec. No types are registered yet."
+    },
+    {
+      "name": "Clip registry",
+      "why": "The names animation clips may use, such as idle, walk and run. One library has built six clips; no names are registered."
+    }
+  ],
+  "durable": [
+    {
+      "what": "Asset IDs and versions",
+      "why": "Anything built from an asset can be rebuilt predictably"
+    },
+    {
+      "what": "Units, axes and real-world coordinates",
+      "why": "Atoms and places line up without manual fixing"
+    },
+    {
+      "what": "Connector names, sides and mating dimensions",
+      "why": "Atoms made years apart still snap together"
+    },
+    {
+      "what": "Each asset's description, recipe and sources",
+      "why": "Better tools can regenerate it, and attribution survives"
+    },
+    {
+      "what": "Open, engine-neutral file formats",
+      "why": "The library outlives any one engine"
+    }
+  ],
+  "scale_levels": [
+    {
+      "n": 1,
+      "name": "Body",
+      "what": "A planet or moon",
+      "example": "Earth",
+      "built": "Reference shape and coordinates, fixed once",
+      "by": "Fixed"
+    },
+    {
+      "n": 2,
+      "name": "Terrain",
+      "what": "The ground surface and what covers it",
+      "example": "Mount Fuji, a coastline",
+      "built": "Open elevation data, refined by terrain tasks",
+      "by": "Data and contributors"
+    },
+    {
+      "n": 3,
+      "name": "Region",
+      "what": "A city or district, the unit that unlocks",
+      "example": "One neighbourhood",
+      "built": "A data pack and a look sheet",
+      "by": "Data"
+    },
+    {
+      "n": 4,
+      "name": "Block",
+      "what": "Streets, lots and what stands on them",
+      "example": "A city block",
+      "built": "Placement rules run on open map data",
+      "by": "Rules"
+    },
+    {
+      "n": 5,
+      "name": "Structure",
+      "what": "A building, bridge or tower",
+      "example": "An apartment block, the Eiffel Tower",
+      "built": "Assembled from atoms and kits",
+      "by": "Contributors"
+    },
+    {
+      "n": 6,
+      "name": "Space",
+      "what": "A room or interior",
+      "example": "A living room",
+      "built": "Assembled from atoms and objects",
+      "by": "Contributors"
+    },
+    {
+      "n": 7,
+      "name": "Object",
+      "what": "A complete thing that can be placed or used",
+      "example": "A car, a computer, a skateboard",
+      "built": "Assembled from atoms",
+      "by": "Contributors"
+    },
+    {
+      "n": 8,
+      "name": "Atom",
+      "what": "The smallest piece that is reused or moves on its own",
+      "example": "A wheel, a bearing, a door",
+      "built": "Built by a contributor",
+      "by": "Contributors"
+    },
+    {
+      "n": 9,
+      "name": "Material",
+      "what": "A shared surface",
+      "example": "Brick, glass, painted metal",
+      "built": "Built once, referenced by ID",
+      "by": "Contributors"
+    }
+  ],
+  "asset_kinds": [
+    {
+      "name": "Library asset",
+      "what": "A reusable atom, kit or object",
+      "placed": "Many times, by placement rules",
+      "example": "A street light, a window bay, a sedan"
+    },
+    {
+      "name": "Unique asset",
+      "what": "One real thing at one real location",
+      "placed": "Once, at its real coordinates",
+      "example": "The Eiffel Tower, Mount Fuji's summit"
+    }
+  ],
+  "accuracy_levels": [
+    {
+      "id": "A0",
+      "name": "Blockout",
+      "meaning": "A plain low-detail shape generated from map data, with the real footprint and height",
+      "example": "A grey box with the right outline and height",
+      "from": "Map data"
+    },
+    {
+      "id": "A1",
+      "name": "Dressed",
+      "meaning": "Placement rules cover the blockout with typical library atoms for that region",
+      "example": "Typical windows, doors and roof on the right shape",
+      "from": "Placement rules"
+    },
+    {
+      "id": "A2",
+      "name": "True exterior",
+      "meaning": "Rebuilt from atoms by a contributor, from references of the real thing",
+      "example": "The actual building, recognisable from the street",
+      "from": "A unique-asset task"
+    },
+    {
+      "id": "A3",
+      "name": "True inside and out",
+      "meaning": "Interior layout and contents also match",
+      "example": "Its real floor plan and rooms",
+      "from": "A unique-asset task"
+    }
+  ],
+  "categories": [
+    {
+      "code": "veh",
+      "name": "Vehicles and vehicle atoms",
+      "status": "Existing"
+    },
+    {
+      "code": "bld",
+      "name": "Buildings, facade modules, structures",
+      "status": "Existing"
+    },
+    {
+      "code": "prop",
+      "name": "Street furniture and outdoor props",
+      "status": "Existing"
+    },
+    {
+      "code": "veg",
+      "name": "Vegetation",
+      "status": "Existing"
+    },
+    {
+      "code": "gnd",
+      "name": "Ground and street surfaces",
+      "status": "Existing"
+    },
+    {
+      "code": "mat",
+      "name": "Shared materials",
+      "status": "Existing"
+    },
+    {
+      "code": "ter",
+      "name": "Terrain features",
+      "status": "New"
+    },
+    {
+      "code": "int",
+      "name": "Interior fittings and furniture",
+      "status": "New"
+    },
+    {
+      "code": "obj",
+      "name": "Everyday objects, tools and devices",
+      "status": "New"
+    },
+    {
+      "code": "chr",
+      "name": "Characters, animals and robots",
+      "status": "New"
+    }
+  ],
+  "behaviours": [
+    "openable",
+    "drivable",
+    "rideable",
+    "sittable",
+    "switchable",
+    "walks",
+    "flies",
+    "transformable"
+  ],
+  "accuracy_rules": [
+    {
+      "subject": "Terrain, coastlines, street layouts",
+      "rule": "Accurate",
+      "reason": "Facts about the world, taken from open data"
+    },
+    {
+      "subject": "Buildings, bridges, landmarks",
+      "rule": "Accurate",
+      "reason": "The point of the project"
+    },
+    {
+      "subject": "Signs, shopfronts, brand names, logos",
+      "rule": "Held",
+      "reason": "Trademark risk"
+    },
+    {
+      "subject": "Specific product designs",
+      "rule": "Held",
+      "reason": "Design-right and trademark risk"
+    },
+    {
+      "subject": "Real people",
+      "rule": "Never",
+      "reason": "Privacy"
+    },
+    {
+      "subject": "Readable licence plates and personal data",
+      "rule": "Never",
+      "reason": "Privacy"
+    }
+  ],
+  "connector": {
+    "pattern": "conn_<type>_<side>_<index>",
+    "example": "conn_wheel_hub_a_01",
+    "mate_rules": [
+      "Their positions coincide.",
+      "Their +Z axes point in opposite directions.",
+      "Their +Y axes point the same way, unless the type's symmetry allows otherwise."
+    ],
+    "registry_fields": [
+      "type",
+      "sides",
+      "mating_dimensions",
+      "symmetry",
+      "motion",
+      "axis"
+    ],
+    "tolerance": "Position within 1 mm, direction within 0.5°",
+    "motions": [
+      "fixed",
+      "hinge",
+      "spin",
+      "ball",
+      "slide"
+    ]
+  },
+  "profile": {
+    "name": "Profile 1 (2026)",
+    "tier": 1,
+    "budgets": [
+      {
+        "class": "Small prop",
+        "examples": "Street light, bench, hydrant",
+        "triangles": 10000
+      },
+      {
+        "class": "Large prop",
+        "examples": "Tree, bus shelter",
+        "triangles": 40000
+      },
+      {
+        "class": "Vehicle atom",
+        "examples": "Door, wheel, bonnet",
+        "triangles": 25000
+      },
+      {
+        "class": "Vehicle assembly",
+        "examples": "Complete car",
+        "triangles": 200000
+      },
+      {
+        "class": "Facade module",
+        "examples": "Window bay, door bay",
+        "triangles": 15000
+      },
+      {
+        "class": "Blockout",
+        "examples": "One building as a plain shape",
+        "triangles": 500
+      },
+      {
+        "class": "Character atom",
+        "examples": "Head, torso, limb",
+        "triangles": 15000
+      },
+      {
+        "class": "Character assembly",
+        "examples": "Complete character or robot",
+        "triangles": 60000
+      }
+    ],
+    "limits": [
+      {
+        "rule": "Smallest modelled feature",
+        "value": "2 cm"
+      },
+      {
+        "rule": "Resolution",
+        "value": "512 pixels per metre"
+      },
+      {
+        "rule": "Maximum size",
+        "value": "4,096 × 4,096"
+      },
+      {
+        "rule": "Collision shapes",
+        "value": "One to eight convex shapes"
+      },
+      {
+        "rule": "Scale tolerance",
+        "value": "Within 2%"
+      },
+      {
+        "rule": "Mating tolerance",
+        "value": "within 1 mm"
+      },
+      {
+        "rule": "Asset folder size",
+        "value": "Under 100 MB"
+      }
+    ]
+  },
+  "tiers": [
+    {
+      "n": 1,
+      "name": "Street",
+      "holds_at": "2 m and beyond",
+      "feature": "2 cm",
+      "px_per_m": 512,
+      "status": "Required now"
+    },
+    {
+      "n": 2,
+      "name": "Close",
+      "holds_at": "0.5 m, first-person view",
+      "feature": "5 mm",
+      "px_per_m": 1024,
+      "status": "Opens when tools allow"
+    },
+    {
+      "n": 3,
+      "name": "Hero",
+      "holds_at": "Any distance",
+      "feature": "1 mm",
+      "px_per_m": 2048,
+      "status": "Future"
+    }
+  ],
+  "principles": [
+    "Measure, don't guess.",
+    "Physically based materials.",
+    "Neutral assets.",
+    "Motivated wear.",
+    "True to the real place.",
+    "Detail matches size."
+  ],
+  "workflow": [
+    {
+      "name": "Pick an object",
+      "what": "Choose one from the board, or propose a new one."
+    },
+    {
+      "name": "Write the blueprint",
+      "what": "If the object has none, the blueprint is the first submission. It lists every atom the object needs."
+    },
+    {
+      "name": "Check the library",
+      "what": "Each slot is filled by an existing atom that fits, or marked as new."
+    },
+    {
+      "name": "Build the missing atoms",
+      "what": "One atom at a time, each as its own pull request. Once one is submitted, the next can start."
+    },
+    {
+      "name": "Assemble",
+      "what": "When every slot holds a merged atom, submit the assembly manifest."
+    },
+    {
+      "name": "Merge",
+      "what": "The object enters the library. Its atoms were already there for everyone else."
+    }
+  ],
+  "fit_rules": [
+    "It carries every connector the slot requires, with the same type and side.",
+    "Its mating dimensions match the slot's, within the profile's mating tolerance.",
+    "Its size is within the profile's scale tolerance of the slot's dimensions.",
+    "Its description matches what the slot asks for."
+  ],
+  "slot_states": [
+    {
+      "name": "Reused",
+      "meaning": "Filled by an atom already in the library"
+    },
+    {
+      "name": "Open",
+      "meaning": "Needed, and nobody is building it"
+    },
+    {
+      "name": "In progress",
+      "meaning": "Being built, with the builder's name and the time left on the claim"
+    },
+    {
+      "name": "In review",
+      "meaning": "Submitted and waiting for a verdict"
+    },
+    {
+      "name": "Merged",
+      "meaning": "In the library"
+    }
+  ],
+  "example_blueprint": {
+    "object": "Skateboard",
+    "object_id": "obj_skateboard_01",
+    "slots": [
+      {
+        "slot": "deck",
+        "label": "Deck",
+        "count": 1
+      },
+      {
+        "slot": "grip_tape",
+        "label": "Grip tape",
+        "count": 1
+      },
+      {
+        "slot": "truck",
+        "label": "Truck",
+        "count": 2
+      },
+      {
+        "slot": "wheel",
+        "label": "Wheel",
+        "count": 4
+      },
+      {
+        "slot": "bearing",
+        "label": "Bearing",
+        "count": 8
+      }
+    ]
+  },
+  "mcp_tools": [
+    {
+      "tool": "whats_needed",
+      "what": "Lists objects and atoms that need a builder, filtered by trust level, region and category"
+    },
+    {
+      "tool": "get_object",
+      "what": "Returns an object's blueprint and the state of every slot"
+    },
+    {
+      "tool": "find_atoms",
+      "what": "Searches the library for atoms that fit a slot"
+    },
+    {
+      "tool": "claim",
+      "what": "Claims an object or its next atom, and returns the work order"
+    },
+    {
+      "tool": "my_work",
+      "what": "Shows the contributor's claims, time left, review verdicts and any newer rules"
+    },
+    {
+      "tool": "submit",
+      "what": "Marks the pull request ready for review"
+    },
+    {
+      "tool": "release",
+      "what": "Gives a claim back with no penalty"
+    },
+    {
+      "tool": "get_rules",
+      "what": "Returns any section of the specs at a given version"
+    },
+    {
+      "tool": "next_review",
+      "what": "Hands a level 2 contributor an atom to review, chosen at random"
+    },
+    {
+      "tool": "send_review",
+      "what": "Records the review's verdict and reasons"
+    }
+  ],
+  "service_rules": [
+    {
+      "name": "Nothing is copied ahead of time.",
+      "what": "A contributor's machine holds no rulebook. The rules arrive with the work, when it is claimed."
+    },
+    {
+      "name": "Every claim pins its versions.",
+      "what": "The work order names the exact spec, capability profile and style guide the atom must meet."
+    },
+    {
+      "name": "The validator is the backstop.",
+      "what": "Every submission records the versions it was built against. One built against old rules is bounced with a list of what changed, so stale instructions cost a contributor one retry and never reach the library."
+    }
+  ],
+  "provenance": {
+    "declared": [
+      {
+        "field": "author",
+        "what": "GitHub handle of the contributor who built it"
+      },
+      {
+        "field": "co_authors",
+        "what": "Anyone else who worked on it"
+      },
+      {
+        "field": "tools",
+        "what": "Each model and program used, with its version and what it was used for (geometry, textures, planning)"
+      },
+      {
+        "field": "created",
+        "what": "The date the asset was built"
+      },
+      {
+        "field": "as_of",
+        "what": "For unique assets, the date the real thing looked like this. Buildings change"
+      },
+      {
+        "field": "dimension_source",
+        "what": "Whether sizes were measured from data, estimated, or designed for an invented object"
+      },
+      {
+        "field": "derived_from",
+        "what": "Any asset this one was adapted or regenerated from"
+      }
+    ],
+    "stamped": [
+      {
+        "field": "merged",
+        "what": "The date it entered the library"
+      },
+      {
+        "field": "reviewed_by",
+        "what": "The reviewers and the date of each verdict"
+      },
+      {
+        "field": "validator",
+        "what": "The validator version that passed it"
+      },
+      {
+        "field": "content_hash",
+        "what": "A fingerprint of the files, so later changes are detectable"
+      },
+      {
+        "field": "supersedes",
+        "what": "The previous version of this asset, if any"
+      },
+      {
+        "field": "status",
+        "what": "`current`, `superseded` or `withdrawn`"
+      }
+    ]
+  },
+  "task_sizes": [
+    {
+      "size": "S",
+      "what": "One atom",
+      "window": "48 hours",
+      "warning": "At 36 hours",
+      "extension": "+24 hours"
+    },
+    {
+      "size": "M",
+      "what": "A kit of matching atoms",
+      "window": "5 days",
+      "warning": "At day 4",
+      "extension": "+2 days"
+    },
+    {
+      "size": "L",
+      "what": "An object assembled from merged atoms",
+      "window": "7 days",
+      "warning": "At day 5",
+      "extension": "+3 days"
+    }
+  ],
+  "task_states": [
+    "Locked",
+    "Open",
+    "Claimed",
+    "In review",
+    "Changes requested",
+    "Merged"
+  ],
+  "transitions": [
+    {
+      "from": "Locked",
+      "to": "Open",
+      "trigger": "Dependencies merged and region unlocked"
+    },
+    {
+      "from": "Open",
+      "to": "Claimed",
+      "trigger": "A contributor claims it"
+    },
+    {
+      "from": "Claimed",
+      "to": "In review",
+      "trigger": "Submitted (pull request marked ready)"
+    },
+    {
+      "from": "Claimed",
+      "to": "Open",
+      "trigger": "Claim expired or released"
+    },
+    {
+      "from": "In review",
+      "to": "Merged",
+      "trigger": "Passes review"
+    },
+    {
+      "from": "In review",
+      "to": "Changes requested",
+      "trigger": "Needs fixes"
+    },
+    {
+      "from": "In review",
+      "to": "Open",
+      "trigger": "Rejected"
+    },
+    {
+      "from": "Changes requested",
+      "to": "In review",
+      "trigger": "Resubmitted"
+    },
+    {
+      "from": "Changes requested",
+      "to": "Open",
+      "trigger": "No resubmit in 72 hours"
+    }
+  ],
+  "trust_levels": [
+    {
+      "n": 0,
+      "name": "New",
+      "reach": "GitHub sign-in and licence agreement accepted",
+      "claims": 1,
+      "sizes": "Starter-tagged objects",
+      "open_prs": "2",
+      "spec_role": "Open an issue describing a problem with a spec"
+    },
+    {
+      "n": 1,
+      "name": "Contributor",
+      "reach": "3 merged tasks",
+      "claims": 2,
+      "sizes": "Any object except landmarks",
+      "open_prs": "2",
+      "spec_role": "Open an issue describing a problem with a spec"
+    },
+    {
+      "n": 2,
+      "name": "Trusted",
+      "reach": "15 merged tasks, with 70% or more approved on first review",
+      "claims": 3,
+      "sizes": "Any object, including landmarks and kits",
+      "open_prs": "4",
+      "spec_role": "Propose a change as a pull request against `docs/`, and propose new connector types, behaviours and materials"
+    },
+    {
+      "n": 3,
+      "name": "Maintainer",
+      "reach": "Invited by project leads",
+      "claims": 5,
+      "sizes": "All, plus review rights",
+      "open_prs": "No cap",
+      "spec_role": "Approve changes, write capability profiles, create and split tasks"
+    }
+  ],
+  "review_gates": [
+    {
+      "name": "Automated checks",
+      "what": "The validator. A failure bounces the pull request with the failing check named."
+    },
+    {
+      "name": "Render check",
+      "what": "Fixed cameras, fixed light. A vision model compares the renders with the reference pack."
+    },
+    {
+      "name": "Model review",
+      "what": "A reviewer model scores the checklist: pass, changes requested, or reject."
+    },
+    {
+      "name": "Human check",
+      "what": "First 3 submissions, every L task, every landmark, and a 10% random sample."
+    },
+    {
+      "name": "Merge",
+      "what": "The asset enters the library and dependent tasks unlock."
+    }
+  ],
+  "checks": [
+    {
+      "name": "File validity",
+      "source": "Contract"
+    },
+    {
+      "name": "Folder and naming",
+      "source": "Contract"
+    },
+    {
+      "name": "Metadata",
+      "source": "Contract"
+    },
+    {
+      "name": "Scale",
+      "source": "Profile"
+    },
+    {
+      "name": "Transforms",
+      "source": "Contract"
+    },
+    {
+      "name": "Triangle budget",
+      "source": "Profile"
+    },
+    {
+      "name": "Mesh health",
+      "source": "Profile"
+    },
+    {
+      "name": "Connectors",
+      "source": "Contract"
+    },
+    {
+      "name": "Assembly",
+      "source": "Contract"
+    },
+    {
+      "name": "Variation",
+      "source": "Contract"
+    },
+    {
+      "name": "Blueprint",
+      "source": "Contract"
+    },
+    {
+      "name": "Reuse",
+      "source": "Contract"
+    },
+    {
+      "name": "Clip",
+      "source": "Contract"
+    },
+    {
+      "name": "Collision",
+      "source": "Profile"
+    },
+    {
+      "name": "Textures",
+      "source": "Profile"
+    },
+    {
+      "name": "Materials",
+      "source": "Profile"
+    },
+    {
+      "name": "File size",
+      "source": "Profile"
+    },
+    {
+      "name": "Licence",
+      "source": "Contract"
+    }
+  ],
+  "libraries": [
+    {
+      "name": "Earth, Again",
+      "what": "Real places, modelled accurately",
+      "look": "Grounded realism",
+      "status": "No assets yet"
+    },
+    {
+      "name": "Frontier Colony",
+      "what": "An invented world",
+      "look": "Cel-styled",
+      "status": "First object rebuilt as atoms: a robot of 21 atoms, 40 instances and 39 joints, with six animation clips"
+    }
+  ],
+  "variation": [
+    {
+      "what": "Scale",
+      "declared": "The atom or assembly, as a range",
+      "chosen": "A manifest entry or a placement rule",
+      "example": "One tree placed at 0.8 to 1.3 times its size",
+      "status": "rule"
+    },
+    {
+      "what": "Span",
+      "declared": "The atom, as a marked span that stretches or repeats",
+      "chosen": "A manifest entry or a placement rule",
+      "example": "A beam from 2 m to 7 m, a stair of 3 to 20 steps",
+      "status": "proposed"
+    },
+    {
+      "what": "Motion",
+      "declared": "The connector type and the atom's limits, as defaults",
+      "chosen": "The joint in a manifest",
+      "example": "A hinged ankle that also rolls 12 degrees",
+      "status": "rule"
+    },
+    {
+      "what": "Look",
+      "declared": "The atom, as an open material slot",
+      "chosen": "A manifest entry or a placement rule",
+      "example": "One sedan in twelve paint colours",
+      "status": "rule"
+    },
+    {
+      "what": "Behaviour settings",
+      "declared": "The behaviour registry",
+      "chosen": "The object's metadata",
+      "example": "A door that closes itself",
+      "status": "rule"
+    }
+  ]
+}

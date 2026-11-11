@@ -1,0 +1,712 @@
+<title>Earth, Again Spec Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root {
+    --bg: #efebe4; --panel: #f8f5f0; --ink: #171614; --muted: #6a655d; --line: #d8d1c5;
+    --accent: #df6426; --accent-soft: #f6dccb; --on-accent: #fff;
+    --ok: #2c7a4d; --ok-soft: #d8eadf; --hold: #a86a12; --hold-soft: #f3e3c4; --no: #b23b2a; --no-soft: #f3d6d0;
+    --fixed: #2d4f96; --fixed-soft: #d9e2f3;
+    --spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1.004 83.8%, 1);
+    --settle: linear(0, 0.03 2%, 0.33 9%, 0.62 16%, 0.83 24%, 0.95 33%, 1.005 43%, 1.02 53%, 1.012 66%, 1 100%);
+    --display: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter Tight", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131211; --panel: #1b1a18; --ink: #f2eee7; --muted: #a29c91; --line: #34312c;
+      --accent: #f2803f; --accent-soft: #46291a; --on-accent: #1a0d05;
+      --ok: #6fc592; --ok-soft: #1c3527; --hold: #e3b25a; --hold-soft: #3c2f14; --no: #ee8573; --no-soft: #41201a;
+      --fixed: #8fb0f2; --fixed-soft: #1d2a47;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131211; --panel: #1b1a18; --ink: #f2eee7; --muted: #a29c91; --line: #34312c;
+    --accent: #f2803f; --accent-soft: #46291a; --on-accent: #1a0d05;
+    --ok: #6fc592; --ok-soft: #1c3527; --hold: #e3b25a; --hold-soft: #3c2f14; --no: #ee8573; --no-soft: #41201a;
+    --fixed: #8fb0f2; --fixed-soft: #1d2a47;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); -webkit-font-smoothing: antialiased; }
+  .wrap { --gl: max(16px, env(safe-area-inset-left, 0px)); --gr: max(16px, env(safe-area-inset-right, 0px)); max-width: 1040px; margin: 0 auto; padding-block: 0 96px; padding-left: var(--gl); padding-right: var(--gr); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; margin: 0; text-wrap: balance; }
+  h1 { font-size: clamp(40px, 9vw, 84px); }
+  h2 { font-size: clamp(28px, 5.2vw, 44px); }
+  h3 { font-size: 20px; letter-spacing: -0.01em; }
+  p { margin: 0; text-wrap: pretty; }
+  code, .mono { font-family: var(--mono); font-size: 0.86em; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header.top { padding: 56px 0 28px; }
+  .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 18px; }
+  .lede { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); max-width: 46ch; margin-top: 18px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 32px; }
+  .stat { background: var(--panel); padding: 14px 14px 12px; }
+  .stat b { display: block; font: 800 clamp(24px, 5vw, 36px)/1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 12.5px; color: var(--muted); line-height: 1.25; display: block; margin-top: 6px; }
+  .draft { margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+
+  nav.jump { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); margin: 0 calc(-1 * var(--gr)) 0 calc(-1 * var(--gl)); padding: 10px var(--gr) 10px var(--gl); border-bottom: 1px solid var(--line); display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  nav.jump::-webkit-scrollbar { display: none; }
+  nav.jump a { flex: none; font: 600 13px/1 var(--display); color: var(--muted); text-decoration: none; padding: 8px 12px; border-radius: 999px; border: 1px solid transparent; transition: color .2s, background .2s, border-color .2s; }
+  nav.jump a.on { color: var(--ink); background: var(--panel); border-color: var(--line); }
+
+  .wrap { counter-reset: sec; }
+  section { padding: 64px 0 0; scroll-margin-top: 48px; counter-increment: sec; }
+  .num::before { content: counter(sec, decimal-leading-zero); }
+  .num { font: 600 12px/1 var(--mono); color: var(--muted); letter-spacing: 0.08em; margin-bottom: 12px; }
+  .sub { color: var(--muted); max-width: 58ch; margin-top: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+  .grid2 { display: grid; gap: 16px; margin-top: 28px; }
+  @media (min-width: 820px) { .grid2 { grid-template-columns: 1fr 1fr; } .grid2.wide-left { grid-template-columns: 1.15fr 0.85fr; } }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font: 600 11.5px/1 var(--mono); letter-spacing: 0.03em; padding: 5px 8px; border-radius: 6px; background: var(--line); color: var(--ink); white-space: nowrap; }
+  .chip.new { background: var(--accent-soft); color: var(--accent); }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .chip.hold { background: var(--hold-soft); color: var(--hold); }
+  .chip.no { background: var(--no-soft); color: var(--no); }
+  .chip.fixed { background: var(--fixed-soft); color: var(--fixed); }
+  .label { font: 600 11.5px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+  /* 1 stack */
+  .stack { margin-top: 28px; display: grid; gap: 8px; }
+  .slab { width: 100%; text-align: left; display: block; padding: 16px 18px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); transition: transform .5s var(--spring), border-color .2s; }
+  .slab:active { transform: scale(0.985); }
+  .slab[aria-expanded="true"] { border-color: var(--ink); }
+  .slab .row { display: flex; align-items: center; gap: 12px; }
+  .slab .idx { font: 600 12px/1 var(--mono); color: var(--muted); width: 18px; }
+  .slab .name { font: 800 clamp(19px, 3.6vw, 24px)/1.1 var(--display); letter-spacing: -0.015em; flex: 1; }
+  .slab .q { color: var(--muted); font-size: 14.5px; margin: 4px 0 0 30px; }
+  .slab .more { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .55s var(--settle); }
+  .slab[aria-expanded="true"] .more { grid-template-rows: 1fr; }
+  .slab .more > div { overflow: hidden; }
+  .slab .more p { margin: 12px 0 2px 30px; font-size: 15px; }
+  .slab .more .mono { display: inline-block; margin: 8px 0 0 30px; color: var(--muted); }
+  .slab.vision { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .slab.vision .idx, .slab.vision .q, .slab.vision .more .mono { color: color-mix(in srgb, var(--bg) 65%, var(--ink)); }
+  .missing { margin-top: 16px; display: grid; gap: 8px; }
+  @media (min-width: 700px) { .missing { grid-template-columns: 1fr 1fr; } }
+  .miss { border: 1px dashed var(--muted); border-radius: 14px; padding: 14px 16px; }
+  .miss b { font: 800 17px/1.2 var(--display); display: block; }
+  .miss span { font-size: 14px; color: var(--muted); }
+
+  /* 2 zoom */
+  .zoom { position: relative; aspect-ratio: 1 / 1; max-height: 440px; width: 100%; overflow: hidden; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+  .zoom svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .zoom g.rings { transform-origin: 500px 500px; transition: transform 1s var(--settle); }
+  .zoom .ring { fill: none; stroke: var(--muted); stroke-width: 1.5; vector-effect: non-scaling-stroke; opacity: .45; transition: opacity .4s, stroke .4s, fill .4s; }
+  .zoom .ring.sel { stroke: var(--accent); stroke-width: 3; opacity: 1; fill: var(--accent-soft); }
+  .zoom .ring.inner { opacity: .7; stroke: var(--accent); }
+  .zoom .tag { position: absolute; left: 12px; top: 12px; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .zoom .tag b { font: 800 clamp(26px, 6vw, 38px)/1 var(--display); letter-spacing: -0.02em; display: block; }
+  .zoom .tag span { font: 600 12px/1 var(--mono); color: var(--accent); display: block; margin-bottom: 8px; }
+  .ladder { display: grid; gap: 4px; }
+  .rung { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 12px; border-radius: 10px; border: 1px solid transparent; transition: background .2s, border-color .2s, transform .45s var(--spring); }
+  .rung .n { font: 600 12px/1 var(--mono); color: var(--muted); width: 14px; }
+  .rung .t { font: 600 16px/1.1 var(--display); flex: 1; }
+  .rung .who { font-size: 12px; color: var(--muted); }
+  .rung[aria-pressed="true"] { background: var(--panel); border-color: var(--line); transform: translateX(6px); }
+  .rung[aria-pressed="true"] .n { color: var(--accent); }
+  .detail { padding: 18px; margin-top: 12px; }
+  .detail dl { margin: 12px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 15px; }
+  .detail dt { color: var(--muted); font-size: 13px; padding-top: 2px; }
+  .detail dd { margin: 0; }
+  .kinds { margin-top: 16px; display: grid; gap: 12px; }
+  @media (min-width: 700px) { .kinds { grid-template-columns: 1fr 1fr; } }
+  .kind { padding: 18px; }
+  .kind p { color: var(--muted); font-size: 15px; margin-top: 6px; }
+  .kind .ex { margin-top: 12px; font-size: 14px; }
+  .cats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+
+  /* 3 accuracy */
+  .seg { display: inline-flex; padding: 4px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); position: relative; gap: 2px; max-width: 100%; }
+  .seg button { position: relative; z-index: 1; font: 600 14px/1 var(--display); padding: 10px 13px; border-radius: 8px; color: var(--muted); transition: color .2s; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { color: var(--bg); }
+  .seg .thumb { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 8px; background: var(--ink); transition: transform .6s var(--spring), width .6s var(--spring); }
+  .acc-stage { padding: 12px; }
+  .acc-stage svg { width: 100%; height: auto; display: block; }
+  .acc-stage g.lv { opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .7s var(--spring); }
+  .acc-stage g.lv.on { opacity: 1; transform: none; }
+  .rules { display: grid; gap: 1px; background: var(--line); border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+  .rule { background: var(--panel); padding: 12px 14px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .rule b { font-weight: 600; font-size: 15px; }
+  .rule small { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+
+  /* 4 snap */
+  .snap { display: grid; gap: 4px; padding: 16px; }
+  @media (min-width: 560px) { .snap { grid-template-columns: 1.2fr 1fr; align-items: center; gap: 16px; } }
+  .snap figure { margin: 0; }
+  .snap svg { width: 100%; height: auto; display: block; }
+  .snap .rollfig svg { max-width: 280px; margin: 0 auto; }
+  .snap .partB { transition: transform .9s var(--spring); }
+  .snap .roll { transform-origin: 150px 150px; transition: transform .8s var(--spring); }
+  .ctrls { display: grid; gap: 14px; padding: 18px; }
+  .ctrl { display: grid; gap: 8px; }
+  .checks3 { display: grid; gap: 8px; padding: 0 18px 18px; }
+  .ck { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; font-size: 15px; }
+  .ck i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 600 12px/1 var(--mono); font-style: normal; background: var(--no-soft); color: var(--no); transition: background .25s, color .25s, transform .5s var(--spring); }
+  .ck.pass i { background: var(--ok-soft); color: var(--ok); transform: scale(1.08); }
+  .verdict { margin: 0 18px 18px; padding: 12px 14px; border-radius: 10px; font: 600 15px/1.3 var(--display); background: var(--no-soft); color: var(--no); transition: background .25s, color .25s; }
+  .verdict.pass { background: var(--ok-soft); color: var(--ok); }
+
+  /* atoms */
+  .obj { padding: 18px; }
+  .obj .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .obj svg { width: 100%; height: auto; display: block; margin: 8px 0 4px; }
+  .sk { transition: opacity .3s; }
+  .sk * { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 5 5; transition: fill .3s, stroke .3s; }
+  .sk[data-st="none"] { opacity: 0; }
+  .sk[data-st="In progress"] * { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: none; }
+  .sk[data-st="In review"] * { fill: var(--hold-soft); stroke: var(--hold); stroke-dasharray: none; }
+  .sk[data-st="Merged"] * { fill: var(--ok-soft); stroke: var(--ok); stroke-dasharray: none; }
+  .sk[data-st="Reused"] * { fill: var(--fixed-soft); stroke: var(--fixed); stroke-dasharray: none; }
+  .slots { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-top: 10px; }
+  .slot { background: var(--panel); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 600; font-size: 15px; transition: opacity .3s; }
+  .slot small { color: var(--muted); font: 400 12.5px var(--mono); margin-left: 6px; }
+  .slot .chip { transition: transform .5s var(--spring); }
+  .slot .chip.pop { transform: scale(1.12); }
+  .slots.ghost .slot { opacity: .3; }
+  .walk { padding: 18px; display: grid; gap: 14px; align-content: start; }
+  .wsteps { display: grid; gap: 2px; }
+  .wstep { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 7px 0; color: var(--muted); font: 600 15px/1.25 var(--display); transition: color .2s; }
+  .wstep i { font: 600 12px/1.6 var(--mono); font-style: normal; }
+  .wstep.on { color: var(--ink); }
+  .wstep.on i { color: var(--accent); }
+  .wstep.done { color: var(--ok); }
+  .wnote { border-top: 1px solid var(--line); padding-top: 14px; font-size: 15.5px; min-height: 5.6em; }
+  .wbtns { display: flex; gap: 8px; align-items: center; }
+  .btn { font: 600 15px/1 var(--display); padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); transition: transform .45s var(--spring), opacity .2s; }
+  .btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn:active { transform: scale(.95); }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .wcount { margin-left: auto; font: 600 12px/1 var(--mono); color: var(--muted); }
+  .fit { margin-top: 16px; padding: 18px; }
+  .fit ol { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15px; }
+
+  /* ask your agent */
+  .chat { padding: 18px; display: grid; gap: 12px; }
+  .bubble { max-width: 92%; padding: 12px 14px; border-radius: 16px; font-size: 15.5px; line-height: 1.4; }
+  .bubble.me { justify-self: end; background: var(--ink); color: var(--bg); border-bottom-right-radius: 4px; }
+  .bubble.ai { background: var(--bg); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .bubble.ai ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+  .call { justify-self: start; font: 600 12px/1 var(--mono); color: var(--accent); background: var(--accent-soft); padding: 7px 9px; border-radius: 6px; }
+  .tools { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .tool { background: var(--panel); padding: 11px 14px; }
+  .tool code { color: var(--accent); font-weight: 600; }
+  .tool span { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .srules { display: grid; gap: 10px; margin-top: 16px; }
+  @media (min-width: 820px) { .srules { grid-template-columns: repeat(3, 1fr); } }
+  .srule { padding: 16px; }
+  .srule b { font: 800 18px/1.15 var(--display); display: block; margin-bottom: 6px; }
+  .srule span { font-size: 14.5px; color: var(--muted); }
+
+  /* 5 fixed vs rising */
+  .locks { padding: 6px 18px 12px; }
+  .lock { display: grid; grid-template-columns: 22px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .lock:last-child { border-bottom: 0; }
+  .lock svg { width: 18px; height: 18px; margin-top: 2px; color: var(--fixed); }
+  .lock b { font-weight: 600; display: block; }
+  .lock span { color: var(--muted); font-size: 14px; }
+  .rise { padding: 18px; }
+  .tiernums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 6px; }
+  .tiernums div b { font: 800 clamp(22px, 5vw, 30px)/1 var(--display); display: block; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .tiernums div span { font-size: 12.5px; color: var(--muted); }
+  .bars { margin-top: 18px; display: grid; gap: 10px; }
+  .bar .cap { display: flex; justify-content: space-between; font-size: 13.5px; gap: 8px; }
+  .bar .cap b { font-weight: 600; }
+  .bar .cap span { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .bar .track { height: 8px; border-radius: 4px; background: var(--line); margin-top: 5px; overflow: hidden; }
+  .bar .fill { height: 100%; border-radius: 4px; background: var(--accent); transform-origin: left; transform: scaleX(0); transition: transform 1.1s var(--settle); }
+  .seen .bar .fill { transform: scaleX(var(--w)); }
+  .limits { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; font-size: 14px; }
+  .limits span { color: var(--muted); display: block; font-size: 12.5px; }
+
+  /* 6 lifecycle */
+  .flow svg { width: 100%; height: auto; display: block; max-width: 420px; margin: 0 auto; }
+  .flow .node rect { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; transition: fill .2s, stroke .2s; }
+  .flow .node text { font: 600 14px var(--display); fill: var(--ink); text-anchor: middle; dominant-baseline: central; transition: fill .2s; }
+  .flow .node { cursor: pointer; transition: transform .5s var(--spring); transform-box: fill-box; transform-origin: center; }
+  .flow .node.sel { transform: scale(1.06); }
+  .flow .node.sel rect { fill: var(--ink); stroke: var(--ink); }
+  .flow .node.sel text { fill: var(--bg); }
+  .flow .node.dest rect { stroke: var(--accent); stroke-width: 2.5; }
+  .flow .edge { fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .5; transition: stroke .2s, opacity .2s, stroke-width .2s; }
+  .flow .edge.hot { stroke: var(--accent); opacity: 1; stroke-width: 2.5; }
+  .flow .edge.dim { opacity: .14; }
+  .trans { padding: 18px; }
+  .trans ul { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
+  .trans li { display: grid; grid-template-columns: auto 1fr; gap: 10px; font-size: 15px; align-items: baseline; }
+  .trans li .chip { background: var(--accent-soft); color: var(--accent); }
+  .sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+  .size { padding: 14px; }
+  .size b { font: 800 30px/1 var(--display); }
+  .size .w { font: 600 15px/1.2 var(--display); margin-top: 10px; }
+  .size span { display: block; font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+  /* 7 trust */
+  .stairs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: end; height: 230px; margin-top: 28px; }
+  .step { display: flex; flex-direction: column; justify-content: flex-end; height: 100%; text-align: left; }
+  .step .blk { border-radius: 12px 12px 4px 4px; background: var(--panel); border: 1px solid var(--line); padding: 10px 10px 12px; height: var(--h); display: flex; flex-direction: column; justify-content: space-between; transition: background .2s, color .2s, border-color .2s, transform .55s var(--spring); transform-origin: bottom; }
+  .step[aria-pressed="true"] .blk { background: var(--accent); color: var(--on-accent); border-color: var(--accent); transform: scaleY(1.04); }
+  .step .lv { font: 600 12px/1 var(--mono); opacity: .7; }
+  .step .nm { font: 800 clamp(14px, 3.4vw, 20px)/1.05 var(--display); letter-spacing: -0.01em; }
+  .unlock { margin-top: 12px; padding: 18px; }
+  .unlock .g { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .unlock .g b { font: 800 clamp(20px, 5vw, 28px)/1 var(--display); display: block; }
+  .unlock .g span { font-size: 12.5px; color: var(--muted); }
+  .unlock .say { border-top: 1px solid var(--line); padding-top: 14px; font-size: 15px; }
+
+  /* 8 review */
+  .gates { margin-top: 28px; display: grid; gap: 8px; counter-reset: g; }
+  @media (min-width: 900px) { .gates { grid-template-columns: repeat(5, 1fr); } }
+  .gate { padding: 16px; counter-increment: g; position: relative; }
+  .gate::before { content: counter(g); font: 600 12px/1 var(--mono); color: var(--accent); }
+  .gate b { display: block; font: 800 18px/1.15 var(--display); margin: 8px 0 6px; }
+  .gate span { font-size: 14px; color: var(--muted); }
+  .checks { margin-top: 12px; display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .check { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 14.5px; font-weight: 600; transition: opacity .25s, transform .5s var(--spring); }
+  .check.off { opacity: .28; transform: scale(.97); }
+  .filter { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+  /* 9 open */
+  .open { margin-top: 28px; display: grid; gap: 8px; }
+  details.oq { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 0 18px; }
+  details.oq summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 16px 0; cursor: pointer; font: 800 18px/1.1 var(--display); }
+  details.oq summary::-webkit-details-marker { display: none; }
+  details.oq summary .cnt { margin-left: auto; font: 600 13px/1 var(--mono); color: var(--accent); }
+  details.oq ul { margin: 0; padding: 0 0 16px 18px; display: grid; gap: 8px; font-size: 15px; color: var(--muted); }
+  footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Spec map · draft</div>
+    <h1 id="title"></h1>
+    <p class="lede">How the specs fit together: what must stay fixed, what rises with the tools, and how a part gets from a claim into the world.</p>
+    <div class="stats" id="stats"></div>
+    <p class="draft" id="draft"></p>
+  </header>
+
+  <nav class="jump" id="jump"></nav>
+
+  <section id="stack">
+    <div class="num"></div>
+    <h2 id="stackh"></h2>
+    <p class="sub">The vision sits on top and every layer below answers one question. Tap a layer to see what it holds.</p>
+    <div class="stack" id="layers"></div>
+    <div class="label" style="margin-top:28px">Libraries on this contract</div>
+    <div class="kinds" id="libs"></div>
+    <div class="label" style="margin-top:28px">Not written yet</div>
+    <div class="missing" id="missing"></div>
+  </section>
+
+  <section id="world">
+    <div class="num"></div>
+    <h2>From the planet down to a material</h2>
+    <p class="sub">Nine levels of scale. Each level is built from the ones inside it, and only some are built by hand.</p>
+    <div class="grid2">
+      <div>
+        <div class="zoom" id="zoom"></div>
+        <div class="card detail" id="lvdetail"></div>
+      </div>
+      <div class="ladder" id="ladder"></div>
+    </div>
+    <div class="kinds" id="kinds"></div>
+    <div class="label" style="margin-top:28px">Categories</div>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <section id="accuracy">
+    <div class="num"></div>
+    <h2>Every place climbs towards true</h2>
+    <p class="sub">A whole region is blocked out first as plain shapes from map data. Each building is then dressed by rules and later rebuilt from atoms by a contributor. It never moves back down.</p>
+    <div style="margin-top:28px"><div class="seg" id="accseg"><span class="thumb"></span></div></div>
+    <div class="grid2">
+      <div class="card acc-stage" id="accstage"></div>
+      <div>
+        <div class="card detail" id="accdetail" style="margin-top:0"></div>
+        <div class="label" style="margin:24px 0 10px">What may match the real world</div>
+        <div class="rules" id="rules"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="snap">
+    <div class="num"></div>
+    <h2>How two parts snap together</h2>
+    <p class="sub">A connector is a named point with two directions: one pointing out of the part, one pointing up. Try to mate two of them.</p>
+    <div class="grid2 wide-left">
+      <div class="card snap" id="snapstage"></div>
+      <div class="card">
+        <div class="ctrls">
+          <div class="ctrl"><span class="label">Distance</span><div class="seg" id="snapdist"><span class="thumb"></span></div></div>
+          <div class="ctrl"><span class="label">Turn part B</span><div class="seg" id="snaproll"><span class="thumb"></span></div></div>
+          <div class="ctrl"><span class="label">Symmetry of the type</span><div class="seg" id="snapsym"><span class="thumb"></span></div></div>
+        </div>
+        <div class="checks3" id="snapchecks"></div>
+        <div class="verdict" id="snapverdict"></div>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:16px">Connector nodes are named <code id="connpat"></code>, for example <code id="connex"></code>. Tolerance in the current profile: <span id="conntol"></span>.</p>
+    <div class="label" style="margin-top:20px">How a mated atom may move</div>
+    <div class="cats" id="motions"></div>
+    <div class="label" style="margin-top:28px">What may vary away from the connectors</div>
+    <p class="sub" style="margin-top:6px">An atom is fixed where it meets another atom. Elsewhere it may vary within a range it declares.</p>
+    <div class="kinds" id="varies"></div>
+  </section>
+
+  <section id="atoms">
+    <div class="num"></div>
+    <h2>Build an object, atom by atom</h2>
+    <p class="sub">An atom is the smallest piece that is reused or moves on its own. Pick a whole object, reuse every atom the library has, and build the rest one at a time. Step through an example.</p>
+    <div class="grid2">
+      <div class="card obj" id="objcard"></div>
+      <div>
+        <div class="card walk">
+          <div class="wsteps" id="wsteps"></div>
+          <p class="wnote" id="wnote"></p>
+          <div class="wbtns"><button class="btn" id="wback" type="button">Back</button><button class="btn primary" id="wnext" type="button">Next</button><span class="wcount" id="wcount"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fit"><span class="label">An existing atom fits a slot when</span><ol id="fit"></ol></div>
+    <div class="label" style="margin-top:24px">What every asset records about how it was made</div>
+    <div class="grid2" style="margin-top:10px">
+      <div><div style="margin-bottom:8px"><span class="chip new">Declared by the contributor</span></div><div class="tools" id="provd"></div></div>
+      <div><div style="margin-bottom:8px"><span class="chip fixed">Stamped by the service</span></div><div class="tools" id="provs"></div></div>
+    </div>
+    <div class="label" style="margin-top:24px">What the board shows for each slot</div>
+    <div class="rules" id="legend" style="margin-top:10px"></div>
+  </section>
+
+  <section id="agent">
+    <div class="num"></div>
+    <h2>Ask your agent what to build</h2>
+    <p class="sub">A contributor's agent connects to the claim system through an MCP server. It reads live state on every call, and the current rules arrive with each claim, so nobody builds from stale instructions.</p>
+    <div class="grid2">
+      <div>
+        <div class="label" style="margin-bottom:10px">Example conversation</div>
+        <div class="card chat">
+          <div class="bubble me">What needs to be built right now?</div>
+          <div class="call">whats_needed</div>
+          <div class="bubble ai">Three objects you can pick at your level:<ul><li>Skateboard: 5 atoms, none built</li><li>Park bench: 4 atoms, 2 already in the library</li><li>Street light: 6 atoms, 5 already in the library</li></ul></div>
+          <div class="bubble me">Take the skateboard.</div>
+          <div class="call">claim</div>
+          <div class="bubble ai">Claimed. There is no blueprint yet, so that is the first submission. The work order pins the asset spec, the capability profile and the style guide to today's versions.</div>
+        </div>
+      </div>
+      <div>
+        <div class="label" style="margin-bottom:10px">Tools the server offers</div>
+        <div class="tools" id="tools"></div>
+      </div>
+    </div>
+    <div class="srules" id="srules"></div>
+  </section>
+
+  <section id="rise">
+    <div class="num"></div>
+    <h2>Fixed for decades, rising with the tools</h2>
+    <p class="sub">The contract does not change. The capability profile is the part that is expected to be replaced.</p>
+    <div class="grid2">
+      <div class="card">
+        <div style="padding:18px 18px 0"><span class="chip fixed">Durable contract</span></div>
+        <div class="locks" id="locks"></div>
+      </div>
+      <div class="card rise" id="risecard">
+        <span class="chip new">Capability profile</span>
+        <div style="margin-top:14px"><div class="seg" id="tierseg"><span class="thumb"></span></div></div>
+        <div class="tiernums" id="tiernums"></div>
+        <p class="draft" id="tiernote" style="margin-top:0"></p>
+        <div class="label" style="margin-top:22px" id="budgetlabel"></div>
+        <div class="bars" id="bars"></div>
+        <div class="limits" id="limits"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="life">
+    <div class="num"></div>
+    <h2>The life of a task</h2>
+    <p class="sub">Six states. Every stalled path leads back to Open, so no task stays stuck with someone who went quiet. Tap a state.</p>
+    <div class="grid2">
+      <div class="card flow" id="flow" style="padding:12px"></div>
+      <div>
+        <div class="card trans" id="trans"></div>
+        <div class="sizes" id="sizes"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="trust">
+    <div class="num"></div>
+    <h2>Contribute more, unlock more</h2>
+    <p class="sub">Merged work widens what a contributor may claim, and at the top it earns a say in the specs themselves.</p>
+    <div class="stairs" id="stairs"></div>
+    <div class="card unlock" id="unlock"></div>
+  </section>
+
+  <section id="review">
+    <div class="num"></div>
+    <h2>Five gates before a merge</h2>
+    <p class="sub">Cheap checks run first, so reviewers only see work that is technically valid. Review judges the output, never the process.</p>
+    <div class="gates" id="gates"></div>
+    <div class="filter"><span class="label">Automated checks take their numbers from</span><div class="seg" id="checkseg"><span class="thumb"></span></div></div>
+    <div class="checks" id="checks"></div>
+  </section>
+
+  <section id="open">
+    <div class="num"></div>
+    <h2>Still to decide</h2>
+    <p class="sub">Every open question in the specs, read from the documents when this page was built.</p>
+    <div class="open" id="openqs"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const SPEC = /*SPEC*/null;
+const OPEN = /*OPEN*/[];
+const $ = (id) => document.getElementById(id);
+const h = (tag, attrs = {}, html = "") => { const e = document.createElement(tag); for (const k in attrs) e.setAttribute(k, attrs[k]); e.innerHTML = html; return e; };
+const fmt = (n) => n.toLocaleString("en-US");
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/`([^`]+)`/g, "<code>$1</code>");
+
+// Segmented control with a spring thumb. Returns a setter.
+function seg(el, options, initial, onChange) {
+  const thumb = el.querySelector(".thumb");
+  const btns = options.map((o, i) => { const b = h("button", { type: "button", "aria-pressed": "false" }, esc(o)); b.onclick = () => set(i, true); el.appendChild(b); return b; });
+  let cur = -1;
+  function place(animate) {
+    const b = btns[cur]; if (!b) return;
+    if (!animate) thumb.style.transition = "none";
+    thumb.style.width = b.offsetWidth + "px"; thumb.style.transform = `translateX(${b.offsetLeft}px)`;
+    if (!animate) { thumb.offsetWidth; thumb.style.transition = ""; }
+  }
+  function set(i, user) { cur = i; btns.forEach((b, j) => b.setAttribute("aria-pressed", j === i)); place(user); onChange(i); }
+  // Sizes change when fonts load, the window resizes or a hidden tab becomes visible.
+  new ResizeObserver(() => place(false)).observe(el);
+  set(initial, false); return set;
+}
+
+// Header
+$("title").textContent = SPEC.meta.title;
+$("draft").textContent = SPEC.meta.status;
+const openCount = OPEN.reduce((a, d) => a + d.items.length, 0);
+[[SPEC.layers.length, "documents in the stack"], [SPEC.scale_levels.length, "levels of scale"], [SPEC.checks.length, "automated checks"], [openCount, "open questions"]]
+  .forEach(([n, l]) => $("stats").appendChild(h("div", { class: "stat" }, `<b>${n}</b><span>${l}</span>`)));
+
+// Jump nav with scroll spy
+const sections = [["stack", "Stack"], ["world", "World"], ["accuracy", "Accuracy"], ["snap", "Connectors"], ["atoms", "Atoms"], ["agent", "Agent"], ["rise", "Fixed vs rising"], ["life", "Tasks"], ["trust", "Trust"], ["review", "Review"], ["open", "Open"]];
+sections.forEach(([id, label]) => $("jump").appendChild(h("a", { href: "#" + id, "data-id": id }, label)));
+const spy = new IntersectionObserver((es) => es.forEach((e) => {
+  if (e.isIntersecting) { e.target.classList.add("inview"); document.querySelectorAll("nav.jump a").forEach((a) => { const on = a.dataset.id === e.target.id; a.classList.toggle("on", on); if (on) a.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); }); }
+}), { rootMargin: "-30% 0px -60% 0px" });
+sections.forEach(([id]) => spy.observe($(id)));
+
+// 01 stack
+$("stackh").textContent = `${["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"][SPEC.layers.length] || SPEC.layers.length} documents, one stack`;
+SPEC.layers.forEach((l, i) => {
+  const chip = l.status === "new" ? `<span class="chip new">New ${l.version}</span>` : `<span class="chip">Revised ${l.version}</span>`;
+  const b = h("button", { class: "slab" + (l.id === "vision" ? " vision" : ""), type: "button", "aria-expanded": i === 0 ? "true" : "false" },
+    `<div class="row"><span class="idx">${i + 1}</span><span class="name">${esc(l.name)}</span>${chip}</div><div class="q">${esc(l.question)}</div>
+     <div class="more"><div><p>${esc(l.summary)}</p><span class="mono">${esc(l.doc)}</span></div></div>`);
+  b.onclick = () => b.setAttribute("aria-expanded", b.getAttribute("aria-expanded") !== "true");
+  $("layers").appendChild(b);
+});
+SPEC.libraries.forEach((l) => $("libs").appendChild(h("div", { class: "card kind" }, `<h3>${esc(l.name)}</h3><p>${esc(l.what)}. Look: ${esc(l.look.charAt(0).toLowerCase() + l.look.slice(1))}.</p><div class="ex"><span class="label">Status</span><br>${esc(l.status)}</div>`)));
+SPEC.missing.forEach((m) => $("missing").appendChild(h("div", { class: "miss" }, `<b>${esc(m.name)}</b><span>${esc(m.why)}</span>`)));
+
+// 02 zoom
+const R = 0.6, BASE = 900, VIEW = 520;
+const sizes = SPEC.scale_levels.map((_, i) => BASE * Math.pow(R, i));
+$("zoom").innerHTML = `<svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><g class="rings">${sizes.map((s, i) =>
+  i === 0 ? `<circle class="ring" cx="500" cy="500" r="${s / 2}"/>` : `<rect class="ring" x="${500 - s / 2}" y="${500 - s / 2}" width="${s}" height="${s}" rx="${s * 0.12}"/>`).join("")}</g></svg><div class="tag"><span></span><b></b></div>`;
+const rings = [...$("zoom").querySelectorAll(".ring")], ringG = $("zoom").querySelector(".rings");
+const rungs = SPEC.scale_levels.map((s, i) => { const b = h("button", { class: "rung", type: "button", "aria-pressed": "false" }, `<span class="n">${s.n}</span><span class="t">${esc(s.name)}</span><span class="who">${esc(s.by)}</span>`); b.onclick = () => setLevel(i); $("ladder").appendChild(b); return b; });
+function setLevel(i) {
+  const s = SPEC.scale_levels[i];
+  ringG.style.transform = `scale(${VIEW / sizes[i]})`;
+  rings.forEach((r, j) => { r.classList.toggle("sel", j === i); r.classList.toggle("inner", j > i); });
+  rungs.forEach((r, j) => r.setAttribute("aria-pressed", j === i));
+  $("zoom").querySelector(".tag span").textContent = `Level ${s.n} of ${SPEC.scale_levels.length}`;
+  $("zoom").querySelector(".tag b").textContent = s.name;
+  $("lvdetail").innerHTML = `<h3>${esc(s.what)}</h3><dl><dt>Example</dt><dd>${esc(s.example)}</dd><dt>Built by</dt><dd>${esc(s.built)}</dd><dt>Who</dt><dd><span class="chip ${/Contributors/.test(s.by) ? "new" : ""}">${esc(s.by)}</span></dd></dl>`;
+}
+setLevel(4);
+SPEC.asset_kinds.forEach((k) => $("kinds").appendChild(h("div", { class: "card kind" }, `<h3>${esc(k.name)}</h3><p>${esc(k.what)}. Placed: ${esc(k.placed.charAt(0).toLowerCase() + k.placed.slice(1))}.</p><div class="ex"><span class="label">Example</span><br>${esc(k.example)}</div>`)));
+SPEC.categories.forEach((c) => $("cats").appendChild(h("span", { class: "chip" + (c.status === "New" ? " new" : "") }, `${c.code} · ${esc(c.name)}${c.status === "New" ? " · new" : ""}`)));
+
+// 03 accuracy: one building drawn four ways
+const win = (x, y, w = 16, hh = 20) => `<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="2"/>`;
+const grid = (x0, y0, cols, rows, dx, dy) => { let s = ""; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) s += win(x0 + c * dx, y0 + r * dy); return s; };
+const AX = `<line x1="20" y1="250" x2="340" y2="250" stroke="var(--line)" stroke-width="2"/>`;
+const accArt = [
+  `<path d="M90 250V120h70V70h80v50h30v130z" fill="var(--line)" stroke="var(--muted)" stroke-width="2"/>`,
+  `<path d="M90 250V120h70V70h80v50h30v130z" fill="var(--line)" stroke="var(--ink)" stroke-width="2"/><g fill="var(--panel)">${grid(102, 136, 6, 3, 28, 36)}${grid(172, 84, 2, 1, 30, 0)}</g>`,
+  `<path d="M90 250V120h70V70h80v50h30v130z" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="2"/><path d="M160 70l40-26 40 26" fill="none" stroke="var(--ink)" stroke-width="2"/><line x1="200" y1="44" x2="200" y2="22" stroke="var(--ink)" stroke-width="2"/><g fill="var(--panel)" stroke="var(--ink)" stroke-width="1.2">${grid(102, 136, 6, 2, 28, 36)}${grid(172, 84, 2, 1, 30, 0)}</g><path d="M150 250v-34a14 14 0 0 1 28 0v34" fill="var(--ink)"/><path d="M90 126h180M90 200h180" stroke="var(--accent)" stroke-width="3"/><g fill="var(--panel)" stroke="var(--ink)" stroke-width="1.2">${win(102, 214)}${win(200, 214, 60, 22)}</g>`,
+  `<path d="M90 250V120h70V70h80v50h30v130z" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><path d="M160 70l40-26 40 26" fill="none" stroke="var(--ink)" stroke-width="2"/><line x1="200" y1="44" x2="200" y2="22" stroke="var(--ink)" stroke-width="2"/><path d="M90 164h180M90 208h180M160 120h80M150 120v130M210 70v180" stroke="var(--ink)" stroke-width="1.5"/><g fill="var(--accent)"><rect x="100" y="188" width="30" height="14" rx="3"/><rect x="222" y="230" width="34" height="14" rx="3"/><rect x="164" y="146" width="24" height="12" rx="3"/><rect x="170" y="98" width="20" height="16" rx="2"/><circle cx="240" cy="150" r="7"/><rect x="104" y="232" width="14" height="18"/><circle cx="182" cy="190" r="6"/></g><path d="M222 100h8v20h-8z" fill="var(--ink)"/>`
+];
+$("accstage").innerHTML = `<svg viewBox="0 0 360 280">${AX}${accArt.map((a, i) => `<g class="lv" data-i="${i}">${a}</g>`).join("")}</svg>`;
+seg($("accseg"), SPEC.accuracy_levels.map((a) => a.id), 2, (i) => {
+  const a = SPEC.accuracy_levels[i];
+  $("accstage").querySelectorAll(".lv").forEach((g) => g.classList.toggle("on", +g.dataset.i === i));
+  $("accdetail").innerHTML = `<span class="chip new">${a.id} · ${esc(a.name)}</span><h3 style="margin-top:10px">${esc(a.meaning)}</h3><dl><dt>For a building</dt><dd>${esc(a.example)}</dd><dt>Comes from</dt><dd>${esc(a.from)}</dd></dl>`;
+});
+SPEC.accuracy_rules.forEach((r) => { const c = { Accurate: "ok", Held: "hold", Never: "no" }[r.rule]; const t = r.rule === "Held" ? "Held for legal review" : r.rule; $("rules").appendChild(h("div", { class: "rule" }, `<b>${esc(r.subject)}</b><span class="chip ${c}">${t}</span><small>${esc(r.reason)}</small>`)); });
+
+// 04 snap
+const arrow = (x1, y1, x2, y2, col, label, lx, ly) => { const a = Math.atan2(y2 - y1, x2 - x1), s = 9; const p = (d) => `${x2 - s * Math.cos(a - d)},${y2 - s * Math.sin(a - d)}`; return `<g stroke="${col}" fill="${col}"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="3" stroke-linecap="round"/><polygon points="${x2},${y2} ${p(0.45)} ${p(-0.45)}" stroke-width="1"/></g><text x="${lx}" y="${ly}" fill="${col}" font-family="var(--mono)" font-size="13" font-weight="600">${label}</text>`; };
+$("snapstage").innerHTML = `<figure><span class="label">Side view</span><svg viewBox="0 78 348 190">
+  <g><rect x="24" y="92" width="92" height="140" rx="10" fill="var(--line)" stroke="var(--ink)" stroke-width="2"/><text x="70" y="256" text-anchor="middle" font-family="var(--display)" font-size="15" font-weight="600" fill="var(--ink)">Part A</text>
+    ${arrow(116, 162, 164, 162, "var(--fixed)", "+Z", 146, 186)}${arrow(116, 162, 116, 110, "var(--fixed)", "+Y", 124, 112)}<circle cx="116" cy="162" r="6" fill="var(--fixed)"/></g>
+  <g class="partB" id="partB"><rect x="232" y="92" width="92" height="140" rx="10" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/><text x="278" y="256" text-anchor="middle" font-family="var(--display)" font-size="15" font-weight="600" fill="var(--ink)">Part B</text>
+    ${arrow(232, 162, 184, 162, "var(--accent)", "+Z", 180, 148)}<circle cx="232" cy="162" r="6" fill="var(--accent)"/></g>
+</svg></figure><figure class="rollfig"><span class="label">Looking along Z</span><svg viewBox="30 30 240 262">
+  <circle cx="150" cy="150" r="104" fill="none" stroke="var(--line)" stroke-width="2"/>
+  ${arrow(150, 150, 150, 62, "var(--fixed)", "A up", 160, 70)}
+  <g class="roll" id="roll">${arrow(150, 150, 150, 92, "var(--accent)", "", 0, 0)}<rect x="126" y="126" width="48" height="48" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/></g>
+  <text x="150" y="282" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="600" fill="var(--accent)" id="rolltxt">B up</text>
+</svg></figure>`;
+const snap = { together: 0, roll: 0, sym: 0 };
+SPEC.connector.mate_rules.forEach((r) => $("snapchecks").appendChild(h("div", { class: "ck" }, `<i></i><span>${esc(r)}</span>`)));
+function drawSnap() {
+  const deg = [0, 90, 180][snap.roll], sym = ["none", "4", "free"][snap.sym];
+  $("partB").style.transform = snap.together ? "translateX(-116px)" : "none";
+  $("roll").style.transform = `rotate(${deg}deg)`;
+  $("rolltxt").textContent = deg ? `B up, turned ${deg}°` : "B up";
+  const yOk = deg === 0 || sym === "free" || (sym === "4" && deg % 90 === 0);
+  const pass = [!!snap.together, true, yOk];
+  [...$("snapchecks").children].forEach((c, i) => { c.classList.toggle("pass", pass[i]); c.querySelector("i").textContent = pass[i] ? "✓" : "×"; });
+  const all = pass.every(Boolean), v = $("snapverdict");
+  v.classList.toggle("pass", all);
+  v.textContent = all ? "Mated. The validator accepts this joint." : !snap.together ? "Not mated: the connector points are apart." : `Not mated: part B is turned ${deg}° and this type allows ${sym === "none" ? "one rotation only" : "quarter turns only"}.`;
+}
+seg($("snapdist"), ["Apart", "Together"], 0, (i) => { snap.together = i; drawSnap(); });
+seg($("snaproll"), ["0°", "90°", "180°"], 0, (i) => { snap.roll = i; drawSnap(); });
+seg($("snapsym"), ["none", "4", "free"], 0, (i) => { snap.sym = i; drawSnap(); });
+drawSnap();
+$("connpat").textContent = SPEC.connector.pattern; $("connex").textContent = SPEC.connector.example;
+SPEC.connector.motions.forEach((m) => $("motions").appendChild(h("span", { class: "chip" + (m === "ball" || m === "slide" ? " new" : "") }, m + (m === "ball" || m === "slide" ? " · new" : ""))));
+SPEC.variation.forEach((v) => $("varies").appendChild(h("div", { class: "card kind" }, `<h3>${esc(v.what)}${v.status === "proposed" ? ' <span class="chip new">proposed</span>' : ""}</h3><p>Declared by: ${esc(v.declared.charAt(0).toLowerCase() + v.declared.slice(1))}. Chosen by: ${esc(v.chosen.charAt(0).toLowerCase() + v.chosen.slice(1))}.</p><div class="ex"><span class="label">Example</span><br>${esc(v.example)}</div>`)));
+$("conntol").textContent = SPEC.connector.tolerance.charAt(0).toLowerCase() + SPEC.connector.tolerance.slice(1);
+
+// 05 atoms: walk one object through the workflow
+const BP = SPEC.example_blueprint, CHIP = { "Open": "", "In progress": "new", "In review": "hold", "Merged": "ok", "Reused": "fixed" };
+const SHAPE = {
+  deck: `<path d="M28 58Q42 68 70 68H290Q318 68 332 58L334 64Q318 78 290 78H70Q42 78 26 64Z"/>`,
+  grip_tape: `<path d="M30 50Q43 60 70 60H290Q317 60 330 50L331.5 54.5Q318 64.5 290 64.5H70Q42 64.5 28.5 54.5Z"/>`,
+  truck: `<path d="M82 80h26l-7 20h-12z"/><path d="M252 80h26l-7 20h-12z"/>`,
+  wheel: `<circle cx="95" cy="108" r="17"/><circle cx="265" cy="108" r="17"/>`,
+  bearing: `<circle cx="95" cy="108" r="6"/><circle cx="265" cy="108" r="6"/>`
+};
+const total = BP.slots.reduce((a, x) => a + x.count, 0), O = "Open", P = "In progress", V = "In review", M = "Merged", U = "Reused";
+const FRAMES = [
+  { step: 0, st: null, tag: "Wanted", note: `The ${BP.object.toLowerCase()} is on the wanted list. Nobody is building it, and it has no blueprint.` },
+  { step: 1, st: [O, O, O, O, O], tag: "Blueprint", note: `You submit the blueprint: ${BP.slots.length} kinds of atom, ${total} pieces. It is reviewed and merged.` },
+  { step: 2, st: [O, O, O, O, O], tag: "Yours", note: `The library has none of them yet, so all ${BP.slots.length} slots are marked new.` },
+  { step: 3, st: [P, O, O, O, O], tag: "Yours", note: "You build the deck. The board shows it as yours, so nobody else starts one." },
+  { step: 3, st: [V, P, O, O, O], tag: "Yours", note: "The deck is submitted. While it waits for review, you start the grip tape." },
+  { step: 3, st: [M, V, P, O, O], tag: "Yours", note: "The deck is merged and already usable by anyone. You move on to the trucks." },
+  { step: 4, st: [M, M, M, M, M], tag: "Assembling", note: "Every slot holds a merged atom. You submit the assembly: which connector joins which." },
+  { step: 5, st: [M, M, M, M, M], tag: "In the library", note: `The ${BP.object.toLowerCase()} is in the library and can be placed in the world.` },
+  { step: 2, st: [O, U, O, O, U], tag: "Next builder", obj: "Longboard", note: "Someone else picks a longboard. Its bearings and grip tape are already in the library, so they build three atoms, not five." }
+];
+$("objcard").innerHTML = `<div class="head"><h3 id="objname"></h3><span class="chip" id="objtag"></span></div>
+  <svg viewBox="16 42 328 92">${BP.slots.map((x) => `<g class="sk" data-slot="${x.slot}">${SHAPE[x.slot] || ""}</g>`).join("")}</svg>
+  <div class="slots" id="slots">${BP.slots.map((x) => `<div class="slot"><span>${esc(x.label)}<small>× ${x.count}</small></span><span class="chip"></span></div>`).join("")}</div>`;
+SPEC.workflow.forEach((w, i) => $("wsteps").appendChild(h("div", { class: "wstep" }, `<i>${i + 1}</i><span>${esc(w.name)}</span>`)));
+SPEC.fit_rules.forEach((r) => $("fit").appendChild(h("li", {}, esc(r))));
+[["provd", SPEC.provenance.declared], ["provs", SPEC.provenance.stamped]].forEach(([id, list]) => list.forEach((f) => $(id).appendChild(h("div", { class: "tool" }, `<code>${esc(f.field)}</code><span>${esc(f.what)}</span>`))));
+SPEC.slot_states.forEach((x) => $("legend").appendChild(h("div", { class: "rule" }, `<b>${esc(x.meaning)}</b><span class="chip ${CHIP[x.name]}">${esc(x.name)}</span>`)));
+let frame = 0;
+function drawFrame() {
+  const f = FRAMES[frame];
+  $("objname").textContent = f.obj || BP.object;
+  $("objtag").textContent = f.tag; $("objtag").className = "chip " + (f.step === 5 ? "ok" : f.step === 0 ? "" : "new");
+  $("slots").classList.toggle("ghost", !f.st);
+  BP.slots.forEach((x, i) => {
+    const st = f.st ? f.st[i] : "none", chip = $("slots").children[i].querySelector(".chip");
+    $("objcard").querySelector(`.sk[data-slot="${x.slot}"]`).dataset.st = st;
+    const text = f.st ? st : "No blueprint";
+    if (chip.textContent !== text) { chip.textContent = text; chip.className = "chip pop " + (CHIP[st] || ""); setTimeout(() => chip.classList.remove("pop"), 180); }
+  });
+  [...$("wsteps").children].forEach((e, i) => { e.classList.toggle("on", i === f.step); e.classList.toggle("done", i < f.step); e.querySelector("i").textContent = i < f.step ? "✓" : i + 1; });
+  $("wnote").textContent = f.note;
+  $("wback").disabled = frame === 0; $("wnext").textContent = frame === FRAMES.length - 1 ? "Start over" : "Next";
+  $("wcount").textContent = `${frame + 1} / ${FRAMES.length}`;
+}
+$("wnext").onclick = () => { frame = (frame + 1) % FRAMES.length; drawFrame(); };
+$("wback").onclick = () => { frame = Math.max(0, frame - 1); drawFrame(); };
+drawFrame();
+
+// ask your agent
+SPEC.mcp_tools.forEach((t) => $("tools").appendChild(h("div", { class: "tool" }, `<code>${esc(t.tool)}</code><span>${esc(t.what)}</span>`)));
+SPEC.service_rules.forEach((r) => $("srules").appendChild(h("div", { class: "card srule" }, `<b>${esc(r.name)}</b><span>${esc(r.what)}</span>`)));
+
+// fixed vs rising
+const LOCK = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="9" width="13" height="8.5" rx="2"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg>`;
+SPEC.durable.forEach((d) => $("locks").appendChild(h("div", { class: "lock" }, `${LOCK}<div><b>${esc(d.what)}</b><span>${esc(d.why)}</span></div>`)));
+seg($("tierseg"), SPEC.tiers.map((t) => `${t.n} ${t.name}`), 0, (i) => {
+  const t = SPEC.tiers[i];
+  $("tiernums").innerHTML = `<div><b>${esc(t.feature)}</b><span>smallest modelled feature</span></div><div><b>${fmt(t.px_per_m)}</b><span>pixels per metre</span></div><div><b>${esc(t.holds_at.split(/,| and/)[0])}</b><span>viewing distance</span></div>`;
+  $("tiernote").textContent = i === 0 ? `${t.status}. Enforced by ${SPEC.profile.name}.` : `${t.status}. A direction, not yet a profile.`;
+});
+$("budgetlabel").textContent = `${SPEC.profile.name}: triangle budgets`;
+const maxTri = Math.max(...SPEC.profile.budgets.map((b) => b.triangles));
+SPEC.profile.budgets.forEach((b) => $("bars").appendChild(h("div", { class: "bar" }, `<div class="cap"><b>${esc(b.class)}</b><span>${fmt(b.triangles)}</span></div><div class="track"><div class="fill" style="--w:${Math.max(0.03, b.triangles / maxTri)}"></div></div>`)));
+new IntersectionObserver((es, o) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("seen"); o.disconnect(); } }), { threshold: 0.25 }).observe($("risecard"));
+SPEC.profile.limits.forEach((l) => $("limits").appendChild(h("div", {}, `<span>${esc(l.rule)}</span>${esc(l.value)}`)));
+
+// 07 lifecycle
+const NODE = { "Locked": [130, 36], "Open": [130, 108], "Claimed": [130, 180], "In review": [130, 252], "Merged": [130, 330], "Changes requested": [284, 252] };
+const W = { "Changes requested": 136 }, nw = (n) => W[n] || 112;
+const EDGE = {
+  "Locked>Open": "M130 54V86", "Open>Claimed": "M130 126V158", "Claimed>In review": "M130 198V230", "In review>Merged": "M130 270V308",
+  "Claimed>Open": "M74 180H52a10 10 0 0 1-10-10V118a10 10 0 0 1 10-10H70",
+  "In review>Open": "M74 252H28a10 10 0 0 1-10-10V110a10 10 0 0 1 10-10H70",
+  "In review>Changes requested": "M186 244H212", "Changes requested>In review": "M216 262H190",
+  "Changes requested>Open": "M284 234V118a10 10 0 0 0-10-10H190"
+};
+const key = (t) => `${t.from}>${t.to}`;
+$("flow").innerHTML = `<svg viewBox="0 0 364 366"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>
+  ${SPEC.transitions.map((t) => `<path class="edge" data-k="${key(t)}" d="${EDGE[key(t)]}" marker-end="url(#ah)"/>`).join("")}
+  ${SPEC.task_states.map((n) => { const [x, y] = NODE[n], w = nw(n); return `<g class="node" data-n="${n}" tabindex="0" role="button"><rect x="${x - w / 2}" y="${y - 18}" width="${w}" height="36" rx="18"/><text x="${x}" y="${y}">${n}</text></g>`; }).join("")}</svg>`;
+function setState(n) {
+  const out = SPEC.transitions.filter((t) => t.from === n), dests = out.map((t) => t.to);
+  $("flow").querySelectorAll(".node").forEach((g) => { g.classList.toggle("sel", g.dataset.n === n); g.classList.toggle("dest", dests.includes(g.dataset.n)); });
+  $("flow").querySelectorAll(".edge").forEach((e) => { const hot = e.dataset.k.startsWith(n + ">"); e.classList.toggle("hot", hot); e.classList.toggle("dim", !hot); });
+  $("trans").innerHTML = `<span class="label">From</span><h3 style="margin-top:8px">${n}</h3>` + (out.length
+    ? `<ul>${out.map((t) => `<li><span class="chip">→ ${t.to}</span><span>${esc(t.trigger)}</span></li>`).join("")}</ul>`
+    : `<p class="sub">The asset is in the library, and the tasks that depend on it unlock.</p>`);
+}
+$("flow").querySelectorAll(".node").forEach((g) => { g.onclick = () => setState(g.dataset.n); g.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setState(g.dataset.n); } }; });
+setState("In review");
+SPEC.task_sizes.forEach((s) => $("sizes").appendChild(h("div", { class: "card size" }, `<b>${s.size}</b><div class="w">${esc(s.window)}</div><span>${esc(s.what)}</span><span>Warning ${esc(s.warning.toLowerCase())}, one extension of ${esc(s.extension)}</span>`)));
+
+// 08 trust
+const steps = SPEC.trust_levels.map((t, i) => { const b = h("button", { class: "step", type: "button", "aria-pressed": "false", style: `--h:${40 + i * 20}%` }, `<div class="blk"><span class="lv">L${t.n}</span><span class="nm">${esc(t.name)}</span></div>`); b.onclick = () => setTrust(i); $("stairs").appendChild(b); return b; });
+function setTrust(i) {
+  const t = SPEC.trust_levels[i];
+  steps.forEach((s, j) => s.setAttribute("aria-pressed", j === i));
+  $("unlock").innerHTML = `<span class="label">How to reach it</span><h3 style="margin-top:8px">${esc(t.reach)}</h3>
+    <div class="g"><div><b>${t.claims}</b><span>objects at once</span></div><div><b>${esc(t.open_prs)}</b><span>pull requests awaiting review</span></div><div><b style="font-size:15px;line-height:1.2;letter-spacing:0">${esc(t.sizes)}</b><span>may pick</span></div></div>
+    <div class="say"><span class="label">Say in the specs (proposed)</span><p style="margin-top:6px">${esc(t.spec_role)}.</p></div>`;
+}
+setTrust(2);
+
+// 09 review
+SPEC.review_gates.forEach((g) => $("gates").appendChild(h("div", { class: "card gate" }, `<b>${esc(g.name)}</b><span>${esc(g.what)}</span>`)));
+const checkEls = SPEC.checks.map((c) => { const e = h("div", { class: "check" }, `${esc(c.name)}<span class="chip ${c.source === "Contract" ? "fixed" : "new"}">${c.source}</span>`); $("checks").appendChild(e); return e; });
+seg($("checkseg"), ["All", "Contract", "Profile"], 0, (i) => checkEls.forEach((e, j) => e.classList.toggle("off", i > 0 && SPEC.checks[j].source !== ["", "Contract", "Profile"][i])));
+
+// 10 open questions
+OPEN.forEach((d) => $("openqs").appendChild(h("details", { class: "oq" }, `<summary>${esc(d.title)}<span class="cnt">${d.items.length}</span></summary><ul>${d.items.map((q) => `<li>${esc(q)}</li>`).join("")}</ul>`)));
+$("foot").textContent = `Built from spec/spec.json and docs/ on ${SPEC.meta.updated}. ${SPEC.meta.status}`;
+</script>
