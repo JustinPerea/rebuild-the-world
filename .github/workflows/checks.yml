@@ -37,6 +37,10 @@ jobs:
         run: node --test validator/test/
       - name: Contributor server tests
         run: node --test mcp/test/
+      - name: Survey tool tests
+        run: node --test tools/survey/test/
+      - name: Every survey plan passes
+        run: node tools/survey/survey.mjs check
       - name: The two finished atoms pass with their tasks
         shell: bash
         run: |

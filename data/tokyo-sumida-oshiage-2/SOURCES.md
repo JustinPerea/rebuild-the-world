@@ -14,7 +14,7 @@ Edited by this project: buildings inside a 300 m square were cut out, coordinate
 - `height_m` is the source's measured height for 302 buildings. For the other 48 it is the height of the source's roof-shape model, and `height_from` says which.
 - `ground_m` is the lowest point of the roof-shape model, in metres above sea level. Six buildings have no roof-shape model and no ground level.
 - `usage` is not recorded for about half the buildings.
-- The source is drawn at map scale 1:2,500 from aerial survey. It carries no facades, windows, doors or signs.
+- The source is drawn at map scale 1:2,500 from aerial survey. Its geometry carries no windows, doors or signs. The archive also holds aerial photo textures for the roofs and walls of 344 of these buildings, at about 6 pixels per metre on a typical wall (median crop 42 by 35 pixels). This pack does not include them: they are too coarse to show a facade's openings on most houses.
 
 ## Rebuilding it
 

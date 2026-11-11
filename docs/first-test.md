@@ -75,3 +75,7 @@ After the three atoms are merged, a maintainer sets `"state": "Merged"` in their
 - The connector frames are stated in the tasks. The test shows whether agents can build to a stated frame, which is the mechanism the spec relies on. It does not test agents agreeing on a frame by themselves.
 - Window and door positions are invented. The source data has no facades.
 - One reviewer step is missing: nothing but the validator checks a submission.
+
+## The block survey
+
+A second run, separate from the house: Hermes writes one facade plan for each of the 150 buildings in the start block, and the plans are tallied to find which bays the block needs most. It needs only Git and Node. The format is in `survey/README.md` and the start prompt in `docs/survey-prompt.md`. The plans are typical facades chosen by the builder, since the data pack holds no picture of any facade.
