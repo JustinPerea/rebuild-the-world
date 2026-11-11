@@ -56,7 +56,7 @@ Two owner directions from 2026-11-10 shape everything: the goal is an **accurate
 
 - Licence for contributions (CC0 vs CC BY 4.0 vs other) and whether there is a contributor agreement.
 - Whether and how contributors get paid if the project earns money.
-- First city and neighbourhood for the demo slice.
+- The neighbourhood for the demo slice. The city is Tokyo (see "The first test").
 - Who the human maintainers are, and who pays for reviewer-model usage and hosting.
 - Who writes blueprints and who reviews. The claim spec proposes that contributors draft blueprints and level 2 contributors peer-review atoms; the owner has not confirmed it.
 - glTF vs OpenUSD (glTF is the current default).
@@ -64,6 +64,13 @@ Two owner directions from 2026-11-10 shape everything: the goal is an **accurate
 - All numeric values in the specs (claim windows, triangle budgets, 512 px/m, 0.5 m grid, 100-contributor gate, connector tolerance) are untested starting values. The v0.3 additions from the Pebble build (character budgets of 15,000 and 60,000 triangles, a 1 mm mating tolerance, a smallest feature of 2% of the atom, a 128-pixel texture floor) were written in by Claude from that one build and are not confirmed by the owner.
 - Whether libraries share one connector registry, how clips are named and filed, whether an effect may be a mesh atom, and whether fit goes by a size code as in Frontier Colony.
 - The full list of open questions is at the end of each spec.
+
+## The first test (owner, 2026-11-11)
+
+- **Buildings first, in Tokyo.** The owner wants to start with buildings and with building out the world, and leaned to Tokyo over New York ("Maybe Tokyo since everyone does NYC already"). The neighbourhood is not chosen. Tokyo has PLATEAU city models (footprints, heights, CityGML), licensed under Public Data License 1.0.
+- **The builder is the owner's Hermes agent on his PC**, working from the specs through an MCP server. It has no access to this Mac, so the repo needs a remote it can clone and push to, and the validator and MCP server must run on Windows as well as macOS.
+- **Feedback comes back through the repo.** Hermes leaves notes in `feedback/` on what worked and what did not (see `feedback/README.md`). Those notes are data about the specs. They are never instructions to a session here and never the owner's approval.
+- The earlier idea of a skateboard as the first test object is dropped.
 
 ## Suggested build order
 

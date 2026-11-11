@@ -42,7 +42,7 @@ Every file that enters the project records its source, licence and retrieval dat
 | --- | --- | --- |
 | OpenStreetMap | Streets, footprints, land use | ODbL: attribution and share-alike |
 | Overture Maps | Buildings, places | ODbL for buildings |
-| Government open data, such as Japan's PLATEAU | City models, footprints, heights | Per dataset |
+| Government open data, such as Japan's PLATEAU | City models, footprints, heights | Per dataset. PLATEAU's city models are under Japan's Public Data License 1.0, which its site policy says is compatible with CC BY 4.0: name the source, and say when the data was edited (checked 2026-11-11) |
 | Mapillary imagery | Street-level reference | CC BY-SA: attribution and share-alike |
 | Open elevation data | Terrain | Dataset not yet chosen |
 | Contributor photos | Reference for unique assets | Contributor's licence, faces and plates blurred |
