@@ -51,7 +51,7 @@ The tools are named mcp__rtw__whats_needed, mcp__rtw__claim and so on. Every res
 2. For each task: call claim and follow the work order it returns. Use get_rules when you need a rule. You may read the skill folder and the two finished atoms under assets/bld as examples. Do not read the docs folder directly: part of the test is whether the work order and get_rules are enough.
 3. Build the atom with a Blender script run headless, and keep the script in the asset's source folder. Run the validator, fix what it reports, and call submit. Count how many tries each atom takes.
 4. Render one picture of each finished atom into its preview folder and show it to me.
-5. After a passing submit: make the branch the work order names from the current main, commit the asset folder and any feedback notes for that task, push the branch, and open a pull request that names the task. Stage files by path. Do not commit anything under tasks/claims; those files are this machine's record of your claims. Use "gh pr create" if gh is installed and signed in; if not, push the branch and give me the link to open the pull request myself. If the push asks for a sign-in, stop and tell me. Never merge a pull request.
+5. After a passing submit: make the branch the work order names from the current main, commit the asset folder and any feedback notes for that task, push the branch, and open a pull request that names the task. Stage files by path. Use "gh pr create" if gh is installed and signed in; if not, push the branch and give me the link to open the pull request myself. If the push asks for a sign-in, stop and tell me. Never merge a pull request.
 6. Call leave_feedback for each thing that was unclear, missing, wrong or broken, and for what worked well. One finding per note. Write notes for anything from Part 1 as well. Each note is committed with the task it relates to.
 
 Rules for the whole run:
@@ -63,4 +63,4 @@ Rules for the whole run:
 
 ## After the run
 
-A maintainer reviews and merges the three pull requests, then sets `"state": "Merged"` in each task file, which unlocks the house. Hermes still holds its own claim files, so it deletes the three files under `tasks/claims/` in its clone, pulls `main`, and is asked to claim `task_bld_house_shell_01`.
+A maintainer reviews and merges the three pull requests, then sets `"state": "Merged"` in each task file, which unlocks the house. Hermes pulls `main` and is asked to claim `task_bld_house_shell_01`. Its claim files are local to the PC and ignored by Git.

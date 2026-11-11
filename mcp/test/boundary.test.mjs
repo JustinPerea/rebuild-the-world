@@ -29,7 +29,7 @@ before(() => {
   writeJson(path.join(repo, 'tasks', 'task_bad_id_01.json'), good(HOSTILE));
   fs.writeFileSync(path.join(repo, 'tasks', 'task_bad_json_01.json'), `{ "task_id": ${MARK} `);
   // Tasks that load, with hostile free text and hostile claim files.
-  t('task_free_01', { asset_id: 'prop_free_01', object_id: 'obj_set_01', slot: 'part', reference_pack: [{ what: MARK, value_or_path: MARK, source: MARK, licence: MARK }] });
+  t('task_free_01', { asset_id: 'prop_free_01', object_id: 'obj_set_01', slot: 'part', connector_frames: [{ name: 'conn_door_hinge_a_01', position_m: [0, 0, 0] }], mating_m: { leaf_width: 1 }, reference_pack: [{ what: MARK, value_or_path: MARK, source: MARK, licence: MARK }] });
   t('task_held_01');
   cl('task_held_01');
   t('task_waiting_01', { depends_on: ['task_held_01'] });
@@ -43,6 +43,10 @@ before(() => {
   cl('task_claim_branch_01', { branch: HOSTILE });
   t('task_claim_pins_01');
   cl('task_claim_pins_01', { handle: 'hermes', versions: { spec: { layer: 'contract', doc: 'docs/asset-spec.md', version: HOSTILE } } });
+  // A claim waiting for review on a task that a maintainer has marked Merged.
+  t('task_merged_01', { state: 'Merged' });
+  cl('task_merged_01', { handle: 'hermes', state: 'In review' });
+  t('task_after_merge_01', { depends_on: ['task_merged_01'] });
   t('task_claim_json_01');
   fs.writeFileSync(path.join(repo, 'tasks', 'claims', 'task_claim_json_01.json'), `{ "handle": ${MARK} `);
   writeJson(path.join(repo, 'assets', 'obj', 'obj_set_01', 'blueprint.json'), {
@@ -122,8 +126,20 @@ test('a claimed task with hostile free text: the work order and a failing submit
   const r = clean(await c.call('claim', { task_id: 'task_free_01' }), 'claim');
   assert.equal(r.isError, false);
   assert.equal(r.body.data.task.description, `Text ${MARK}`);
+  // The work order carries the whole task, so the numbers the validator measures are in it.
+  assert.equal(r.body.data.task.connector_frames[0].name, 'conn_door_hinge_a_01');
+  assert.deepEqual(r.body.data.task.mating_m, { leaf_width: 1 });
   clean(await c.call('my_work'), 'my_work after claim');
   const s = clean(await c.call('submit', { task_id: 'task_free_01', asset_path: 'prop/prop_free_01' }), 'submit');
   assert.notEqual(s.body.instructions.verdict, 'PASSED');
   clean(await c.call('release', { task_id: 'task_free_01' }), 'release');
+});
+
+test('a claim waiting for review counts as Merged once the task file says Merged', async () => {
+  const all = (await c.call('whats_needed', { include_unavailable: true })).body.data.tasks;
+  assert.equal(all.find((t) => t.task_id === 'task_merged_01').state, 'Merged');
+  assert.equal(all.find((t) => t.task_id === 'task_after_merge_01').state, 'Open');
+  const mine = (await c.call('my_work')).body.data.claims.find((x) => x.task_id === 'task_merged_01');
+  assert.equal(mine.state, 'Merged');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(repo, 'tasks', 'claims', 'task_merged_01.json'), 'utf8')).state, 'In review', 'the claim file itself is not rewritten');
 });

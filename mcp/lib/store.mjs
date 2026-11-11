@@ -144,7 +144,14 @@ export class Store {
     const r = readJson(this.claimFile(id));
     if (r.error === 'file not found') return null;
     const problem = r.error || claimProblem(r.value, id);
-    return problem ? { task_id: id, invalid: true, problem } : r.value;
+    if (problem) return { task_id: id, invalid: true, problem };
+    // Claim files are local to each clone. Once a maintainer marks the task Merged in its task file,
+    // a claim still waiting for review here is finished, and it stops counting against the builder's limits.
+    if (ACTIVE.includes(r.value.state)) {
+      const t = readJson(path.join(this.tasksDir, `${id}.json`));
+      if (isObj(t.value) && t.value.state === 'Merged') return { ...r.value, state: 'Merged', merged_in_task_file: true };
+    }
+    return r.value;
   }
 
   listClaims() {

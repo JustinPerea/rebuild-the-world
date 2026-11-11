@@ -31,3 +31,6 @@ data/raw/
 
 # Session working notes stay on the maintainer's machine.
 implementation-notes.md
+
+# Claims are each clone's own record in the local test (mcp/README.md). The task file holds what everyone shares.
+tasks/claims/

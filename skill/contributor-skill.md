@@ -93,7 +93,7 @@ A connector is an empty node named `conn_<type>_<side>_<index>`, for example `co
 
 Two atoms meet when their connectors are the same type, one side `a` and one side `b`, at the same point, with +Z opposed and +Y agreeing. That is why a frame that is 2 mm off fails: the other builder used the stated frame.
 
-A connector whose type moves, such as `door_hinge`, also needs `limits` and `rest` in `asset.json`. The task gives them.
+A connector whose type moves, such as `door_hinge`, also needs `limits` (`[min, max]`) and `rest` in `asset.json`, in degrees for a hinge. The task gives them under the same names in that connector's `connector_frames` entry, and the validator compares the two.
 
 ## asset.json
 
@@ -129,7 +129,7 @@ Fill in every field. The corner post's file is a complete example.
     "author": "<your handle>",
     "co_authors": [],
     "tools": [{ "name": "<model or program and version>", "used_for": "<what it did>" }],
-    "created": "2026-11-12",
+    "created": "2026-11-11",
     "dimension_source": "estimated"
   }
 }
@@ -137,7 +137,7 @@ Fill in every field. The corner post's file is a complete example.
 
 - `dimensions_m` and `triangles` must match the file. Compute them in the build script; do not type them.
 - `connectors` lists every connector node in the file, each with the `mating` sizes from the task's `mating_m` that its type uses (the registry lists them).
-- `considered` lists each library atom you looked at and why it does not fit: `{ "asset": "<id>@<version>", "reason": "..." }`. Use `[]` when the library had none.
+- `considered` lists each library atom you looked at and why it does not fit: `{ "asset": "<id>@<version>", "reason": "..." }`. Use `[]` when the library had none. An atom can match your task's connectors and size and still be a different kind of part, as a door module is beside a plain wall module. List it and say so in the reason. The validator notes such an atom for the reviewer and does not fail you for it.
 - `provenance.tools` names every model and program that helped. It is never used to judge the asset.
 - `dimension_source` is `measured` when sizes come from data, `estimated` when they are typical values, `designed` for an invented object.
 

@@ -26,5 +26,11 @@ export function loadProfile(profilePath) {
   } else {
     budgets = Object.fromEntries(Object.entries(budgets).map(([k, v]) => [normClass(k), v]));
   }
-  return { ...p, budgets, budget_source: budgetSource, file };
+  // The asset spec's version comes from spec/spec.json, so the report cannot fall behind the docs.
+  let specVersion = p.spec_version;
+  try {
+    const v = readJson(path.join(REPO_ROOT, 'spec', 'spec.json')).layers.find((l) => l.id === 'contract').version;
+    if (typeof v === 'string') specVersion = v.replace(/^v/, '');
+  } catch { /* keep the profile's own value */ }
+  return { ...p, spec_version: specVersion, budgets, budget_source: budgetSource, file };
 }

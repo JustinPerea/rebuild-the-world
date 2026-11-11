@@ -170,12 +170,13 @@
         1,
         0
       ],
-      "limits_deg": [
+      "note": "The door opens outwards, towards +Z. A turn about the connector's +Y by a negative angle swings the leaf out.",
+      "limits": [
         -100,
         0
       ],
-      "rest_deg": 0,
-      "note": "The door opens outwards, towards +Z. A turn about the connector's +Y by a negative angle swings the leaf out."
+      "rest": 0
     }
-  ]
+  ],
+  "state": "Merged"
 }

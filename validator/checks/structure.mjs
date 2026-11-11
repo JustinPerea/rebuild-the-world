@@ -47,7 +47,7 @@ export function connectors(ctx) {
     // Where the task fixes a connector's frame, the file must match it. This is what lets
     // atoms made by different people meet: each is checked against the same stated frame.
     const frames = ctx.task.connector_frames;
-    if (frames !== undefined && !Array.isArray(frames)) msgs.push('task file "connector_frames" must be an array of { name, position_m, z_axis, y_axis }');
+    if (frames !== undefined && !Array.isArray(frames)) msgs.push('task file "connector_frames" must be an array of { name, position_m, z_axis, y_axis, and limits and rest for a moving connector }');
     else for (const f of frames || []) {
       const c = found.get(f.name);
       if (!c) { msgs.push(`task fixes the frame of connector "${f.name}", and the file has no node of that name`); continue; }
@@ -57,6 +57,9 @@ export function connectors(ctx) {
         const d = Math.hypot(...f.position_m.map((x, k) => x - c.rawFrame.p[k]));
         if (d > tolP) msgs.push(`connector "${f.name}": position is ${fmt(c.rawFrame.p)}, the task asks for ${fmt(f.position_m)} (${(d * 1000).toFixed(1)} mm apart; allowed ${tolP * 1000} mm)`);
       }
+      const cm = (Array.isArray(a.meta?.connectors) ? a.meta.connectors : []).find((x) => x && x.name === f.name);
+      if (f.limits !== undefined && !(cm && Array.isArray(cm.limits) && cm.limits.length === 2 && cm.limits.every((v, k) => Math.abs(v - f.limits[k]) <= 1e-6))) msgs.push(`connector "${f.name}": asset.json limits are ${JSON.stringify(cm?.limits ?? null)}, the task asks for ${JSON.stringify(f.limits)}`);
+      if (f.rest !== undefined && !(cm && typeof cm.rest === 'number' && Math.abs(cm.rest - f.rest) <= 1e-6)) msgs.push(`connector "${f.name}": asset.json rest is ${JSON.stringify(cm?.rest ?? null)}, the task asks for ${JSON.stringify(f.rest)}`);
       for (const [axis, want] of [['z', f.z_axis], ['y', f.y_axis]]) {
         if (!Array.isArray(want)) continue;
         const ang = angleDeg(c.rawFrame[axis], want);
@@ -245,6 +248,7 @@ export function reuse(ctx) {
   const c = a.meta?.considered;
   if (!Array.isArray(c)) return fail('asset.json "considered" is missing; list the library atoms looked at as [{ "asset": "<id>@<version>", "reason": "why it does not fit" }], or [] if the library has nothing similar');
   const msgs = [];
+  const notes = [];
   let mine = null;
   if (a.glb) {
     const box = bboxOfFaces(visiblePrims(collectGeometry(a.glb).prims));
@@ -259,9 +263,13 @@ export function reuse(ctx) {
     if (!mine || !mine.size || mine.conns.length === 0 || !Array.isArray(rec.meta.dimensions_m)) return;
     const carries = mine.conns.every((m) => theirs.some((t) => t.type === m.type && t.side === m.side));
     const sizeOk = mine.size.every((s, k) => rec.meta.dimensions_m[k] > 0 && Math.abs(rec.meta.dimensions_m[k] - s) / s <= ctx.profile.scale_tolerance);
-    if (carries && sizeOk) msgs.push(`${w}: ${e.asset} carries every connector of this atom and is within ${ctx.profile.scale_tolerance * 100}% of its size, so it fits; reuse it instead of adding this atom`);
+    // Connectors and size are the fit rules a script can test. Two parts can agree on both and still be
+    // different things (a plain wall module and a window module), which is fit rule 4, the description.
+    // So this is a note for the reviewer, with the builder's reason beside it, and not a failure.
+    if (carries && sizeOk) notes.push(`${w}: ${e.asset} carries every connector of this atom and is within ${ctx.profile.scale_tolerance * 100}% of its size. Whether it is the same kind of part (fit rule 4, the description) is for a reviewer to judge from the reason given: ${JSON.stringify(e.reason.trim().slice(0, 300))}`);
   });
-  return msgs.length ? fail(msgs) : pass([`${c.length} considered atom(s); the "description matches" test is not scripted (spec open question), so only connectors and size were compared`]);
+  if (msgs.length) return fail(msgs);
+  return pass([`${c.length} considered atom(s); connectors and size were compared, and the "description matches" rule is not scripted (spec open question)`, ...notes]);
 }
 
 // ---------------------------------------------------------------------------

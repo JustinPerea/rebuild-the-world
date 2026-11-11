@@ -117,6 +117,8 @@ The shape starts from `tasks/task.example.json`. `tasks/task.example.json` itsel
 
 ### Claim: `tasks/claims/<task_id>.json`
 
+Claim files are each clone's own record and are ignored by Git. What every clone shares is the task file: a maintainer sets `"state": "Merged"` there when a pull request merges. A claim still waiting for review on a task that is Merged counts as Merged, so the builder only has to pull.
+
 ```json
 {
   "task_id": "task_wheel_17in_01",

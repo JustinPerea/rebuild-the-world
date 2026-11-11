@@ -421,7 +421,7 @@ A task is one file, `tasks/<task_id>.json`:
 | `category`, `class`, `size`, `min_trust_level` | Where it is filed, its budget class, its size and who may claim it |
 | `dimensions_m` | The bounding box the atom must match |
 | `required_connectors` | `[{ "type", "side", "count" }]` |
-| `connector_frames` | `[{ "name", "position_m", "z_axis", "y_axis" }]`, and `limits_deg` and `rest_deg` for a moving type |
+| `connector_frames` | `[{ "name", "position_m", "z_axis", "y_axis" }]`, and `limits` and `rest` for a moving type, in the same form as the connector's entry in `asset.json` |
 | `mating_m` | `{ dimension: metres }` for every mating dimension the atom's connectors use |
 | `reference_pack` | `[{ "what", "value_or_path", "source", "licence" }]` |
 | `depends_on` | Tasks that must be merged first |

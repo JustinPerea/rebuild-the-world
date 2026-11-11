@@ -40,7 +40,7 @@
     },
     {
       "what": "Shape",
-      "value_or_path": "The leaf fills a box from x = 0 to 0.8, y = 0 to 2.0 and z = -0.02 to 0.02. Its origin is on the hinge line, at the bottom. The outer face faces +Z. The handles are the only parts allowed outside the box, by at most 6 cm on each face; the task's depth already counts them.",
+      "value_or_path": "The leaf fills a box from x = 0 to 0.8, y = 0 to 2.0 and z = -0.02 to 0.02. Its origin is on the hinge line, at the bottom. The outer face faces +Z. The handles are the only parts outside the box. Each handle stands exactly 6 cm proud of its face, one on each face, which is what makes the task's depth 0.16 m (0.04 m of leaf plus 0.06 m on each side). The validator measures the depth with the handles on.",
       "source": "Project maintainers",
       "licence": "n/a"
     },
@@ -75,11 +75,11 @@
         1,
         0
       ],
-      "limits_deg": [
+      "limits": [
         -100,
         0
       ],
-      "rest_deg": 0
+      "rest": 0
     }
   ]
 }

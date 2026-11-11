@@ -120,6 +120,18 @@ test('Connectors: unregistered type, +Y parallel to +Z, missing limits, missing 
   failing(await run(atomIn('prop_box_05'), { task: { required_connectors: [{ type: 'wheel_hub', side: 'b', count: 1 }] } }), 'Connectors', 'wheel_hub', 'side "b"');
 });
 
+test('Connectors: a task that fixes a frame is measured: position, directions, limits and rest', async () => {
+  const hub = () => atomIn(`prop_box_0${n}`, { glb: { connectors: [conn('conn_wheel_hub_b_01', [0, 0, 0])] }, meta: { connectors: [connMeta('conn_wheel_hub_b_01', { limits: [-180, 180], rest: 0 })] } });
+  const frame = (extra = {}) => ({ task: { connector_frames: [{ name: 'conn_wheel_hub_b_01', position_m: [0, 0, 0], z_axis: [0, 0, 1], y_axis: [0, 1, 0], limits: [-180, 180], rest: 0, ...extra }] } });
+  const ok = status(await run(hub(), frame()), 'Connectors');
+  assert.equal(ok.status, 'PASS', ok.messages.join(' | '));
+  failing(await run(hub(), frame({ position_m: [0.005, 0, 0] })), 'Connectors', 'conn_wheel_hub_b_01', '5.0 mm apart');
+  failing(await run(hub(), frame({ z_axis: [1, 0, 0] })), 'Connectors', '+Z points along');
+  failing(await run(hub(), frame({ limits: [-90, 90] })), 'Connectors', 'limits are [-180,180]', 'the task asks for [-90,90]');
+  failing(await run(hub(), frame({ rest: 10 })), 'Connectors', 'rest is 0', 'the task asks for 10');
+  failing(await run(hub(), { task: { connector_frames: [{ name: 'conn_wheel_hub_b_02', position_m: [0, 0, 0] }] } }), 'Connectors', 'no node of that name');
+});
+
 test('Collision: none, too many, non-convex', async () => {
   failing(await run(atomIn('prop_box_01', { glb: { collision: 0 } })), 'Collision', '0 collision');
   failing(await run(atomIn('prop_box_02', { glb: { collision: 9 } })), 'Collision', '9 collision', '1 to 8');
@@ -165,12 +177,15 @@ test('Licence: empty licence and a reference without a note fail', async () => {
   assert.equal(status(await run(d), 'Licence').status, 'PASS');
 });
 
-test('Reuse: missing list fails; a considered atom that fits fails; one that does not fit passes', async () => {
+test('Reuse: a missing list or a missing reason fails; a considered atom that fits by connectors and size is noted for the reviewer', async () => {
   failing(await run(atomIn('prop_box_01', { meta: { considered: undefined } })), 'Reuse', 'considered');
   const other = path.join(fresh(), 'lib2');
   validAtom(other, 'prop_twin_01', { meta: { library: 'test' } });
   const withLib = (consider) => atomIn('prop_box_02', { meta: { considered: [{ asset: consider, reason: 'looked' }] } });
-  failing(await validate(withLib('prop_twin_01@1.0.0'), { registry, library: other }), 'Reuse', 'fits');
+  const twin = status(await validate(withLib('prop_twin_01@1.0.0'), { registry, library: other }), 'Reuse');
+  assert.equal(twin.status, 'PASS');
+  assert.ok(twin.messages.some((m) => m.includes('prop_twin_01@1.0.0') && m.includes('reviewer') && m.includes('"looked"')), twin.messages.join(' | '));
+  failing(await validate(atomIn('prop_box_03', { meta: { considered: [{ asset: 'prop_twin_01@1.0.0', reason: '  ' }] } }), { registry, library: other }), 'Reuse', 'reason');
   validAtom(other, 'prop_big_01', { glb: { size: [3, 1, 1] }, meta: { dimensions_m: [3, 1, 1] } });
   assert.equal(status(await validate(withLib('prop_big_01@1.0.0'), { registry, library: other }), 'Reuse').status, 'PASS');
 });
