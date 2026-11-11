@@ -276,7 +276,7 @@ test('leave_feedback writes one note from the template and never overwrites', as
   const text = fs.readFileSync(file, 'utf8');
   // the headings match the template in feedback/README.md
   const readme = fs.readFileSync(path.join(repo, 'feedback', 'README.md'), 'utf8');
-  const tpl = /```markdown\n([\s\S]*?)```/.exec(readme)[1];
+  const tpl = /```markdown\r?\n([\s\S]*?)```/.exec(readme.replace(/\r\n/g, '\n'))[1];
   const heads = (s) => s.split('\n').filter((l) => /^#|^- /.test(l)).map((l) => l.replace(/:.*$/, ''));
   assert.deepEqual(heads(text).slice(1), heads(tpl).slice(1));
   assert.match(text, /- Kind: unclear rule/);

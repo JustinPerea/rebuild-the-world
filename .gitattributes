@@ -1,3 +1,7 @@
+# Text files are stored and checked out with LF line endings on every system. Without this, Git on
+# Windows checks text out with CRLF, and a file's bytes (and so its hash) differ between contributors.
+* text=auto eol=lf
+
 # Large binaries never go in plain Git (asset spec, "Files, naming and metadata").
 # Every pattern here is stored with Git LFS. scripts/check-lfs.sh fails if a
 # file with one of these extensions is committed as a plain blob.
