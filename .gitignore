@@ -34,3 +34,7 @@ implementation-notes.md
 
 # Claims are each clone's own record in the local test (mcp/README.md). The task file holds what everyone shares.
 tasks/claims/
+
+# Wall reference images are cut from Mapillary photos (CC BY-SA 4.0). They stay local until the
+# project's own licence is chosen (tools/refs/README.md).
+data/*/refs/

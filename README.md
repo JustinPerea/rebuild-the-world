@@ -29,6 +29,7 @@ skill/                          contributor skill file (instructions for a contr
 data/                           region data packs from open map data, each with source and licence
 survey/                         one facade plan per building, and the tally of the bays they use (survey/README.md)
 tools/survey/                   hands out the next building, checks plans, writes the tally
+tools/refs/                     front-on reference images of real walls, from openly licensed street photos
 spec/spec.json                  the specs' tables as data, read by the visualizer (and later the validator)
 tools/spec-visualizer/          interactive map of the specs, built from spec/spec.json
 scripts/                        repo maintenance checks (check-lfs.sh, check-spec-sync.mjs)

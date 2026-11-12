@@ -5,6 +5,7 @@
 //   node tools/survey/survey.mjs check           check every plan file
 //   node tools/survey/survey.mjs check <file>    check one plan file
 //   node tools/survey/survey.mjs tally           what the passing plans add up to (--write saves TALLY.md)
+//   node tools/survey/survey.mjs edges           every building's walls as JSON, for tools/refs/wallrefs.py
 //
 // Options: --region <name> (default tokyo-sumida-oshiage-2), --all (every building, not only the
 // start block), --repo <path> (default: the clone this file is in).
@@ -73,6 +74,16 @@ if (command === 'next') {
     writeFileSync(path.join(dir, 'tally.json'), JSON.stringify(t, null, 1) + '\n');
     console.log(`wrote survey/${region}/TALLY.md and tally.json: ${t.plans.planned} planned, ${t.plans.skipped} skipped, ${t.plans.failing} failing`);
   } else print(t);
+} else if (command === 'edges') {
+  // For tools/refs/wallrefs.py: every building's walls, numbered as the survey numbers them,
+  // with both ends in region metres [x, z] (left end first, seen from outside).
+  process.stdout.write(JSON.stringify(Object.fromEntries(reg.places.map((p) => {
+    const f = facts(reg, p), ring = reg.rings.get(p.place_id);
+    return [p.source_id, {
+      place_id: p.place_id, in_start_block: f.in_start_block, ground_m: p.ground_m ?? 0, wall_height_m: f.roof.main_eave_m, top_m: f.roof.top_m,
+      edges: f.edges.map((e, i) => ({ ...e, left: ring[i], right: ring[(i + 1) % ring.length] })),
+    }];
+  }))) + '\n');
 } else {
   console.error('usage: node tools/survey/survey.mjs next | check [file] | tally [--write]   (options: --region <name>, --all, --repo <path>)');
   process.exit(2);

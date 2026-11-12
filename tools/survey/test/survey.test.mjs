@@ -147,6 +147,11 @@ test('command line: next, check and tally run, and check exits 1 on a failing pl
   save(reg, A, goodPlan(A, facts(reg, reg.byId.get(`plateau:${A}`)).edges[0]));
   assert.equal(run('check', `${A}.json`).status, 0);
   assert.match(run('tally', '--write').stdout, /wrote survey\/test-block\/TALLY\.md/);
+  const walls = JSON.parse(run('edges').stdout);
+  assert.deepEqual(Object.keys(walls).sort(), [A, B, C].sort());
+  assert.equal(walls[A].edges.length, 4);
+  assert.ok(walls[A].edges.every((e) => e.left.length === 2 && e.right.length === 2 && Math.abs(Math.hypot(e.right[0] - e.left[0], e.right[1] - e.left[1]) - e.length_m) < 1e-3));
+  assert.deepEqual([walls[A].wall_height_m, walls[A].in_start_block, walls[C].in_start_block], [6, true, false]);
   assert.equal(run('nonsense').status, 2);
 });
 

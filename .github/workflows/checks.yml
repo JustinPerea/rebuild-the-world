@@ -73,3 +73,10 @@ jobs:
         run: node scripts/check-spec-sync.mjs
       - name: Large files are stored with Git LFS
         run: bash scripts/check-lfs.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Wall reference tool, geometry tests
+        run: |
+          python -m pip install --quiet numpy==2.5.4
+          python tools/refs/test_wallrefs.py

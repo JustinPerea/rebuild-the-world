@@ -1,0 +1,4 @@
+# Versions the tool was built and run with (2026-11-11).
+pycolmap==4.2.1
+numpy==2.5.4
+opencv-python-headless==5.0.0.93
