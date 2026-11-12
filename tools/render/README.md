@@ -24,7 +24,11 @@ It writes PNG files to the asset's `preview/` folder (or `--out DIR`) and prints
 - To the asset's right, on its front plane: a 1.8 m figure, a 1 m ruler in 0.1 m bands, and a chart of six greys and six colours on a post.
 - `front` looks at the +Z face, which the asset spec defines as the front. `close` frames a patch of the front at most 3 m across, at eye height on a tall asset.
 
-A molecule is drawn with every atom where the validator's analysis places it, through nested molecules, with each entry's scale and mirror. The tool decides no position itself, and a molecule that does not assemble is not rendered.
+A molecule is drawn with every atom where the validator's analysis places it, with each entry's scale and mirror. The tool decides no position itself, and a molecule that does not assemble is not rendered. Nested molecules are composed the same way and have no test yet.
+
+Five of the views frame the asset together with the references, so an asset much smaller than the figure is small in them. `close` frames the asset alone.
+
+An asset folder can arrive in a pull request, so the tool refuses a model that names images or buffers outside its own file, refuses to write through a `preview` folder that is a link, and removes the pictures of an earlier run before it renders.
 
 ## What is pinned
 

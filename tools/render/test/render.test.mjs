@@ -46,6 +46,7 @@ function validatorBox(dir, lib) {
   const ctx = { dir, asset, profile: loadProfile(), registry: loadRegistry(registry), task: null, libDir: lib };
   return moleculeBounds(analyzeMolecule(dir, asset.manifest, asset.meta, ctx));
 }
+const det3 = (m) => m[0] * (m[5] * m[10] - m[6] * m[9]) - m[4] * (m[1] * m[10] - m[2] * m[9]) + m[8] * (m[1] * m[6] - m[2] * m[5]);
 const close = (a, b) => a.every((v, i) => Math.abs(v - b[i]) < 1e-9);
 
 test('an atom is one mesh at the origin', () => {
@@ -57,9 +58,15 @@ test('an atom is one mesh at the origin', () => {
   assert.deepEqual(p.meshes[0].matrix, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 });
 
-test('a molecule is rendered where the validator places it: same bounding box, plain and with a scaled atom', () => {
+test('a molecule is rendered where the validator places it: same bounding box, plain, scaled, stretched and mirrored', () => {
   const one = (m) => ({ ...m, joints: m.joints.slice(0, 1) });
-  for (const [name, m, doorMeta] of [['plain', manifest(), {}], ['scaled', one(manifest({ scale: 1.2 })), { variation: { scale: [0.8, 1.3] } }]]) {
+  const cases = [
+    ['plain', manifest(), {}, null],
+    ['scaled', one(manifest({ scale: 1.2 })), { variation: { scale: [0.8, 1.3] } }, (m) => Math.abs(m[5] - 1.2) < 1e-9],
+    ['stretched', one(manifest({ scale: [1, 1.5, 1] })), { variation: { scale: { y: [1, 2] } } }, (m) => Math.abs(Math.hypot(m[4], m[5], m[6]) - 1.5) < 1e-9 && Math.abs(Math.hypot(m[0], m[1], m[2]) - 1) < 1e-9],
+    ['mirrored', manifest({ mirror: true }), { mirror_safe: true }, (m) => det3(m) < 0],
+  ];
+  for (const [name, m, doorMeta, holds] of cases) {
     const lib = newLib();
     bodyDoor(lib, doorMeta);
     const dir = writeMolecule(lib, 'veh_sedan_01', m, { library: 'test' });
@@ -68,8 +75,19 @@ test('a molecule is rendered where the validator places it: same bounding box, p
     assert.equal(p.meshes.length, 2);
     const mine = boxOf(p.meshes), theirs = validatorBox(dir, lib);
     assert.ok(close(mine.min, theirs.min) && close(mine.max, theirs.max), `${name}: ${JSON.stringify(mine)} vs ${JSON.stringify(theirs)}`);
-    if (name === 'scaled') assert.ok(Math.abs(p.meshes[1].matrix[5] - 1.2) < 1e-9, 'the scale is in the matrix');
+    if (holds) assert.ok(holds(p.meshes[1].matrix), `${name}: the matrix carries it`);
   }
+});
+
+test('a model that names a file outside itself is refused, alone and inside a molecule', () => {
+  const lib = newLib();
+  const outside = (json) => { json.images = [{ uri: '../secret.png' }]; };
+  const dir = validAtom(lib, 'prop_box_01', { glb: { mutate: outside } });
+  assert.match(placements(dir, { registry, library: lib }).error, /names a file outside itself/);
+  validAtom(lib, 'veh_body_01', { glb: { connectors: [conn('conn_door_hinge_a_01', [0.5, 0, 0], 90), conn('conn_door_hinge_a_02', [0.5, 0.3, 0], 90)] } });
+  validAtom(lib, 'veh_door_01', { glb: { mutate: outside, connectors: [conn('conn_door_hinge_b_01', [-0.5, 0, 0], -90), conn('conn_door_hinge_b_02', [-0.5, 0.3, 0], -90)] } });
+  const mol = writeMolecule(lib, 'veh_sedan_01', manifest(), { library: 'test' });
+  assert.match(placements(mol, { registry, library: lib }).error, /veh_door_01.*names a file outside itself/);
 });
 
 test('a molecule that does not assemble is refused, and so is a folder with nothing to render', () => {

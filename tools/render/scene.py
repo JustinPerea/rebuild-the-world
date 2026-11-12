@@ -6,9 +6,11 @@ Run by tools/render/render.mjs, which writes the job file:
 
 The job names the mesh files and where each sits, the views, the light and the output folder.
 Every asset gets the same ground, sky, scale references, colour chart and cameras, so two renders
-can be compared. The cameras are placed from the asset's own bounding box and nothing else.
+can be compared. Five cameras frame the asset together with the references, so an asset much
+smaller than the 1.8 m figure is small in them; the close camera frames the asset alone.
 
-Reads only the files the job names and writes only PNG files into the job's output folder.
+Opens the model files the job names and writes PNG files into the job's output folder. render.mjs
+refuses a model that names images or buffers outside itself before this script runs.
 """
 import json
 import math
@@ -28,7 +30,7 @@ CHART = [(g, g, g) for g in (0.9, 0.59, 0.36, 0.19, 0.09, 0.03)] + [
     (0.6, 0.03, 0.03), (0.03, 0.4, 0.05), (0.03, 0.05, 0.5), (0.03, 0.45, 0.6), (0.5, 0.05, 0.4), (0.8, 0.65, 0.03)]
 
 
-def flat_material(name, rgb, emit=False):
+def flat_material(name, rgb):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     b = m.node_tree.nodes["Principled BSDF"]
@@ -69,13 +71,15 @@ def import_asset(job):
             bpy.ops.import_scene.gltf(filepath=m["glb"])
             new = [o for o in bpy.data.objects if o not in before]
             keep = [o for o in new if o.type == "MESH" and not o.name.startswith("col_")]
+            bpy.context.view_layer.update()
+            worlds = {o: o.matrix_world.copy() for o in keep}      # read before any parent is removed
+            for o in keep:
+                o.animation_data_clear()          # a clip's channels would otherwise overwrite the placement
+                o.parent = None
+                o.matrix_world = worlds[o]
             for o in new:
                 if o not in keep:
                     bpy.data.objects.remove(o, do_unlink=True)
-            for o in keep:
-                world = o.matrix_world.copy()
-                o.parent = None
-                o.matrix_world = world
             templates[m["glb"]] = [(o, o.matrix_world.copy()) for o in keep]
             fresh = True
         else:

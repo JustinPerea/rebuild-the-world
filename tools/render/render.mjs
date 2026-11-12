@@ -52,25 +52,33 @@ function main() {
   const p = placements(o.dir, { library: o.library });
   if (p.error) fail(p.error);
   const out = path.resolve(o.out || path.join(o.dir, 'preview'));
-  fs.mkdirSync(out, { recursive: true });
+  // An asset folder arrives in a pull request. A preview folder or picture that is a link would send the render somewhere else.
+  const isLink = (f) => { try { return fs.lstatSync(f).isSymbolicLink(); } catch { return false; } };
+  if (isLink(out)) fail(`${out} is a link, not a folder; remove it and run again`);
   const blender = o.blender || process.env.BLENDER || 'blender';
   const ver = spawnSync(blender, ['--version'], { encoding: 'utf8' });
   if (ver.error || ver.status !== 0) fail(`could not run Blender as "${blender}". Install Blender ${BLENDER_SERIES}, or give its path with --blender or the BLENDER environment variable.`);
   const found = (ver.stdout.match(/Blender (\d+\.\d+)/) || [])[1];
   if (found !== BLENDER_SERIES) console.error(`warning: this is Blender ${found}; the standard scene is pinned to ${BLENDER_SERIES}, so these pictures may differ from the reviewer's`);
 
+  fs.mkdirSync(out, { recursive: true });
+  const prefix = o.light === 'sun' ? 'sun_' : '';
+  const files = o.views.map((v) => path.join(out, `${prefix}${v}.png`));
+  // Remove what an earlier run left, links included, so every file reported below was written by this run.
+  for (const f of files) fs.rmSync(f, { force: true });
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rtw-render-'));
   const job = path.join(tmp, 'job.json');
   // Forward slashes: Blender takes them on every system.
   const fwd = (f) => f.split(path.sep).join('/');
-  const prefix = o.light === 'sun' ? 'sun_' : '';
+  let r;
+  try {
   fs.writeFileSync(job, JSON.stringify({ meshes: p.meshes.map((m) => ({ glb: fwd(m.glb), matrix: m.matrix })), views: o.views, light: o.light, size: o.size, out: fwd(out), prefix }));
-  const r = spawnSync(blender, ['--background', '--factory-startup', '--python-exit-code', '1', '--python', path.join(here, 'scene.py'), '--', job], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  fs.rmSync(tmp, { recursive: true, force: true });
+  r = spawnSync(blender, ['--background', '--factory-startup', '--python-exit-code', '1', '--python', path.join(here, 'scene.py'), '--', job], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+  if (r.error) fail(`Blender could not be run to the end: ${r.error.message}`);
   const line = (r.stdout || '').split('\n').find((l) => l.startsWith('RENDERED '));
   if (r.status !== 0 || !line) fail(`Blender did not finish the render.\n${(r.stderr || '').trim().split('\n').slice(-8).join('\n')}\n${(r.stdout || '').trim().split('\n').slice(-8).join('\n')}`);
   const info = JSON.parse(line.slice('RENDERED '.length));
-  const files = o.views.map((v) => path.join(out, `${prefix}${v}.png`));
   const missing = files.filter((f) => !fs.existsSync(f));
   if (missing.length) fail(`Blender reported success but did not write ${missing.map((f) => path.basename(f)).join(', ')}`);
   console.log(JSON.stringify({ asset: p.asset_id, kind: p.kind, meshes: p.meshes.length, light: o.light, size_px: o.size, measured_m: info.size_m, blender: info.blender, scene_settings: info.settings, files: files.map((f) => fwd(path.relative(process.cwd(), f))) }, null, 1));
