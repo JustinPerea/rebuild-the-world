@@ -77,7 +77,8 @@ export function loadAssetDir(dir) {
     a.manifest = j.value ?? null;
     a.manifestError = j.error ?? null;
   }
-  if (a.kind === 'object') {
+  // An object's folder keeps its blueprint when the assembly is written, so an assembly may have one beside it.
+  if (a.kind === 'object' || (a.kind === 'assembly' && entries.includes('blueprint.json'))) {
     const j = tryJson(path.join(dir, 'blueprint.json'));
     a.blueprint = j.value ?? null;
     a.blueprintError = j.error ?? null;
