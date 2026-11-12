@@ -1,0 +1,6 @@
+# Made from Mapillary photos (CC BY-SA 4.0) or downloaded: kept local. See tools/refs/README.md, "Licence".
+assets/
+renders/
+.media/
+.hyperframes/
+node_modules/

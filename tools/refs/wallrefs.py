@@ -416,7 +416,7 @@ def georeference(rec, where, seq, segs, tops):
                 "moved_from_gps_m": round(moved, 1), "scale_change": round(scale / scale0, 3)})
     if not 0.7 < scale / scale0 < 1.4 or moved > 15:
         return None                          # the refinement ran away; better no image than a wall from the wrong building
-    return {"scale": scale, "R": R, "t": t, "fit": fit}
+    return {"scale": scale, "R": R, "t": t, "fit": fit, "first": {"scale": scale0, "R": R_first, "t": t_first}}
 
 
 def fit_wall(points, e, top_m):

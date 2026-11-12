@@ -38,6 +38,7 @@ film/                           pitch film source (reference only)
 announce/film/                  announcement film, 16:9 (HyperFrames)
 announce/film-vertical/         the same film re-laid out for 9:16
 announce/web-hero/              the live globe used on the waitlist page
+explain/wall-refs/              explainer film: how tools/refs makes a wall reference (source only; its images stay local)
 brand/, site/                   brand work and the waitlist page
 ```
 

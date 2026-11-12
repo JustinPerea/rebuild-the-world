@@ -1,0 +1,758 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: Inter, sans-serif;
+      color: #14181d;
+    }
+    #w-ground {
+      position: absolute;
+      inset: 0;
+      background: #eceff1;
+    }
+    .w-layer {
+      position: absolute;
+      inset: 0;
+    }
+    #w-map,
+    #w-over {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    .w-abs {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform-origin: 0 0;
+      opacity: 0;
+    }
+    .w-ph {
+      width: 1280px;
+      height: 960px;
+      overflow: hidden;
+    }
+    .w-ph img {
+      display: block;
+      width: 1280px;
+      height: 960px;
+    }
+    .w-ph svg {
+      position: absolute;
+      inset: 0;
+    }
+    .w-pl {
+      width: 711px;
+      height: 1360px;
+      display: block;
+    }
+    .w-cr .w-crbg {
+      position: absolute;
+      inset: 0;
+      background: #000;
+    }
+    .w-cr img {
+      position: absolute;
+      display: block;
+    }
+    .w-mg {
+      position: absolute;
+      left: 0;
+      top: -1169.6px;
+      width: 990px;
+      height: 1893.7px;
+      display: block;
+    }
+    .w-pt {
+      width: 180px;
+      height: 180px;
+      background-repeat: no-repeat;
+      background-size: 1066.5px 2040px;
+      background-position: -156px -732px;
+    }
+    .w-sw {
+      width: 180px;
+      height: 48px;
+    }
+    .w-t {
+      position: absolute;
+      opacity: 0;
+    }
+    .w-h {
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .w-top.w-h {
+      left: 96px;
+      top: 66px;
+      font-size: 64px;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .w-top.w-s {
+      left: 96px;
+      top: 152px;
+      width: 1720px;
+      font-size: 42px;
+      line-height: 1.3;
+      color: #56606c;
+    }
+    .w-col {
+      position: absolute;
+      left: 96px;
+      top: 150px;
+      width: 520px;
+    }
+    .w-col .w-h {
+      position: relative;
+      font-size: 60px;
+      line-height: 1.08;
+    }
+    .w-col .w-slot {
+      position: relative;
+      margin-top: 30px;
+    }
+    .w-col .w-s {
+      left: 0;
+      top: 0;
+      width: 520px;
+      font-size: 40px;
+      line-height: 1.32;
+      color: #56606c;
+    }
+    #w-open {
+      left: 96px;
+      top: 232px;
+      font-size: 124px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+    #w-open-sub {
+      left: 96px;
+      top: 540px;
+      width: 1040px;
+      font-size: 46px;
+      line-height: 1.3;
+      color: #56606c;
+    }
+    .w-end {
+      left: 960px;
+      width: 850px;
+      font-size: 40px;
+      line-height: 1.32;
+    }
+    #w-i3 {
+      font-size: 30px;
+      line-height: 1.55;
+      color: #56606c;
+    }
+  </style>
+
+  <div id="root" data-composition-id="wall" data-width="1920" data-height="1080">
+    <div id="w-ground"></div>
+
+    <div id="w-mapc" class="w-layer clip" data-start="0" data-duration="112" data-track-index="1" data-layout-ignore>
+      <canvas id="w-map" width="1920" height="1080"></canvas>
+    </div>
+
+    <div id="w-photos" class="w-layer clip" data-start="0" data-duration="112" data-track-index="2" data-layout-allow-overflow data-layout-ignore>
+      <div id="w-ph0" class="w-abs w-ph"><img src="assets/src0.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q0" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
+      <div id="w-ph1" class="w-abs w-ph"><img src="assets/src1.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q1" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
+      <div id="w-ph2" class="w-abs w-ph"><img src="assets/src2.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q2" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
+      <div id="w-ph3" class="w-abs w-ph"><img src="assets/src3.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q3" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
+      <div id="w-ph4" class="w-abs w-ph"><img src="assets/src4.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q4" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
+      <div id="w-ph5" class="w-abs w-ph"><img src="assets/src5.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q5" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
+
+      <div id="w-pa" class="w-abs w-ph"><img src="assets/pairA.jpg" alt="" /></div>
+      <div id="w-pb" class="w-abs w-ph"><img src="assets/pairB.jpg" alt="" /></div>
+
+      <img id="w-fl0" class="w-abs w-pl" src="assets/flat0.jpg" alt="" />
+      <img id="w-fl1" class="w-abs w-pl" src="assets/flat1.jpg" alt="" />
+      <img id="w-fl2" class="w-abs w-pl" src="assets/flat2.jpg" alt="" />
+      <img id="w-fl3" class="w-abs w-pl" src="assets/flat3.jpg" alt="" />
+      <img id="w-fl4" class="w-abs w-pl" src="assets/flat4.jpg" alt="" />
+      <img id="w-fl5" class="w-abs w-pl" src="assets/flat5.jpg" alt="" />
+      <img id="w-fused" class="w-abs w-pl" src="assets/fused.jpg" alt="" />
+      <img id="w-best" class="w-abs w-pl" src="assets/best.jpg" alt="" />
+
+      <div id="w-cr0" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop0.jpg" alt="" /></div>
+      <div id="w-cr1" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop1.jpg" alt="" /></div>
+      <div id="w-cr2" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop2.jpg" alt="" /></div>
+      <div id="w-cr3" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop3.jpg" alt="" /></div>
+      <div id="w-cr4" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop4.jpg" alt="" /></div>
+      <div id="w-cr5" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop5.jpg" alt="" /></div>
+
+      <div id="w-mag" class="w-abs" style="width: 990px; height: 724px; overflow: hidden">
+        <img id="w-mg0" class="w-mg" src="assets/flat0.jpg" alt="" /><img id="w-mg1" class="w-mg" src="assets/flat1.jpg" alt="" /><img id="w-mg2" class="w-mg" src="assets/flat2.jpg" alt="" />
+        <img id="w-mg3" class="w-mg" src="assets/flat3.jpg" alt="" /><img id="w-mg4" class="w-mg" src="assets/flat4.jpg" alt="" /><img id="w-mg5" class="w-mg" src="assets/flat5.jpg" alt="" />
+      </div>
+      <div id="w-pt0" class="w-abs w-pt" style="background-image: url(assets/flat0.jpg)"></div>
+      <div id="w-pt1" class="w-abs w-pt" style="background-image: url(assets/flat1.jpg)"></div>
+      <div id="w-pt2" class="w-abs w-pt" style="background-image: url(assets/flat2.jpg)"></div>
+      <div id="w-pt3" class="w-abs w-pt" style="background-image: url(assets/flat3.jpg)"></div>
+      <div id="w-pt4" class="w-abs w-pt" style="background-image: url(assets/flat4.jpg)"></div>
+      <div id="w-pt5" class="w-abs w-pt" style="background-image: url(assets/flat5.jpg)"></div>
+      <div id="w-ptf" class="w-abs w-pt" style="background-image: url(assets/fused.jpg)"></div>
+      <div id="w-sw0" class="w-abs w-sw"></div>
+      <div id="w-sw1" class="w-abs w-sw"></div>
+      <div id="w-sw2" class="w-abs w-sw"></div>
+      <div id="w-sw3" class="w-abs w-sw"></div>
+      <div id="w-sw4" class="w-abs w-sw"></div>
+      <div id="w-sw5" class="w-abs w-sw"></div>
+    </div>
+
+    <div id="w-overc" class="w-layer clip" data-start="0" data-duration="112" data-track-index="3" data-layout-ignore>
+      <canvas id="w-over" width="1920" height="1080"></canvas>
+    </div>
+
+    <div id="w-text" class="w-layer clip" data-start="0" data-duration="112" data-track-index="4">
+      <div id="w-open" class="w-t">Nobody took<br />this photo.</div>
+      <div id="w-open-sub" class="w-t">One wall in Oshiage, Tokyo, seen square-on and to scale. 80 pixels to the metre.</div>
+
+      <div id="w-h-b" class="w-t w-top w-h">It was made from these.</div>
+      <div id="w-s-b1" class="w-t w-top w-s">Six frames from one drive down the street, shared on Mapillary.</div>
+      <div id="w-s-b2" class="w-t w-top w-s">The wall is in all six, but never square-on.</div>
+
+      <div class="w-col">
+        <div id="w-h-c" class="w-t w-h">First, find the photos.</div>
+        <div class="w-slot">
+          <div id="w-s-c1" class="w-t w-s">2,216 street photos surround this block, shared openly on Mapillary.</div>
+          <div id="w-s-c2" class="w-t w-s">106 were taken within 40 m of the wall.</div>
+          <div id="w-s-c3" class="w-t w-s">8 face it, close enough, with no building in between.</div>
+        </div>
+      </div>
+      <div class="w-col">
+        <div id="w-h-d" class="w-t w-h">Next, work out where each was taken.</div>
+        <div class="w-slot">
+          <div id="w-s-d1" class="w-t w-s">Each photo carries a GPS position, good to a few metres. A wall needs centimetres.</div>
+          <div id="w-s-d2" class="w-t w-s">So the photos locate each other. These two share 793 matching spots.</div>
+          <div id="w-s-d3" class="w-t w-s">Only one layout of cameras and points explains every match.</div>
+          <div id="w-s-d4" class="w-t w-s">38 photos, 11,471 points: a rough 3D model of the street.</div>
+        </div>
+      </div>
+      <div class="w-col">
+        <div id="w-h-e" class="w-t w-h">Then put the model on the map.</div>
+        <div class="w-slot">
+          <div id="w-s-e1" class="w-t w-s">Placed by GPS alone, its walls miss the surveyed outlines.</div>
+          <div id="w-s-e2" class="w-t w-s">Slide it until they meet. Here that is a 2 m move.</div>
+          <div id="w-s-e3" class="w-t w-s">Now each camera's true position is known. GPS was about 6 m off.</div>
+        </div>
+      </div>
+      <div class="w-col">
+        <div id="w-h-f" class="w-t w-h">Find the wall itself.</div>
+        <div class="w-slot">
+          <div id="w-s-f1" class="w-t w-s">1,633 points lie along this edge, flat to 5 cm. That plane is the wall.</div>
+          <div id="w-s-f2" class="w-t w-s">The tree and the truck stand in front of it.</div>
+        </div>
+      </div>
+
+      <div id="w-h-g" class="w-t w-top w-h">Flatten each photo onto that plane.</div>
+      <div id="w-s-g1" class="w-t w-top w-s">Lay a grid on the wall, 80 cells to the metre.</div>
+      <div id="w-s-g2" class="w-t w-top w-s">For each cell, take the colour the photo saw there.</div>
+      <div id="w-s-g3" class="w-t w-top w-s">The same for the other five.</div>
+
+      <div id="w-h-h" class="w-t w-top w-h">Combine them.</div>
+      <div id="w-s-h1" class="w-t w-top w-s">The wall lands in the same place in every view. Things in front of it don't.</div>
+      <div id="w-s-h2" class="w-t w-top w-s">Take one window. The wires shift between views; the window stays put.</div>
+      <div id="w-s-h3" class="w-t w-top w-s">For each cell, keep the middle value of the six.</div>
+      <div id="w-s-h4" class="w-t w-top w-s">What only some views saw drops out. The tree is in all six, so it stays.</div>
+
+      <div id="w-h-i" class="w-t w-top w-h">A reference to match. Not a texture to copy.</div>
+      <div id="w-i1" class="w-t w-end" style="top: 262px">Builders read it to place windows and doors, and to judge the texture they make themselves.</div>
+      <div id="w-i2" class="w-t w-end" style="top: 462px">In this block, open street photos reach 48 walls of 30 buildings, all along one street.</div>
+      <div id="w-i3" class="w-t w-end" style="top: 690px">Photos: musashino5 and lvl5 on Mapillary, CC BY-SA 4.0<br />Building outlines and heights: PLATEAU, MLIT Japan<br />Earth, Again · tools/refs/wallrefs.py</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const D = window.WALLREFS;
+      const W = 1920, HH = 1080, DUR = 112;
+      const INK = "#14181d", INK2 = "#56606c", ACC = "#f04e16", GROUND = "#eceff1";
+      const SEQ = [INK, "#2f6fde", "#0f9d8a", "#8b52d6"];
+      const $ = (id) => document.getElementById(id);
+
+      // ---- small maths ----
+      const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const lerp = (a, b, u) => a + (b - a) * u;
+      const seg = (t, a, b) => clamp((t - a) / (b - a));
+      const io = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+      const out3 = (u) => 1 - Math.pow(1 - u, 3);
+      const vis = (t, a, b, din = 0.22, dout = 0.16) => (t < a || t >= b ? 0 : Math.min(seg(t, a, a + din), 1 - seg(t, b - dout, b)));
+      const rl = (A, B, u) => ({ x: lerp(A.x, B.x, u), y: lerp(A.y, B.y, u), w: lerp(A.w, B.w, u), h: lerp(A.h, B.h, u) });
+
+      // ---- layout ----
+      const PL = { x: 1321, y: 70, w: 471, h: 900 };           // the big plate
+      const PB = { x: 96, y: 236, w: 1040, h: 780 };           // the big photo
+      const cellB = (k) => ({ x: 96 + (k % 3) * 524, y: 262 + Math.floor(k / 3) * 389, w: 500, h: 375 });
+      const slotS = (k) => ({ x: 104 + k * 289, y: 500, w: 267, h: 510 });
+      const slotT = (k) => ({ x: 104 + k * 289, y: 276, w: 267, h: 200.25 });
+      const ST = { x: 96, y: 236, w: 377, h: 720 };            // the stack
+      const BEST = { x: 513, y: 236, w: 377, h: 720 };
+      const PA = { x: 640, y: 96, w: 580, h: 435 }, PBR = { x: 1244, y: 96, w: 580, h: 435 };
+      const LEN = D.wall.length_m, SHOWN = D.wall.shown_height_m;
+
+      // ---- the map, in the wall's own frame: s along the wall, d out into the street ----
+      const L = D.wall.left, AL = D.along, OU = D.outward;
+      const wf = (p) => [(p[0] - L[0]) * AL[0] + (p[1] - L[1]) * AL[1], (p[0] - L[0]) * OU[0] + (p[1] - L[1]) * OU[1]];
+      const MID = [LEN / 2, 0];
+      const outlines = D.outlines.map((r) => r.map(wf));
+      const target = D.target.map(wf);
+      const photos = D.photos.map(wf).map((p) => ({ p, dist: Math.hypot(p[0] - MID[0], p[1] - MID[1]) }));
+      photos.slice().sort((a, b) => a.dist - b.dist).forEach((q, i) => (q.rank = i / photos.length));
+      const camById = {};
+      const cams = D.cams.map((c) => (camById[c.id] = { id: c.id, seq: c.seq, gps: wf(c.gps), first: wf(c.first), final: wf(c.final) }));
+      const given = D.given.map((g) => ({ id: g.id, seq: g.seq, cand: g.cand, gps: wf(g.gps), cam: camById[g.id] }));
+      const cands = given.filter((g) => g.cand);
+      const ptsF = D.pf.map(wf), ptsL = D.pl.map((p) => wf(p)), ptsH = D.pl.map((p) => p[2]);
+      // final -> first is one similarity in plan; fit it from the cameras
+      const sim = (() => {
+        let gx = 0, gy = 0, fx = 0, fy = 0;
+        cams.forEach((c) => { gx += c.final[0]; gy += c.final[1]; fx += c.first[0]; fy += c.first[1]; });
+        gx /= cams.length; gy /= cams.length; fx /= cams.length; fy /= cams.length;
+        let ar = 0, ai = 0, den = 0;
+        cams.forEach((c) => {
+          const px = c.final[0] - gx, py = c.final[1] - gy, qx = c.first[0] - fx, qy = c.first[1] - fy;
+          ar += qx * px + qy * py; ai += qy * px - qx * py; den += px * px + py * py;
+        });
+        ar /= den; ai /= den;
+        return (p) => { const x = p[0] - gx, y = p[1] - gy; return [fx + ar * x - ai * y, fy + ai * x + ar * y]; };
+      })();
+      const pair = D.pair;
+      const pairPts = pair.pts.map((q) => ({ a: [q[0], q[1]], b: [q[2], q[3]], first: sim(wf([q[4], q[5]])), on: q[7] }));
+      const camA = camById[pair.a], camB = camById[pair.b];
+      const OFF = D.wall.plane_offset_m;
+      const near = D.near.map((q) => ({ s: q[0], d: q[1], h: q[2], on: Math.abs(q[1] - OFF) < 0.12 && q[0] > -0.5 && q[0] < LEN + 0.5 && q[2] > 0.3 }));
+
+      const treePts = near.filter((q) => q.h > 3.5 && q.d > 1.5 && q.d < 5.6), truckPts = near.filter((q) => q.h < 3.5 && q.d > 5);
+      const mean = (a, f) => a.reduce((n, q) => n + f(q), 0) / a.length;
+      const TREE = [mean(treePts, (q) => q.s), mean(treePts, (q) => q.d) + 0.12], TRUCK = [mean(truckPts, (q) => q.s), Math.max(...truckPts.map((q) => q.d)) + 0.5];
+
+      const CAM = {
+        district: { s: -60, d: -50, k: 2.8, ax: 1260, ay: 540 },
+        mid: { s: MID[0], d: 0, k: 9, ax: 1260, ay: 540 },
+        near: { s: 6, d: 0, k: 18, ax: 1230, ay: 640 },
+        near2: { s: 5, d: 0, k: 26, ax: 1230, ay: 420 },
+        wall: { s: MID[0], d: 0, k: 105, ax: 1260, ay: 235 },
+      };
+      const camMix = (a, b, u) => ({ s: lerp(a.s, b.s, u), d: lerp(a.d, b.d, u), k: Math.exp(lerp(Math.log(a.k), Math.log(b.k), u)), ax: lerp(a.ax, b.ax, u), ay: lerp(a.ay, b.ay, u) });
+      function camAt(t) {
+        if (t < 18.4) return CAM.district;
+        if (t < 19.8) return camMix(CAM.district, CAM.mid, io(seg(t, 18.4, 19.8)));
+        if (t < 22.6) return CAM.mid;
+        if (t < 23.8) return camMix(CAM.mid, CAM.near, io(seg(t, 22.6, 23.8)));
+        if (t < 45.0) return CAM.near;
+        if (t < 46.4) return camMix(CAM.near, CAM.near2, io(seg(t, 45.0, 46.4)));
+        if (t < 57.0) return CAM.near2;
+        return camMix(CAM.near2, CAM.wall, io(seg(t, 57.0, 58.6)));
+      }
+      const pr = (p, c) => [c.ax + (p[0] - c.s) * c.k, c.ay + (p[1] - c.d) * c.k];
+
+      // ---- the flattening warp: a homography from the wall's outline in a photo to a rectangle ----
+      function homog(s, d) {
+        const A = [];
+        for (let i = 0; i < 4; i++) {
+          const x = s[i][0], y = s[i][1], u = d[i][0], v = d[i][1];
+          A.push([x, y, 1, 0, 0, 0, -u * x, -u * y, u]);
+          A.push([0, 0, 0, x, y, 1, -v * x, -v * y, v]);
+        }
+        for (let c = 0; c < 8; c++) {
+          let m = c;
+          for (let r = c + 1; r < 8; r++) if (Math.abs(A[r][c]) > Math.abs(A[m][c])) m = r;
+          [A[c], A[m]] = [A[m], A[c]];
+          for (let r = 0; r < 8; r++) {
+            if (r === c) continue;
+            const f = A[r][c] / A[c][c];
+            for (let j = c; j < 9; j++) A[r][j] -= f * A[c][j];
+          }
+        }
+        return A.map((row, i) => row[8] / row[i]);
+      }
+      const warps = D.views.map((V, k) => {
+        const [x0, y0, x1] = V.crop, [cw, ch] = V.crop_px, [fw, fh] = V.full_px;
+        const sc = cw / ((x1 - x0) * fw);
+        const Q = V.corners.map(([u, v]) => [(u - x0) * fw * sc, (v - y0) * fh * sc]);
+        const minX = Math.min(0, ...Q.map((q) => q[0])), minY = Math.min(0, ...Q.map((q) => q[1]));
+        const maxX = Math.max(cw, ...Q.map((q) => q[0])), maxY = Math.max(ch, ...Q.map((q) => q[1]));
+        const src = Q.map((q) => [q[0] - minX, q[1] - minY]);
+        const el = $("w-cr" + k), img = el.querySelector("img");
+        el.style.width = maxX - minX + "px"; el.style.height = maxY - minY + "px";
+        img.style.left = -minX + "px"; img.style.top = -minY + "px"; img.style.width = cw + "px"; img.style.height = ch + "px";
+        el.style.clipPath = "polygon(" + src.map((q) => q[0].toFixed(1) + "px " + q[1].toFixed(1) + "px").join(",") + ")";
+        $("w-q" + k).setAttribute("points", V.corners.map(([u, v]) => (u * 1280).toFixed(1) + "," + (v * 960).toFixed(1)).join(" "));
+        return { el, bg: el.querySelector(".w-crbg"), src, corners: V.corners };
+      });
+      function setWarp(k, R, P, p, alpha) {
+        const w = warps[k];
+        if (alpha <= 0) { w.el.style.opacity = 0; return; }
+        const from = w.corners.map(([u, v]) => [R.x + u * R.w, R.y + v * R.h]);
+        const to = [[P.x, P.y], [P.x + P.w, P.y], [P.x + P.w, P.y + P.h], [P.x, P.y + P.h]];
+        const dst = from.map((f, i) => [lerp(f[0], to[i][0], p), lerp(f[1], to[i][1], p)]);
+        const h = homog(w.src, dst);
+        w.el.style.transform = `matrix3d(${h[0]},${h[3]},0,${h[6]},${h[1]},${h[4]},0,${h[7]},0,0,1,0,${h[2]},${h[5]},0,1)`;
+        w.el.style.opacity = alpha;
+        w.bg.style.opacity = clamp(p * 1.6);
+      }
+
+      // ---- DOM helpers ----
+      function put(el, R, baseW, alpha, blur) {
+        if (alpha <= 0.001) { el.style.opacity = 0; return; }
+        const s = R.w / baseW;
+        el.style.transform = `translate(${R.x}px,${R.y}px) scale(${s})`;
+        el.style.opacity = alpha;
+        el.style.filter = blur > 0.05 ? `blur(${blur}px)` : "none";
+      }
+      const ph = [0, 1, 2, 3, 4, 5].map((k) => $("w-ph" + k)), qd = [0, 1, 2, 3, 4, 5].map((k) => $("w-q" + k));
+      const fl = [0, 1, 2, 3, 4, 5].map((k) => $("w-fl" + k)), pt = [0, 1, 2, 3, 4, 5].map((k) => $("w-pt" + k)), sw = [0, 1, 2, 3, 4, 5].map((k) => $("w-sw" + k));
+      const mg = [0, 1, 2, 3, 4, 5].map((k) => $("w-mg" + k));
+      const cols = D.spot.cols, lum = cols.map((c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]);
+      const rank = lum.map((v, i) => lum.filter((u, j) => u < v || (u === v && j < i)).length);
+      sw.forEach((el, k) => (el.style.background = `rgb(${cols[k].join(",")})`));
+      const viewGps = D.views.map((v) => camById[v.id].gps);
+
+      const TEXT = [
+        ["w-open", -1, 6.0], ["w-open-sub", 1.2, 6.0],
+        ["w-h-b", 6.3, 14.0], ["w-s-b1", 6.7, 10.6], ["w-s-b2", 10.6, 14.0],
+        ["w-h-c", 14.4, 27.0], ["w-s-c1", 15.0, 19.2], ["w-s-c2", 19.6, 23.2], ["w-s-c3", 23.6, 27.0],
+        ["w-h-d", 27.2, 45.0], ["w-s-d1", 27.8, 32.6], ["w-s-d2", 32.9, 38.0], ["w-s-d3", 38.2, 41.4], ["w-s-d4", 41.4, 45.0],
+        ["w-h-e", 45.2, 57.0], ["w-s-e1", 45.6, 49.2], ["w-s-e2", 49.2, 53.0], ["w-s-e3", 53.0, 57.0],
+        ["w-h-f", 57.4, 66.0], ["w-s-f1", 58.8, 63.2], ["w-s-f2", 63.2, 66.0],
+        ["w-h-g", 66.4, 81.0], ["w-s-g1", 66.9, 70.2], ["w-s-g2", 70.2, 74.4], ["w-s-g3", 74.6, 81.0],
+        ["w-h-h", 81.2, 100.3], ["w-s-h1", 81.6, 87.4], ["w-s-h2", 87.4, 91.8], ["w-s-h3", 91.8, 95.8], ["w-s-h4", 95.8, 100.3],
+        ["w-h-i", 100.7, 113], ["w-i1", 101.4, 113], ["w-i2", 103.4, 113], ["w-i3", 105.4, 113],
+      ].map(([id, a, b]) => ({ el: $(id), a, b }));
+
+      const M = $("w-map").getContext("2d"), O = $("w-over").getContext("2d");
+      const dot = (c, x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fill(); };
+      const label = (c, s, x, y, col, weight = 400, align = "left", size = 28) => { c.font = `${weight} ${size}px Inter, sans-serif`; c.textAlign = align; c.fillStyle = col; c.fillText(s, x, y); };
+
+      // ---- the map ----
+      function drawMap(t) {
+        M.setTransform(1, 0, 0, 1, 0, 0);
+        M.clearRect(0, 0, W, HH);
+        const A0 = Math.min(seg(t, 14.0, 14.8), 1 - seg(t, 66.0, 66.5));
+        if (A0 <= 0) return;
+        const c = camAt(t);
+        const P = (p) => pr(p, c);
+        M.globalAlpha = A0;
+        // buildings
+        M.lineWidth = clamp(c.k * 0.09, 1, 2.5); M.strokeStyle = "#b3bac3"; M.fillStyle = "#d7dbe0"; M.lineJoin = "round";
+        for (const r of outlines) {
+          M.beginPath();
+          r.forEach((p, i) => { const q = P(p); i ? M.lineTo(q[0], q[1]) : M.moveTo(q[0], q[1]); });
+          M.closePath(); M.fill(); M.stroke();
+        }
+        M.fillStyle = "#c3c9d1"; M.beginPath();
+        target.forEach((p, i) => { const q = P(p); i ? M.lineTo(q[0], q[1]) : M.moveTo(q[0], q[1]); });
+        M.closePath(); M.fill(); M.stroke();
+
+        // every street photo
+        const aAll = (1 - seg(t, 27.0, 27.5)) * A0;
+        if (aAll > 0) {
+          const r = clamp(0.9 + c.k * 0.17, 1.6, 4.2), far = lerp(0.62, 0.16, seg(t, 20.2, 20.9)), nearA = lerp(0.72, 0.34, seg(t, 23.6, 24.2));
+          M.fillStyle = INK;
+          for (const q of photos) {
+            const a = seg(t, 15.0 + 2.0 * q.rank, 15.15 + 2.0 * q.rank) * (q.dist <= 40 ? nearA : far);
+            if (a <= 0) continue;
+            const s = P(q.p);
+            if (s[0] < 600 || s[0] > W + 5 || s[1] < -5 || s[1] > HH + 5) continue;
+            M.globalAlpha = a * aAll; dot(M, s[0], s[1], r);
+          }
+        }
+        // the 40 m circle
+        const aC = seg(t, 19.8, 20.0) * (1 - seg(t, 26.6, 27.0)) * A0;
+        if (aC > 0) {
+          const m = P(MID);
+          M.globalAlpha = aC; M.strokeStyle = ACC; M.lineWidth = 2.5; M.beginPath();
+          M.arc(m[0], m[1], 40 * c.k, -Math.PI / 2, -Math.PI / 2 + 6.2832 * io(seg(t, 19.8, 20.8))); M.stroke();
+          M.globalAlpha = aC * seg(t, 20.6, 20.9) * (1 - seg(t, 22.6, 22.9));
+          label(M, "40 m", m[0] + 40 * c.k * 0.72 + 14, m[1] - 40 * c.k * 0.72 - 8, ACC, 700);
+        }
+        // the model's points
+        const aP = seg(t, 40.6, 41.8) * (1 - seg(t, 58.0, 58.6)) * A0;
+        if (aP > 0) {
+          const u = io(seg(t, 49.2, 50.6)), hi = lerp(0.42, 0.8, seg(t, 45.2, 46.0)), lo = lerp(0.42, 0.2, seg(t, 45.2, 46.0));
+          M.fillStyle = INK;
+          const z = clamp(c.k / 18, 1, 2.2) * 2.2;
+          for (let i = 0; i < ptsF.length; i++) {
+            const s = P([lerp(ptsF[i][0], ptsL[i][0], u), lerp(ptsF[i][1], ptsL[i][1], u)]);
+            if (s[0] < 600 || s[0] > W || s[1] < 0 || s[1] > HH) continue;
+            M.globalAlpha = aP * (ptsH[i] > 2 ? hi : lo); M.fillRect(s[0] - z / 2, s[1] - z / 2, z, z);
+          }
+        }
+        // points along the wall, close up
+        const aN = seg(t, 58.0, 58.8) * A0;
+        if (aN > 0) {
+          for (const q of near) {
+            const s = P([q.s, q.d]);
+            const hot = q.on && t > 59.4 + 0.8 * clamp(q.s / LEN);
+            M.globalAlpha = aN * (hot ? 0.95 : 0.5); M.fillStyle = hot ? ACC : INK; dot(M, s[0], s[1], hot ? 2.6 : 2.1);
+          }
+          M.globalAlpha = aN * seg(t, 62.0, 62.4);
+          M.font = "700 28px Inter, sans-serif"; M.textAlign = "center"; M.lineWidth = 8; M.strokeStyle = GROUND; M.lineJoin = "round";
+          M.strokeText("tree", P(TREE)[0], P(TREE)[1]); M.strokeText("truck", P(TRUCK)[0], P(TRUCK)[1]);
+          label(M, "tree", P(TREE)[0], P(TREE)[1], INK2, 700, "center");
+          label(M, "truck", P(TRUCK)[0], P(TRUCK)[1], INK2, 700, "center");
+        }
+        // the wall
+        M.globalAlpha = A0; M.strokeStyle = ACC; M.lineCap = "round";
+        M.lineWidth = clamp(c.k * 0.3, 4, 6);
+        const w0 = P([0, 0]), w1 = P([LEN, 0]);
+        M.beginPath(); M.moveTo(w0[0], w0[1]); M.lineTo(w1[0], w1[1]); M.stroke();
+        const uL = io(seg(t, 60.2, 60.9));
+        if (uL > 0) {
+          const a = P([-0.5, OFF]), b = P([lerp(-0.5, LEN + 0.5, uL), OFF]);
+          M.lineWidth = 3; M.beginPath(); M.moveTo(a[0], a[1]); M.lineTo(b[0], b[1]); M.stroke();
+        }
+        M.lineCap = "butt";
+        const aW = seg(t, 15.2, 15.6) * (1 - seg(t, 26.6, 27.0)) * A0;
+        if (aW > 0) { M.globalAlpha = aW; label(M, "the wall", (w0[0] + w1[0]) / 2, w0[1] - 18, ACC, 700, "center"); }
+
+        // sight lines of the photos that pass
+        const aS = (1 - seg(t, 26.6, 27.2)) * A0;
+        if (aS > 0 && t > 23.8) {
+          const m = P(MID);
+          cands.forEach((g, i) => {
+            const s = P(g.gps), u = out3(seg(t, 24.0 + 0.08 * i, 24.7 + 0.08 * i));
+            M.globalAlpha = aS * 0.75; M.strokeStyle = ACC; M.lineWidth = 2;
+            M.beginPath(); M.moveTo(s[0], s[1]); M.lineTo(lerp(s[0], m[0], u), lerp(s[1], m[1], u)); M.stroke();
+            M.globalAlpha = aS * seg(t, 23.8, 24.1); M.fillStyle = "#fff"; dot(M, s[0], s[1], 9); M.fillStyle = INK; dot(M, s[0], s[1], 6.5);
+          });
+        }
+        // the photos given to the reconstruction, by drive
+        const aG = seg(t, 27.0, 27.6) * (1 - seg(t, 57.2, 57.9)) * A0;
+        if (aG > 0) {
+          const u1 = io(seg(t, 38.2, 39.4)), u2 = io(seg(t, 49.2, 50.6));
+          // GPS ghosts and the distance each was off
+          const aGh = seg(t, 53.0, 53.3);
+          if (aGh > 0) cams.forEach((cm, i) => {
+            const a = P(cm.gps), b = P(cm.final), u = out3(seg(t, 53.0 + 0.02 * i, 53.7 + 0.02 * i));
+            M.globalAlpha = aG * 0.55; M.strokeStyle = SEQ[cm.seq]; M.lineWidth = 1.5;
+            M.beginPath(); M.moveTo(b[0], b[1]); M.lineTo(lerp(b[0], a[0], u), lerp(b[1], a[1], u)); M.stroke();
+            M.globalAlpha = aG * u; M.lineWidth = 2; M.beginPath(); M.arc(a[0], a[1], 5.5, 0, 6.2832); M.stroke();
+          });
+          // rays from the two matched photos
+          const aR = seg(t, 39.4, 39.6) * (1 - seg(t, 42.2, 43.0));
+          if (aR > 0) {
+            const a = P(camA.first), b = P(camB.first);
+            pairPts.forEach((q, j) => {
+              if (!q.on && (j % 3 || Math.abs(q.first[0] - 5) > 13 || q.first[1] < -3 || q.first[1] > 10)) return;
+              const e = P(q.first), u = out3(seg(t, 39.4 + 0.012 * j, 40.1 + 0.012 * j));
+              M.globalAlpha = aG * aR * (q.on ? 0.5 : 0.28); M.strokeStyle = q.on ? ACC : INK; M.lineWidth = 1;
+              M.beginPath(); M.moveTo(a[0], a[1]); M.lineTo(lerp(a[0], e[0], u), lerp(a[1], e[1], u));
+              M.moveTo(b[0], b[1]); M.lineTo(lerp(b[0], e[0], u), lerp(b[1], e[1], u)); M.stroke();
+              if (u > 0.98) { M.globalAlpha = aG * aR; M.fillStyle = q.on ? ACC : INK; dot(M, e[0], e[1], 2.6); }
+            });
+          }
+          for (const g of given) {
+            let p = g.gps, a = aG;
+            if (g.cam) p = [lerp(lerp(g.gps[0], g.cam.first[0], u1), g.cam.final[0], u2), lerp(lerp(g.gps[1], g.cam.first[1], u1), g.cam.final[1], u2)];
+            else a *= 1 - seg(t, 38.2, 38.8);
+            if (a <= 0) continue;
+            const s = P(p);
+            M.globalAlpha = a; M.fillStyle = "#fff"; dot(M, s[0], s[1], 8); M.fillStyle = SEQ[g.seq]; dot(M, s[0], s[1], 6);
+            if (g.id === pair.a || g.id === pair.b) {
+              const aa = a * vis(t, 32.7, 43.0, 0.3, 0.4);
+              if (aa > 0) {
+                M.globalAlpha = aa; M.strokeStyle = ACC; M.lineWidth = 3; M.beginPath(); M.arc(s[0], s[1], 13, 0, 6.2832); M.stroke();
+                label(M, g.id === pair.a ? "A" : "B", s[0], s[1] + 46, ACC, 700, "center");
+              }
+            }
+          }
+          const aL = aG * vis(t, 27.8, 44.9, 0.3, 0.3);
+          if (aL > 0) {
+            M.globalAlpha = aL;
+            M.fillStyle = SEQ[0]; dot(M, 712, 806, 6); label(M, "June 2023, one drive", 734, 816, INK2);
+            [1, 2, 3].forEach((q, i) => { M.fillStyle = SEQ[q]; dot(M, 712 + i * 18, 852, 6); });
+            label(M, "2018, three drives", 770, 862, INK2);
+          }
+        }
+        // the text column sits on clear ground
+        M.globalAlpha = A0;
+        const g = M.createLinearGradient(600, 0, 720, 0);
+        g.addColorStop(0, GROUND); g.addColorStop(1, "rgba(236,239,241,0)");
+        M.fillStyle = GROUND; M.fillRect(0, 0, 600, HH); M.fillStyle = g; M.fillRect(600, 0, 120, HH);
+        M.globalAlpha = 1;
+      }
+
+      // ---- rulers, grid, match lines, labels: drawn over the photos ----
+      function ruler(R, a, grow) {
+        if (a <= 0) return;
+        const m = R.h / SHOWN;
+        O.globalAlpha = a; O.strokeStyle = INK; O.lineWidth = 2; O.beginPath();
+        const top = R.y + R.h - R.h * grow;
+        O.moveTo(R.x - 12, R.y + R.h); O.lineTo(R.x - 12, top);
+        for (let i = 0; i <= SHOWN * grow + 0.001; i++) { const y = R.y + R.h - i * m, l = i % 5 ? 8 : 16; O.moveTo(R.x - 12, y); O.lineTo(R.x - 12 - l, y); }
+        const right = R.x + R.w * grow;
+        O.moveTo(R.x, R.y + R.h + 12); O.lineTo(right, R.y + R.h + 12);
+        for (let i = 0; i <= LEN * grow + 0.001; i++) { const x = R.x + i * m; O.moveTo(x, R.y + R.h + 12); O.lineTo(x, R.y + R.h + 22); }
+        O.stroke();
+        for (let i = 5; i <= SHOWN * grow; i += 5) label(O, i + " m", R.x - 36, R.y + R.h - i * m + 10, INK, 400, "right");
+        O.globalAlpha = a * seg(grow, 0.8, 1);
+        label(O, "8.9 m", R.x + R.w / 2, R.y + R.h + 56, INK, 400, "center");
+      }
+      function drawOver(t) {
+        O.setTransform(1, 0, 0, 1, 0, 0);
+        O.clearRect(0, 0, W, HH);
+        // opening plate
+        ruler(PL, 1 - seg(t, 6.0, 6.3), io(seg(t, 0.2, 1.4)));
+        let a = vis(t, 3.2, 6.0, 0.3, 0.2);
+        if (a > 0) { O.globalAlpha = a; label(O, "No photo saw this", PL.x + PL.w - 16, PL.y + 44, "#fff", 400, "right"); }
+
+        // matched spots
+        a = vis(t, 33.2, 40.6, 0.2, 0.4);
+        if (a > 0) {
+          const n = pairPts.length;
+          pairPts.forEach((q, j) => {
+            const u = seg(t, 33.3 + (1.7 * j) / n, 33.6 + (1.7 * j) / n);
+            if (u <= 0) return;
+            const x0 = PA.x + q.a[0] * PA.w, y0 = PA.y + q.a[1] * PA.h, x1 = PBR.x + q.b[0] * PBR.w, y1 = PBR.y + q.b[1] * PBR.h;
+            O.globalAlpha = a * 0.5 * u; O.strokeStyle = q.on ? ACC : "#ffffff"; O.lineWidth = 1.3;
+            if (j % 2 === 0) { O.beginPath(); O.moveTo(x0, y0); O.lineTo(lerp(x0, x1, out3(u)), lerp(y0, y1, out3(u))); O.stroke(); }
+            O.globalAlpha = a; O.fillStyle = q.on ? ACC : "#ffffff"; dot(O, x0, y0, 3.5); if (u >= 1) dot(O, x1, y1, 3.5);
+          });
+        }
+        a = vis(t, 32.7, 40.6, 0.3, 0.4);
+        if (a > 0) {
+          O.globalAlpha = a;
+          [[PA, "A"], [PBR, "B"]].forEach(([R, s]) => { O.fillStyle = INK; O.fillRect(R.x, R.y, 52, 52); label(O, s, R.x + 26, R.y + 37, "#fff", 700, "center", 30); });
+        }
+
+        // the wall's line stands up as a grid
+        const uLine = io(seg(t, 66.0, 67.0)), aLine = seg(t, 66.0, 66.1) * (1 - seg(t, 73.6, 74.2));
+        if (aLine > 0) {
+          const c = CAM.wall, x0 = lerp(c.ax + (0 - c.s) * c.k, PL.x, uLine), x1 = lerp(c.ax + (LEN - c.s) * c.k, PL.x + PL.w, uLine), y = lerp(c.ay, PL.y + PL.h, uLine);
+          const gr = io(seg(t, 67.0, 67.9)), m = PL.h / SHOWN, aGrid = lerp(1, 0.4, seg(t, 70.4, 71.8));
+          if (gr > 0) {
+            O.globalAlpha = aLine * aGrid * 0.32; O.strokeStyle = INK; O.lineWidth = 1; O.beginPath();
+            const top = PL.y + PL.h - PL.h * gr;
+            for (let i = 0; i * m <= PL.w + 0.5; i++) { O.moveTo(PL.x + i * m, PL.y + PL.h); O.lineTo(PL.x + i * m, top); }
+            O.moveTo(PL.x + PL.w, PL.y + PL.h); O.lineTo(PL.x + PL.w, top);
+            for (let i = 1; i <= SHOWN * gr; i++) { O.moveTo(PL.x, PL.y + PL.h - i * m); O.lineTo(PL.x + PL.w, PL.y + PL.h - i * m); }
+            O.stroke();
+          }
+          O.globalAlpha = aLine; O.strokeStyle = ACC; O.lineWidth = 5; O.lineCap = "round";
+          O.beginPath(); O.moveTo(x0, y); O.lineTo(x1, y); O.stroke(); O.lineCap = "butt";
+          ruler(PL, aLine * seg(t, 67.2, 67.5), gr);
+        }
+
+        // the flip-book's caption
+        a = vis(t, 82.5, 87.4, 0.25, 0.3);
+        if (a > 0) {
+          const n = clamp(Math.floor((t - 82.6) / 0.43), 0, 5) + 1, txt = t < 85.4 ? `view ${n} of 6` : "all six, averaged";
+          O.globalAlpha = a; O.font = "700 28px Inter, sans-serif"; const tw = O.measureText(txt).width;
+          O.fillStyle = INK; O.fillRect(600, 290, tw + 40, 54); label(O, txt, 620, 327, "#fff", 700);
+        }
+        // one window, six views
+        a = seg(t, 87.2, 87.6) * (1 - seg(t, 100.3, 100.7));
+        if (a > 0) {
+          const ks = ST.w / 711, bx = ST.x + (D.spot.x - 60) * ks, by = ST.y + (D.spot.y - 60) * ks, bs = 120 * ks;
+          O.globalAlpha = a; O.strokeStyle = ACC; O.lineWidth = 3; O.strokeRect(bx, by, bs, bs);
+          O.globalAlpha = a * 0.5 * seg(t, 87.4, 87.8); O.lineWidth = 1.5; O.beginPath();
+          O.moveTo(bx + bs, by); O.lineTo(600, 290); O.moveTo(bx + bs, by + bs); O.lineTo(600, 470); O.stroke();
+          const aM = a * seg(t, 91.8, 92.1), us = io(seg(t, 92.6, 93.4));
+          if (aM > 0) for (let k = 0; k < 6; k++) {
+            const cx = 600 + k * 196 + 90, cy = 380;
+            O.globalAlpha = aM; O.strokeStyle = "#fff"; O.lineWidth = 5; O.beginPath(); O.moveTo(cx - 13, cy); O.lineTo(cx + 13, cy); O.moveTo(cx, cy - 13); O.lineTo(cx, cy + 13); O.stroke();
+            O.strokeStyle = ACC; O.lineWidth = 2.5; O.beginPath(); O.moveTo(cx - 12, cy); O.lineTo(cx + 12, cy); O.moveTo(cx, cy - 12); O.lineTo(cx, cy + 12); O.stroke();
+            O.globalAlpha = a * seg(t, 92.0 + 0.05 * k, 92.2 + 0.05 * k);
+            label(O, String(Math.round(lum[k])), lerp(600 + k * 196, 600 + rank[k] * 196, us) + 90, lerp(486, 600, us) + 82, INK, 400, "center");
+          }
+          O.globalAlpha = a * seg(t, 93.2, 93.6); label(O, "sorted, dark to bright", 600, 582, INK2);
+          const aB = a * seg(t, 93.7, 94.0);
+          if (aB > 0) {
+            O.globalAlpha = aB; O.strokeStyle = ACC; O.lineWidth = 3; O.beginPath();
+            O.moveTo(992, 700); O.lineTo(992, 710); O.lineTo(1368, 710); O.lineTo(1368, 700); O.stroke();
+            label(O, "the middle", 1180, 748, ACC, 700, "center");
+          }
+          O.globalAlpha = a * seg(t, 96.2, 96.6); label(O, "the combined view, same window", 804, 890, INK2);
+        }
+        // end card
+        a = seg(t, 101.0, 101.4);
+        if (a > 0) { O.globalAlpha = a; label(O, "combined from six", ST.x, 1000, INK2); label(O, "sharpest single view", BEST.x, 1000, INK2); }
+        O.globalAlpha = 1;
+      }
+
+      // ---- photos and plates ----
+      function drawDom(t) {
+        const cD = CAM.district;
+        for (let k = 0; k < 6; k++) {
+          const tk = 75.4 + 0.45 * (k - 1);
+          // street photo
+          let R = null, a = 0, blur = 0, q = 1;
+          if (t >= 6.0 && t < 15.2) {
+            const cell = cellB(k);
+            if (k === 0) { R = rl(PB, cell, io(seg(t, 8.6, 9.6))); a = seg(t, 6.2, 7.2); }
+            else { R = cell; a = seg(t, 9.0 + 0.12 * k, 9.3 + 0.12 * k); blur = (1 - a) * 10; }
+            const u = io(seg(t, 14.0, 15.2));
+            if (u > 0) { const s = pr(viewGps[k], cD); R = rl(R, { x: s[0] - 6, y: s[1] - 4.5, w: 12, h: 9 }, u); a *= 1 - seg(t, 14.5, 15.2); }
+            q = io(seg(t, 10.8 + 0.1 * k, 11.6 + 0.1 * k));
+          } else if (t >= 67.4 && t < 81.4) {
+            if (k === 0) { R = rl(PB, slotT(0), io(seg(t, 74.4, 75.4))); a = seg(t, 67.4, 67.7); blur = (1 - a) * 10; a *= 1 - 0.5 * seg(t, 70.2, 71.2); q = io(seg(t, 68.2, 69.0)); }
+            else { R = slotT(k); a = seg(t, tk, tk + 0.25); blur = (1 - a) * 8; a *= 1 - 0.5 * seg(t, tk + 0.3, tk + 0.9); }
+            a *= 1 - seg(t, 81.0, 81.4);
+          }
+          if (R) { put(ph[k], R, 1280, a, blur); qd[k].setAttribute("stroke-dashoffset", 1 - q); qd[k].setAttribute("stroke-width", (4 * 1280) / R.w); }
+          else ph[k].style.opacity = 0;
+
+          // the warp
+          if (k === 0 && t >= 6.0 && t < 7.4) setWarp(0, PB, PL, 1 - io(seg(t, 6.0, 7.4)), 1);
+          else if (k === 0 && t >= 70.2 && t < 72.1) setWarp(0, PB, PL, io(seg(t, 70.2, 71.8)), 1 - seg(t, 71.8, 72.05));
+          else if (k > 0 && t >= tk + 0.3 && t < tk + 1.4) setWarp(k, slotT(k), slotS(k), io(seg(t, tk + 0.3, tk + 1.1)), 1 - seg(t, tk + 1.1, tk + 1.35));
+          else warps[k].el.style.opacity = 0;
+
+          // the flattened view
+          let F = null, fa = 0;
+          if (t >= 71.8 && t < 97.0) {
+            if (k === 0) { F = rl(PL, slotS(0), io(seg(t, 74.4, 75.4))); fa = seg(t, 71.8, 72.05); }
+            else { F = slotS(k); fa = seg(t, tk + 1.1, tk + 1.35); }
+            const u = io(seg(t, 81.2 + 0.06 * k, 82.3 + 0.06 * k));
+            if (u > 0) { F = rl(F, ST, u); fa *= lerp(1, 1 / (k + 1), u); }
+          }
+          if (F) put(fl[k], F, 711, fa, 0); else fl[k].style.opacity = 0;
+
+          // the window, cut from each view; its value; sorted
+          const aP = seg(t, 87.4 + 0.08 * k, 87.7 + 0.08 * k) * (1 - seg(t, 100.3, 100.7));
+          put(pt[k], { x: 600 + k * 196, y: 290, w: 180 }, 180, aP, (1 - seg(t, 87.4 + 0.08 * k, 87.7 + 0.08 * k)) * 8);
+          const us = io(seg(t, 92.6, 93.4)), mid = rank[k] === 2 || rank[k] === 3;
+          const aS = seg(t, 91.9 + 0.05 * k, 92.1 + 0.05 * k) * (1 - seg(t, 100.3, 100.7));
+          put(sw[k], { x: lerp(600 + k * 196, 600 + rank[k] * 196, us), y: lerp(486, 600, us), w: 180 }, 180, aS, 0);
+          sw[k].style.outline = mid && t > 93.7 ? `4px solid ${ACC}` : "none";
+          // the flip-book: one view after another, then all six averaged
+          const f = (t - 82.6) / 0.43;
+          mg[k].style.opacity = (k === 0 ? 1 : clamp((f - k) / 0.25)) * lerp(1, 1 / (k + 1), seg(t, 85.4, 86.2));
+        }
+        const aMag = vis(t, 82.2, 87.4, 0.3, 0.3);
+        put($("w-mag"), { x: 600, y: 290, w: 990 }, 990, aMag, (1 - aMag) * 8);
+        put($("w-ptf"), { x: 600, y: 790, w: 180 }, 180, seg(t, 96.0, 96.4) * (1 - seg(t, 100.3, 100.7)), 0);
+        put($("w-fused"), ST, 711, seg(t, 95.8, 96.8), 0);
+        const aBest = t < 50 ? 1 - seg(t, 6.0, 6.2) : seg(t, 100.8, 101.2);
+        put($("w-best"), t < 50 ? PL : BEST, 711, aBest, t < 50 ? 0 : (1 - aBest) * 8);
+        const aPair = vis(t, 32.5, 40.6, 0.3, 0.4);
+        put($("w-pa"), PA, 1280, aPair, (1 - aPair) * 8); put($("w-pb"), PBR, 1280, aPair, (1 - aPair) * 8);
+      }
+
+      function drawText(t) {
+        for (const x of TEXT) {
+          const v = vis(t, x.a, x.b);
+          x.el.style.opacity = v;
+          x.el.style.filter = v > 0 && v < 1 ? `blur(${((1 - v) * 8).toFixed(2)}px)` : "none";
+        }
+      }
+
+      function renderAt(t) { drawMap(t); drawDom(t); drawOver(t); drawText(t); }
+
+      const tl = gsap.timeline({ paused: true });
+      const clock = { t: 0 };
+      tl.fromTo(clock, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => renderAt(clock.t) }, 0);
+      renderAt(0);
+      window.__timelines["wall"] = tl;
+    })();
+  </script>
+</template>
