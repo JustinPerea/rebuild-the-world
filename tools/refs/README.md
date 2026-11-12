@@ -50,14 +50,14 @@ Results go to `data/<region>/refs/<building>/`:
 python tools/refs/sheet.py bldg_e4639cfe-aa87-42b0-afb1-618c2e74eb92
 ```
 
-`sheet.py` writes two more images beside each wall reference. It reads local files only and needs numpy and opencv.
+`sheet.py` writes two more images beside each wall reference. It reads local files only and needs numpy and opencv, and node for the plan check. The building id and `--region` must match the survey's patterns, so neither can name a path outside `data/`.
 
 | File | Content |
 | --- | --- |
 | `edgeNN_grid.jpg` | The reference under a grid with a line every 0.5 m, numbered in metres from the wall's left end and from the ground. Bay widths, sill heights and storey heights are read off it |
-| `edgeNN_plan.jpg` | The reference with the building's survey plan drawn over it: storey lines, bay edges and each opening as a coloured box. Written when `survey/<region>/plans/<building>.json` lists that wall. An opening drawn where the image shows wall means the plan is off there |
+| `edgeNN_plan.jpg` | The reference with the building's survey plan drawn over it: storey lines, bay edges and each opening as a coloured box. Written when `survey/<region>/plans/<building>.json` lists that wall. An opening drawn where the image shows wall means the plan is off there. A plan can arrive in a pull request, so it is drawn only after `node tools/survey/survey.mjs check <building>` passes; if that fails, the grid sheet is written alone and the checker's output is printed with a line saying the plan was not drawn. The plan sheet uses the image the facade's `reference` names (`plan_drawn_on` in the output says which), or the one `--image` gives |
 
-`--edge N` does one wall and `--image best` uses the sharpest single photo, which is the one to look at where the combined image is smeared. Both sheets are ignored by Git with the rest of `refs/`.
+`--edge N` does one wall and `--image best` uses the sharpest single photo, which is the one to look at where the combined image is smeared. A missing or unreadable image is reported by name: for the grid sheet the wall gets a `problem` line, for the plan sheet a `plan_not_drawn` line. Both sheets are ignored by Git with the rest of `refs/`.
 
 ## How far to trust an image
 

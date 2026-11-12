@@ -17,12 +17,15 @@ export const STEP = 50;                // mm, size step
 export const MIN_BAND = 50;            // mm, a base or top band under this is dropped
 export const MIN_MODULE = 50;          // mm, no module is narrower
 export const MIN_END_BAY = 300;        // mm, the wall bay next to an outside corner
+export const MIN_REMAINDER = 200;      // mm, the least a plain run's last panel may be; a smaller remainder joins the panel before it
 export const PANEL = 1000;             // mm, the plain panel
 export const CORNER_TOL_DEG = 2;
 export const MAX_SHIFT_M = 0.10;
 export const LEAF_DEPTH = 0.16;        // m, 4 cm leaf and a 6 cm handle each side
 export const ID_RE = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
 export const ID_MAX = 64;
+export const PIN_RE = /^[a-z0-9]+(?:_[a-z0-9]+)*@\d+\.\d+\.\d+$/;   // an atom pin: <asset id>@<version>
+export const VERSION_RE = /^\d+\.\d+\.\d+$/;
 const ORIGIN_VERSION = '0.1.0';
 
 // The five atoms that already exist under older names, by the canonical id this tool would give them.
@@ -79,9 +82,12 @@ export function objectIdFor(sourceId) {
   else {
     const osm = /^(way|relation)_([0-9]+)$/.exec(sourceId);
     if (!osm) throw new Error(`source id ${sourceId} is not one this tool can name`);
-    key = `${osm[1] === 'way' ? 'w' : 'r'}${osm[2]}`.slice(0, 12);
+    key = `${osm[1] === 'way' ? 'w' : 'r'}${osm[2]}`;   // the whole number: a cut one would let two ways share an id
   }
-  return `bld_place_${key}_01`;
+  const id = `bld_place_${key}_01`;
+  const bad = idProblem(id);
+  if (bad) throw new Error(bad);
+  return id;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -270,7 +276,7 @@ function plainRun(R) {
   if (R <= 0) return [];
   const n = Math.floor(R / PANEL), rem = R - n * PANEL;
   if (rem === 0) return Array(n).fill(PANEL);
-  if (rem >= MIN_END_BAY) return [...Array(n).fill(PANEL), rem];
+  if (rem >= MIN_REMAINDER) return [...Array(n).fill(PANEL), rem];
   if (n >= 1) return [...Array(n - 1).fill(PANEL), PANEL + rem];
   return [rem];
 }
@@ -278,13 +284,18 @@ function plainRun(R) {
 function bayRun(R, bays, startOut, endOut, where, problems) {
   const list = bays.flatMap((b) => Array.from({ length: b.count ?? 1 }, () => ({ bay: b, w: Math.round(b.width_m * 1000) })));
   const last = list.length - 1;
+  // The check is on the bay as written. A single bay between two outside corners is checked once
+  // and then loses both posts, so its already-reduced width is not the one to test.
   const cornerBay = (end, i) => {
-    const ok = list[i].bay.kind === 'wall' && list[i].w >= MIN_END_BAY;
+    const ok = list[i].bay.kind === 'wall' && Math.round(list[i].bay.width_m * 1000) >= MIN_END_BAY;
     if (!ok) problems.add(`${where}: a corner post takes 0.15 m, so the ${end} bay must be a plain wall bay at least ${MIN_END_BAY / 1000} m wide`);
     else list[i].w -= THICKNESS;
   };
   if (startOut) cornerBay('first', 0);
   if (endOut) cornerBay('last', last);
+  // A single 0.3 m bay between two outside corners has nothing left: the two posts join each other,
+  // as an unlisted edge of that length would.
+  for (let i = list.length - 1; i >= 0; i--) if (list[i].w === 0) list.splice(i, 1);
   const diff = R - list.reduce((t, x) => t + x.w, 0);
   const walls = list.map((x, i) => (x.bay.kind === 'wall' ? i : -1)).filter((i) => i >= 0);
   if (walls.length) {
@@ -311,7 +322,7 @@ function lookup(id, alias, dir, taskDir) {
   for (const a of ids) {
     if (!pin && dir) {
       const f = path.join(dir, 'bld', a, 'asset.json');
-      if (existsSync(f)) { try { const v = JSON.parse(readFileSync(f, 'utf8')).version; if (typeof v === 'string' && v) pin = `${a}@${v}`; } catch { /* unreadable: not a pin */ } }
+      if (existsSync(f)) { try { const v = JSON.parse(readFileSync(f, 'utf8')).version; if (typeof v === 'string' && VERSION_RE.test(v)) pin = `${a}@${v}`; } catch { /* unreadable: not a pin */ } }
     }
     if (!task && taskDir && existsSync(path.join(taskDir, `task_${a}.json`))) task = `task_${a}`;
   }
@@ -428,7 +439,8 @@ export function draft(reg, place, plan, opts = {}) {
   if (result.problems.length) return result;
 
   // Atoms: reuse, or a task that exists, or a task to write.
-  const pinned = opts.pinned ?? new Map();
+  // Pins from an existing blueprint: only a well-formed pin on a well-formed slot name is kept.
+  const pinned = new Map([...(opts.pinned ?? new Map())].filter(([k, v]) => ID_RE.test(k) && PIN_RE.test(v)));
   const slotList = [...slots.values()].map((s) => {
     const kept = pinned.get(s.slot);
     const hit = lookup(s.id, ALIASES[s.id], opts.library, opts.tasks);
@@ -443,7 +455,7 @@ export function draft(reg, place, plan, opts = {}) {
 
   result.blueprint = {
     object_id: objectId,
-    version: ORIGIN_VERSION,
+    version: typeof opts.version === 'string' && VERSION_RE.test(opts.version) ? opts.version : ORIGIN_VERSION,
     description: `The walls of ${place.source_id}, ${m(rect.extent[0])} m by ${m(rect.extent[1])} m once made square, ${courses.length} course${courses.length === 1 ? '' : 's'} high, built from facade modules and corner posts. No roof.`,
     slots: slotList.map((s) => {
       const info = pieceInfo(s.spec);
@@ -508,7 +520,12 @@ export function draft(reg, place, plan, opts = {}) {
 
 // ---------------------------------------------------------------------------------------------
 // 3. assemble(blueprint, layout) -> the assembly.json object, or an error naming the open slots.
-export function assemble(blueprint, layout) {
+export function assemble(blueprint, layout, objectId) {
+  if (blueprint.object_id !== objectId || layout.object_id !== objectId) {
+    throw new Error(`cannot assemble: the blueprint's object_id and the layout's object_id must both be ${objectId}`);
+  }
+  const badPins = blueprint.slots.filter((s) => s.atom !== 'new' && !(typeof s.atom === 'string' && PIN_RE.test(s.atom))).length;
+  if (badPins) throw new Error(`cannot assemble: ${badPins} slot${badPins > 1 ? 's' : ''} in the blueprint ${badPins > 1 ? 'have' : 'has'} an atom that is neither "new" nor a pin written as <asset id>@<version>`);
   const pin = new Map(blueprint.slots.map((s) => [s.slot, s.atom]));
   const open = blueprint.slots.filter((s) => s.atom === 'new').map((s) => s.slot);
   const unknown = [...new Set(layout.atoms.map((a) => a.slot).filter((s) => !pin.has(s)))];

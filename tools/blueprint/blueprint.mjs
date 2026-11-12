@@ -7,11 +7,11 @@
 //
 // Options: --region <name> (default tokyo-sumida-oshiage-2), --repo <path> (default: the clone this file is in).
 // What the tool does and what it does not: tools/blueprint/README.md.
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, realpathSync, lstatSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadRegion, readPlans, planFile } from '../survey/lib.mjs';
-import { draft, assemble, ID_RE, ID_MAX } from './lib.mjs';
+import { draft, assemble, ID_RE, ID_MAX, PIN_RE, VERSION_RE } from './lib.mjs';
 
 const argv = process.argv.slice(2);
 const flag = (name) => { const i = argv.indexOf(name); if (i < 0) return false; argv.splice(i, 1); return true; };
@@ -23,17 +23,40 @@ const [command, target] = argv;
 
 const out = (o) => process.stdout.write(JSON.stringify(o, null, 2) + '\n');
 const fail = (msg, code = 2) => { console.error(msg); process.exit(code); };
-const writeJson = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2) + '\n'); };
+// Output goes only inside the clone. A symlink at assets/bld/<id>, tasks or a file in them could point
+// elsewhere, so the real path of each file's nearest existing parent must lie inside the clone's real path.
+const insideRepo = (file) => {
+  let dir = path.dirname(path.resolve(file));
+  while (!existsSync(dir) && path.dirname(dir) !== dir) dir = path.dirname(dir);
+  const rel = path.relative(realpathSync(repo), realpathSync(dir));
+  if (rel.startsWith('..') || path.isAbsolute(rel)) return false;
+  try { if (lstatSync(file).isSymbolicLink()) return false; } catch { /* does not exist yet */ }
+  return true;
+};
+const guardOutputs = (files) => { const bad = files.find((f) => !insideRepo(f)); if (bad) fail(`refusing to write ${path.relative(repo, bad)}: it resolves outside the clone (a symlink?)`); };
+const writeJson = (file, value) => { guardOutputs([file]); mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2) + '\n'); };
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 const library = path.join(repo, 'assets');
 const tasksDir = path.join(repo, 'tasks');
 const objectDir = (id) => path.join(library, 'bld', id);
 const validObjectId = (id) => typeof id === 'string' && ID_RE.test(id) && id.length <= ID_MAX && id.startsWith('bld_');
 
+// An existing blueprint is untrusted: a pin or a slot name of the wrong shape is not carried over, and
+// the report says how many and under which slot names, never what the value was.
 function existingPins(id) {
+  const none = { pins: new Map(), rejected: [], version: undefined };
   const file = path.join(objectDir(id), 'blueprint.json');
-  if (!existsSync(file)) return new Map();
-  try { return new Map(readJson(file).slots.filter((s) => s.atom && s.atom !== 'new').map((s) => [s.slot, s.atom])); } catch { return new Map(); }
+  if (!existsSync(file)) return none;
+  try {
+    const bp = readJson(file);
+    const pins = new Map(), rejected = [];
+    for (const s of bp.slots) {
+      if (!s || s.atom === undefined || s.atom === 'new') continue;
+      if (typeof s.slot === 'string' && ID_RE.test(s.slot) && typeof s.atom === 'string' && PIN_RE.test(s.atom)) pins.set(s.slot, s.atom);
+      else rejected.push(typeof s.slot === 'string' && /^[a-z0-9_]{1,64}$/.test(s.slot) ? s.slot : '(a slot name of the wrong shape)');
+    }
+    return { pins, rejected, version: typeof bp.version === 'string' && VERSION_RE.test(bp.version) ? bp.version : undefined };
+  } catch { return none; }
 }
 
 function summarise(r) {
@@ -59,11 +82,13 @@ if (command === 'draft') {
   let plan;
   try { plan = readJson(file); } catch { fail(`${path.relative(repo, file)} is not valid JSON`); }
   const pre = draft(reg, place, plan, { library, tasks: tasksDir });
-  const pinned = pre.object_id ? existingPins(pre.object_id) : new Map();
-  const r = pinned.size ? draft(reg, place, plan, { library, tasks: tasksDir, pinned }) : pre;
+  const prior = pre.object_id ? existingPins(pre.object_id) : { pins: new Map(), rejected: [], version: undefined };
+  const r = prior.pins.size || prior.version ? draft(reg, place, plan, { library, tasks: tasksDir, pinned: prior.pins, version: prior.version }) : pre;
   const report = summarise(r);
+  if (prior.rejected.length) report.ignored_pins = { count: prior.rejected.length, slots: prior.rejected };
   if (write && !r.problems.length && !r.unsupported && !r.conflicts) {
     const dir = objectDir(r.object_id);
+    guardOutputs([path.join(dir, 'blueprint.json'), path.join(dir, 'layout.json'), ...r.tasks.map((t) => path.join(tasksDir, `${t.task_id}.json`))]);
     const written = [], kept = [];
     writeJson(path.join(dir, 'blueprint.json'), r.blueprint); written.push(path.relative(repo, path.join(dir, 'blueprint.json')));
     writeJson(path.join(dir, 'layout.json'), r.layout); written.push(path.relative(repo, path.join(dir, 'layout.json')));
@@ -89,7 +114,8 @@ if (command === 'draft') {
   let blueprint, layout;
   try { blueprint = readJson(path.join(dir, 'blueprint.json')); layout = readJson(path.join(dir, 'layout.json')); } catch (e) { fail(`cannot read blueprint.json and layout.json in ${path.relative(repo, dir)}: ${e.message}`); }
   try {
-    const manifest = assemble(blueprint, layout);
+    const manifest = assemble(blueprint, layout, target);
+    guardOutputs([path.join(dir, 'assembly.json')]);
     writeJson(path.join(dir, 'assembly.json'), manifest);
     out({ wrote: path.relative(repo, path.join(dir, 'assembly.json')), atoms: manifest.atoms.length, joints: manifest.joints.length });
   } catch (e) { fail(e.message, 1); }

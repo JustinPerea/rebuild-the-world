@@ -35,7 +35,7 @@ Leave out people, number plates, and the wording and logos of signs. A shop fron
 
 ### 1. Pick a building and check it is free
 
-A building is named by its source id, for example `bldg_e4639cfe-aa87-42b0-afb1-618c2e74eb92`. Its object id is `bld_place_` plus the first 12 hex digits of that id with the dashes removed, plus `_01`: `bld_place_e4639cfeaa87_01`. The building is free when `assets/bld/<object id>/` does not exist on `main` and no open pull request adds it (`gh pr list --search "<object id>"`). Nothing reserves a building while you draft it; that service is not built.
+A building is named by its source id, for example `bldg_e4639cfe-aa87-42b0-afb1-618c2e74eb92`. Its object id is `bld_place_` plus the first 12 hex digits of that id with the dashes removed, plus `_01`: `bld_place_e4639cfeaa87_01`. An OpenStreetMap building keeps its whole number: `way_123456789012345` gives `bld_place_w123456789012345_01`. The building is free when `assets/bld/<object id>/` does not exist on `main` and no open pull request adds it (`gh pr list --search "<object id>"`). Nothing reserves a building while you draft it; that service is not built.
 
 ### 2. Read the facts
 
