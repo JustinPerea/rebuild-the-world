@@ -65,9 +65,9 @@
       "name": "Process",
       "question": "Who builds what, and how is it checked?",
       "doc": "docs/claim-system-spec.md",
-      "version": "v0.3",
+      "version": "v0.4",
       "status": "revised",
-      "summary": "Objects built atom by atom from a blueprint, the board, claims, claiming a place from the map, trust levels, review gates, strikes, and region and block unlocks."
+      "summary": "Objects built atom by atom from a blueprint and submitted as one bundle, the board, claims, claiming a place from the map, trust levels that limit unreviewed work, review gates, strikes, and region and block unlocks."
     },
     {
       "id": "service",
@@ -495,15 +495,15 @@
     },
     {
       "name": "Build the missing atoms",
-      "what": "One atom at a time, each as its own pull request. Once one is submitted, the next can start."
+      "what": "In any order, without waiting for review. Each is its own asset and passes the checks on its own."
     },
     {
       "name": "Assemble",
-      "what": "When every slot holds a merged atom, submit the assembly manifest."
+      "what": "When every slot holds an atom, write the assembly manifest. Sub-assemblies are written first."
     },
     {
-      "name": "Merge",
-      "what": "The object enters the library. Its atoms were already there for everyone else."
+      "name": "Submit the bundle",
+      "what": "The new atoms, the sub-assemblies and the assembly go in as one pull request. When it merges, the object and every atom in it are in the library."
     }
   ],
   "fit_rules": [
@@ -718,7 +718,7 @@
     {
       "from": "Locked",
       "to": "Open",
-      "trigger": "Dependencies merged and region unlocked"
+      "trigger": "Dependencies merged or in the same bundle, and region unlocked"
     },
     {
       "from": "Open",
@@ -768,32 +768,32 @@
       "reach": "GitHub sign-in and licence agreement accepted",
       "claims": 1,
       "sizes": "Starter-tagged objects",
-      "open_prs": "2",
+      "open_prs": "1",
       "spec_role": "Open an issue describing a problem with a spec"
     },
     {
       "n": 1,
       "name": "Contributor",
       "reach": "3 merged tasks",
-      "claims": 2,
+      "claims": 3,
       "sizes": "Any object except landmarks",
-      "open_prs": "2",
+      "open_prs": "3",
       "spec_role": "Open an issue describing a problem with a spec"
     },
     {
       "n": 2,
       "name": "Trusted",
       "reach": "15 merged tasks, with 70% or more approved on first review",
-      "claims": 3,
+      "claims": 10,
       "sizes": "Any object, including landmarks and kits",
-      "open_prs": "4",
+      "open_prs": "10",
       "spec_role": "Propose a change as a pull request against `docs/`, and propose new connector types, behaviours and materials"
     },
     {
       "n": 3,
       "name": "Maintainer",
       "reach": "Invited by project leads",
-      "claims": 5,
+      "claims": 20,
       "sizes": "All, plus review rights",
       "open_prs": "No cap",
       "spec_role": "Approve changes, write capability profiles, create and split tasks"
@@ -810,11 +810,11 @@
     },
     {
       "name": "Model review",
-      "what": "A reviewer model scores the checklist: pass, changes requested, or reject."
+      "what": "A reviewer model scores the checklist for each asset: pass, changes requested, or reject."
     },
     {
       "name": "Human check",
-      "what": "First 3 submissions, every L task, every landmark, and a 10% random sample."
+      "what": "Each contributor's first 3 bundles, every landmark, and a 10% random sample of the remaining assets."
     },
     {
       "name": "Merge",

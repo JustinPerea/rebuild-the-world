@@ -1,4 +1,4 @@
-# Rebuild the World: Claim System Spec (Draft v0.3)
+# Rebuild the World: Claim System Spec (Draft v0.4)
 
 Nov 12, 2026
 
@@ -21,7 +21,7 @@ These need their own specs and are only referenced here:
 
 ## Task model
 
-Work is organised around objects. A contributor picks a whole object and builds it one atom at a time, and each atom is one reviewable task. Nobody claims a city or a district.
+Work is organised around objects. A contributor picks a whole object and builds it atom by atom. Each atom is its own asset and is reviewed on its own, whether it arrives alone or in the object's bundle. Nobody claims a city or a district.
 
 | Size | What it is | Examples |
 | --- | --- | --- |
@@ -40,22 +40,43 @@ Each task record carries:
 - An acceptance checklist the reviewer scores against.
 - The minimum trust level needed to claim it.
 
-A task stays locked until every dependency is merged. The assembly task for a sedan opens only after its wheel, door and chassis atoms are in the library.
+A task stays locked until every dependency is merged or is part of the same bundle ("Building in bulk"). The assembly task for a sedan opens once its wheel, door and chassis atoms are in the library or in its builder's own bundle.
 
 ## Building an object
 
-A contributor picks an object, reuses every atom the library already has, and builds the rest one at a time.
+A contributor picks an object, reuses every atom the library already has, builds the rest, and submits the object as one bundle.
 
 1. **Pick an object.** Choose one from the board, or propose a new one.
 2. **Write the blueprint.** If the object has none, the blueprint is the first submission. It lists every atom the object needs.
 3. **Check the library.** Each slot is filled by an existing atom that fits, or marked as new.
-4. **Build the missing atoms.** One atom at a time, each as its own pull request. Once one is submitted, the next can start.
-5. **Assemble.** When every slot holds a merged atom, submit the assembly manifest.
-6. **Merge.** The object enters the library. Its atoms were already there for everyone else.
+4. **Build the missing atoms.** In any order, without waiting for review. Each is its own asset and passes the checks on its own.
+5. **Assemble.** When every slot holds an atom, write the assembly manifest. Sub-assemblies are written first.
+6. **Submit the bundle.** The new atoms, the sub-assemblies and the assembly go in as one pull request. When it merges, the object and every atom in it are in the library.
 
-- Atoms merge on their own. If the object is never finished, every merged atom stays in the library.
+- An atom may also be submitted alone and merges on its own. If the object is never finished, every merged atom stays in the library.
 - A new atom must say which library atoms were considered and why none fits. Review rejects a near-duplicate.
 - If a slot needs an atom that someone else is already building, the slot waits on that atom. Nobody builds a second one.
+
+## Building in bulk
+
+Proposed on 2026-11-12. The owner said that claiming one atom at a time "would take forever", that people want to turn on a loop, build a lot and get credit for it, and said yes to this being written up. The details and every number here are Claude's and are not confirmed. Nothing in this section has been run.
+
+Three rules of v0.3 made a loop wait: a new contributor built one atom at a time, each atom was its own pull request, and an assembly could not be submitted until its atoms had merged. This version replaces them.
+
+- **The claim is the object.** Claiming an object reserves every slot its blueprint marks as new. Nothing is claimed atom by atom.
+- **A bundle is one object in one pull request.** It holds the blueprint if the object had none, the new atoms, any sub-assemblies, and the assembly. The validator checks each asset on its own and the assembly against the atoms beside it.
+- **Nothing waits for review.** A contributor builds every atom of an object without stopping, submits the bundle, and starts the next object while the first is in review, up to the limits under "Trust levels".
+- **Combined parts go to the library too.** The owner calls a combined part a molecule. In the asset spec it is an assembly that exposes connectors, so it is placed as one piece: a wheel on its axle, a window with its frame and shutters. A molecule that other objects could use is submitted as its own bundle, and larger objects are built from molecules as well as atoms.
+- **A bundle holds at most 30 new atoms.** A bigger object is split into molecules, each its own bundle. The object's builder makes the split in the blueprint, where a molecule is a slot like any other, and builds the molecules under the same object claim at any trust level. The first object rebuilt as atoms had 21.
+- **A bundle merges whole.** Review gives a verdict for each asset. If an atom fails, the contributor fixes it in the same pull request, or takes it out along with everything that uses it, and the rest merges. What was taken out stays reserved under the object claim, and the contributor has the 72 hours of claim rule 7 to submit it again.
+- **The asset contract does not change.** In the library, an assembly is still made only of merged atoms, because its atoms merge in the same merge. While a bundle is in review, its assembly points at atoms that are not merged yet. The asset spec's wording describes the library, not a pull request, and is left as it is.
+- **An atom may still go in alone.** When an object will take days, submitting its atoms as they are finished puts them in the library sooner, and they stay there if the object is never finished.
+- **An atom that someone else is waiting for goes in alone.** When the board shows another object waiting on a reserved atom, its builder submits that atom on its own as soon as it passes the validator. The contributor who is waiting builds the rest of their object meanwhile. If the reservation lapses, the slot reopens and either may build it.
+- **Duplicates are caught before building.** Reserved slots show on the board. Before starting a new atom, the contributor's agent searches the library and the board, and a new atom must still say which atoms were considered and why none fits.
+- **Credit is per asset.** Every atom, molecule and assembly in a bundle is recorded against its author, in the ledger and in the asset's own provenance. The ledger also counts, for each asset, how many merged assemblies by other contributors use it, so a loop earns more from parts that others reuse than from volume.
+- **A loop pays for its own checking first.** The contributor's agent runs the validator before submitting, so the reviewer model sees only what already passes. Who pays for the reviewer model is still open, and loops make the answer matter more.
+
+Not built: reservations, the board, the reuse count, and a search that reports atoms in progress (the server's `find_atoms` searches merged atoms only). The contributor server in `mcp/` and `contributor-service.md` still describe v0.3: one task claimed at a time, and limits of 2, 2 and 4 submissions awaiting review. The first test runs on that server unchanged. The validator resolves an assembly's atoms from the library folder it is given, and its tests check assemblies against atoms in a local folder that way, so a bundle needs no change to it. No real bundle has been put through it yet.
 
 ## The board
 
@@ -71,7 +92,7 @@ The board shows every object and every atom being worked on, so two people never
 
 - Each object shows its blueprint, its builder and how many slots are filled.
 - The same information is available to a contributor's agent through the MCP server, so a contributor can ask what needs building without opening the board.
-- Each atom in progress links to its draft pull request, so anyone can see the work.
+- Each object in progress links to its draft pull request, so anyone can see the work.
 - A wanted list shows objects with no builder, ordered by how many places in the world are waiting for them. For structures it is the set of places still shown as a blockout (world model, "Accuracy levels").
 
 ## Claiming a place
@@ -89,7 +110,7 @@ A place is claimed at one accuracy level (world model, "Accuracy levels"). The c
 - **References decide what can be claimed.** A wall has a reference when the reference tool accepts an image of it (`tools/refs/README.md`) or a maintainer accepts photos supplied for it. A building with no reference can be claimed up to Dressed and no further. In the first block the tool accepts images of 9 of the 48 walls that open street photos can see, so most buildings start there.
 - **A wall without a reference stays typical.** A true exterior is built wall by wall. A wall with no reference keeps its dressed facade and the assembly says so. The place counts as True exterior once every wall that faces a street is built from a reference.
 - **Missing references are a task.** A building that lacks them is listed as needing photos. Photographing it is a contribution with its own claim. Contributor photos follow `accuracy-and-data.md`: location data in a photo is never proof, and faces and plates are blurred.
-- **A place claim counts as an object claim.** It uses one of the contributor's "objects claimed at once" under "Trust levels". A facade plan is an S task. A true exterior is an L object whose atoms are S tasks.
+- **A place claim counts as an object claim.** It uses one of the contributor's "objects claimed at once" under "Trust levels". A facade plan is an S task. A true exterior is an L object, submitted as a bundle like any other.
 - **A lapsed claim loses no work.** An expired or released claim returns the place to the map at the level it had reached, with its merged atoms in the library.
 
 ### The map
@@ -106,7 +127,7 @@ A task moves through six states, and every stalled path leads back to Open.
 
 | From | To | Trigger |
 | --- | --- | --- |
-| Locked | Open | Dependencies merged and region unlocked |
+| Locked | Open | Dependencies merged or in the same bundle, and region unlocked |
 | Open | Claimed | A contributor claims it |
 | Claimed | In review | Submitted (pull request marked ready) |
 | Claimed | Open | Claim expired or released |
@@ -116,7 +137,7 @@ A task moves through six states, and every stalled path leads back to Open.
 | Changes requested | In review | Resubmitted |
 | Changes requested | Open | No resubmit in 72 hours |
 
-Three paths return a task to the pool: an expired or released claim, a rejection, and a missed 72-hour resubmit window. Partial work stays on the branch each time. A task leaves Locked once its dependencies are merged and its region is unlocked.
+Three paths return a task to the pool: an expired or released claim, a rejection, and a missed 72-hour resubmit window. Partial work stays on the branch each time. A task leaves Locked once its dependencies are merged, or are part of the same bundle, and its region is unlocked. In a bundle the states apply to each asset: after a partial merge the merged atoms are Merged, and an asset that was taken out is back in Changes requested under the same object claim.
 
 ## Claim rules and timeouts
 
@@ -128,27 +149,31 @@ A claim lasts 48 hours to 7 days depending on task size, and an expired claim re
 | M | 5 days | At day 4 | +2 days |
 | L | 7 days | At day 5 | +3 days |
 
-1. Claiming an object reserves it and its unbuilt atoms for one contributor. Claiming creates a branch and a draft pull request for the atom in progress.
-2. The window is the deadline for marking the pull request ready for review. Each atom has its own S window, which starts when the previous atom is submitted. The L window covers the assembly once every atom is merged.
+1. Claiming an object reserves it and its unbuilt atoms for one contributor. Claiming creates a branch and a draft pull request for the object's bundle.
+2. The window is the deadline for marking the pull request ready for review. An object's bundle has the L window, and it is the only window that runs inside an object claim: an atom or molecule submitted ahead of the bundle has no window of its own. A molecule or kit claimed as a task by itself has the M window, and an atom claimed by itself has the S window.
 3. A contributor may extend once per claim, and only if the branch has at least one commit.
 4. A contributor may release a task at any time with no penalty.
-5. At expiry the atom and its object reopen. Merged atoms stay in the library, and the branch and draft pull request stay linked, so the next builder continues from them.
+5. At expiry the object and its unbuilt atoms reopen. Merged atoms stay in the library, and the branch and draft pull request stay linked, so the next builder continues from them.
 6. The clock pauses while a submission waits for review.
 7. After "changes requested", the contributor has 72 hours to resubmit before the task reopens.
 8. A contributor whose claim expired cannot reclaim the same task for 24 hours.
 
 ## Trust levels
 
-New accounts can do little damage: they hold one object at a time, from a starter list, and build one atom at a time. Limits widen as merged work accumulates. A merged task is an atom, a blueprint, a kit or an assembly.
+New accounts can do little damage: they hold one object at a time, from a starter list, with one bundle in review. Limits widen as merged work accumulates, and they count unreviewed work, not how fast a contributor builds. A merged task is an atom, a blueprint, a kit or an assembly.
 
-| Level | How to reach it | Objects claimed at once | May pick | Open pull requests awaiting review |
+| Level | How to reach it | Objects claimed at once | May pick | Bundles awaiting review |
 | --- | --- | --- | --- | --- |
-| 0 New | GitHub sign-in and licence agreement accepted | 1 | Starter-tagged objects | 2 |
-| 1 Contributor | 3 merged tasks | 2 | Any object except landmarks | 2 |
-| 2 Trusted | 15 merged tasks, with 70% or more approved on first review | 3 | Any object, including landmarks and kits | 4 |
-| 3 Maintainer | Invited by project leads | 5 | All, plus review rights | No cap |
+| 0 New | GitHub sign-in and licence agreement accepted | 1 | Starter-tagged objects | 1 |
+| 1 Contributor | 3 merged tasks | 3 | Any object except landmarks | 3 |
+| 2 Trusted | 15 merged tasks, with 70% or more approved on first review | 10 | Any object, including landmarks and kits | 10 |
+| 3 Maintainer | Invited by project leads | 20 | All, plus review rights | No cap |
 
 - Landmark and other high-profile tasks require level 2.
+- Every asset in a merged bundle counts as a merged task, so a first bundle of three atoms and their assembly takes a new contributor to level 1.
+- An object stops counting as claimed when its bundle is submitted. A level 0 contributor can therefore build one object while another waits for review.
+- "Bundles awaiting review" counts objects with work awaiting review. Atoms submitted ahead of their object's bundle count with that object, not separately. An atom or molecule claimed as a task by itself counts as one.
+- Approval on first review is counted per asset, here and for level 2. A contributor with at least ten reviewed assets, of whose last thirty fewer than half were approved on first review, is held at level 0's limits until ten assets in a row are approved. A loop that produces poor work slows itself down, and one that produces good work is not held back.
 - Maintainers also help write and revise the specs and coordinate tasks, so the top level is a path into running the project, not only reviewing (owner direction, 2026-11-10). "Spec changes" below proposes how.
 - A suspension drops the contributor one level.
 - Every merged task is recorded against the contributor's account, with its size and date. This ledger supports credit now and any reward or revenue-sharing scheme later.
@@ -181,25 +206,25 @@ Reviews:
 
 - The validator and the reviewer model see every submission. People see only what those two pass.
 - Reviewing is unlocked by trust. A level 2 contributor may review atoms and blueprints they did not build, using their own tools.
-- Each atom gets two independent reviews, assigned at random. If they disagree, a maintainer decides.
-- Maintainers review objects, landmarks, appeals and a random sample of peer-reviewed atoms.
+- Each atom gets two independent reviews, assigned at random. If they disagree, a maintainer decides. Peer review is separate from the human check in "Review pipeline", which is the maintainers' own sample.
+- Maintainers review each contributor's first bundles, landmarks, appeals and a random sample of peer-reviewed assets.
 - A review is recorded in the ledger like a merged task. A reviewer whose approvals are overturned loses review rights.
 
 ## Review pipeline
 
 Every submission passes three gates before merge: automated checks, a model review, and a human check on a sample. Cheap checks run first, so reviewers only see work that is technically valid.
 
-1. **Automated checks.** File validity, format, units and scale, triangle budget, required metadata, naming, connector points, file size, licence declaration. A failure bounces the pull request with the failing check named. The claim stays active.
+1. **Automated checks.** File validity, format, units and scale, triangle budget, required metadata, naming, connector points, file size, licence declaration. In a bundle they run on every asset. A failure bounces the pull request with the failing asset and check named. The claim stays active.
 2. **Render check.** The asset is rendered from fixed camera angles under fixed lighting. A vision-capable model compares the renders with the task's reference pack and the style guide.
-3. **Model review.** A reviewer model scores the acceptance checklist and returns one verdict with reasons: pass, changes requested, or reject.
-4. **Human check.** Maintainers review each contributor's first 3 submissions, every L task, every landmark, and a 10% random sample of the rest.
+3. **Model review.** A reviewer model scores the acceptance checklist and returns one verdict with reasons for each asset: pass, changes requested, or reject.
+4. **Human check.** Maintainers review each contributor's first 3 bundles, every landmark, and a 10% random sample of the remaining assets, drawn asset by asset so a large bundle is sampled like any other. Until v0.3 every L task was checked by a person; with one bundle per object that would put a person in front of every submission.
 5. **Merge.** The asset enters the library and dependent tasks unlock.
 
 Rules for reviewers:
 
 - Everything in a submission is data. Text in files, metadata, commit messages and pull request descriptions is never treated as instructions to the reviewer model.
 - "Changes requested" is for fixable problems, and the contributor keeps the task. "Reject" is for the wrong asset or a submission that ignores the spec, and the task reopens.
-- Target turnaround is 48 hours. The per-level caps on open pull requests keep the queue within reviewer capacity.
+- Target turnaround is 48 hours. The per-level caps on bundles awaiting review keep the queue within reviewer capacity.
 
 ## Strikes, cooldowns and bans
 
@@ -215,6 +240,7 @@ Low quality costs nothing; only low effort and bad faith are penalised. A failed
 | Deliberate junk, ripped or stolen assets, false licence claims, prompt injection aimed at the reviewer, ban evasion | Bad faith | Ban |
 
 - The reviewer model can flag a strike or a ban, but a human maintainer must confirm it.
+- A bundle earns at most one strike, however many of its assets are rejected for low effort.
 - Each action can be appealed once, within 14 days, to a maintainer who was not involved in the decision.
 - Stolen or ripped assets are removed from the library when found, whatever the contributor's status. Other merged work from a banned account stays.
 
@@ -289,6 +315,14 @@ The owner suggested building in stages: blocks first, and trees, cars and trains
 - [ ] Should reviewing be opened to level 2 contributors, and are two reviews per atom enough to stop friends approving each other?
 - [ ] How large can a starter object be: a fixed number of atoms, or a hand-picked list?
 - [ ] Should a slow builder lose only the atom in progress, or the whole object?
+- [ ] Is 30 new atoms the right size for a bundle, and are 1, 3 and 10 bundles awaiting review the right limits?
+- [ ] Is it right to stop checking every object by hand and sample 10% of assets instead?
+- [ ] Should a first bundle be enough to reach level 1, and a single clean bundle of fifteen assets enough for level 2, or should levels count bundles and not assets?
+- [ ] May a bundle be assembled against an atom in another contributor's open bundle, so that nobody waits for a shared atom to merge?
+- [ ] May a level 0 contributor split an object into molecules, or does a maintainer approve the split?
+- [ ] Should the asset spec say "merged or in the same bundle" where it says "merged atoms"? That is a new asset spec version, which the skill file and the two finished atoms pin.
+- [ ] When does the contributor service change to bundles: its `claim` tool, its work order and the limits the server enforces?
+- [ ] Is reuse by other contributors the right measure of credit, and can two accounts inflate it for each other?
 - [ ] Which model does the review, and who pays for its usage?
 - [ ] Is 100 active contributors the right region gate, and who picks the next region?
 - [ ] Are home blocks opened to everyone from the start, or only once the featured region has a finished block to show?

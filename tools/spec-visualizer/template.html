@@ -696,7 +696,7 @@ function setTrust(i) {
   const t = SPEC.trust_levels[i];
   steps.forEach((s, j) => s.setAttribute("aria-pressed", j === i));
   $("unlock").innerHTML = `<span class="label">How to reach it</span><h3 style="margin-top:8px">${esc(t.reach)}</h3>
-    <div class="g"><div><b>${t.claims}</b><span>objects at once</span></div><div><b>${esc(t.open_prs)}</b><span>pull requests awaiting review</span></div><div><b style="font-size:15px;line-height:1.2;letter-spacing:0">${esc(t.sizes)}</b><span>may pick</span></div></div>
+    <div class="g"><div><b>${t.claims}</b><span>objects at once</span></div><div><b>${esc(t.open_prs)}</b><span>bundles awaiting review</span></div><div><b style="font-size:15px;line-height:1.2;letter-spacing:0">${esc(t.sizes)}</b><span>may pick</span></div></div>
     <div class="say"><span class="label">Say in the specs (proposed)</span><p style="margin-top:6px">${esc(t.spec_role)}.</p></div>`;
 }
 setTrust(2);
