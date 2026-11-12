@@ -32,7 +32,7 @@ Changed in v0.6 (owner, 2026-11-12): a placed atom may be scaled on each axis se
 
 Added on 2026-11-12 after the first rehearsal of a bundle, with no change of version: the Scale check measures a molecule, and the Blueprint check compares a molecule with the blueprint beside it. Before this, a molecule's recorded size and the number of each atom it placed were not checked.
 
-Renamed on 2026-11-12 at the owner's choice, with no change of version: what versions up to this one called an assembly is now a molecule, the manifest file is `molecule.json` and the metadata kind is `"molecule"`. Frontier Colony's library uses the same word. The notes above use the new word for the old thing.
+Renamed on 2026-11-12 at the owner's choice, with no change of version: what versions up to this one called an assembly is now a molecule, the manifest file is `molecule.json`, the validator's check is "Molecule", and the asset classes "Vehicle assembly" and "Character assembly" are "Vehicle molecule" and "Character molecule". The `kind` in `asset.json` is unchanged: `"library"` or `"unique"`. Frontier Colony's library uses the same word. The notes above use the new word for the old thing.
 
 ## Libraries
 

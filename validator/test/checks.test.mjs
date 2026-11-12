@@ -72,6 +72,20 @@ test('Folder and naming: bad folder name and missing asset.json fail', async () 
   failing(await run(d3), 'Folder and naming', 'prop_other_01');
 });
 
+test('Folder and naming: a manifest under its old name, assembly.json, fails and says what to rename', async () => {
+  // beside a blueprint the folder would otherwise read as an object, and the manifest would never be checked
+  const d = path.join(fresh(), 'bld_old_house_01');
+  fs.mkdirSync(d);
+  fs.writeFileSync(path.join(d, 'assembly.json'), '{}');
+  fs.writeFileSync(path.join(d, 'blueprint.json'), '{}');
+  failing(await run(d), 'Folder and naming', 'assembly.json was renamed', 'molecule.json');
+  // alone, it is not mistaken for an empty folder either
+  const d2 = path.join(fresh(), 'bld_old_house_02');
+  fs.mkdirSync(d2);
+  fs.writeFileSync(path.join(d2, 'assembly.json'), '{}');
+  failing(await run(d2), 'Folder and naming', 'assembly.json was renamed');
+});
+
 test('Metadata: missing field, wrong triangles, wrong dimensions, unlisted connector', async () => {
   const d = atomIn('prop_box_01', { meta: { triangles: 13, dimensions_m: [1, 1.5, 1], style_version: undefined, connectors: [] } });
   failing(await run(d), 'Metadata', 'style_version', 'triangles is 13 but the mesh has 12', 'height (y) is 1.5', 'conn_door_hinge_a_01');

@@ -59,6 +59,9 @@ export function folderAndNaming(ctx) {
   const msgs = [];
   const folder = path.basename(path.resolve(ctx.dir));
   if (!ID_RE.test(folder)) msgs.push(`folder name "${folder}" does not match <category>_<name>_<variant> (lowercase ASCII, digits and underscores; category one of veh, bld, prop, veg, gnd, mat, ter, int, obj, chr; at least a name and a variant, e.g. veh_wheel_17in_01)`);
+  // The manifest was called assembly.json until 2026-11-12. A folder that still holds one would otherwise be read
+  // as an object or as nothing, and its manifest would never be checked.
+  if (a.files.includes('assembly.json')) msgs.push('assembly.json was renamed: a molecule\'s manifest is molecule.json. Rename the file; its content is unchanged');
   if (!a.kind) {
     msgs.push('folder holds none of asset.glb (atom), molecule.json (molecule) or blueprint.json (object)');
     return fail(msgs);
