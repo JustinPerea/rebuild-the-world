@@ -228,14 +228,24 @@ export class Store {
     return !!o && !o.invalid && (o.state === 'Claimed' || o.state === 'Changes requested');
   }
 
+  // The object a claim counts toward. Every claim of a bundle counts as the bundle's object, so a
+  // member that is itself an object (with its own object_id) does not count as a second one.
+  objectKey(c) {
+    if (c.bundle && c.bundle !== c.task_id) {
+      const o = this.getTask(c.bundle);
+      return (!o.error && o.task.object_id) || c.bundle;
+    }
+    return c.object_id || c.task_id;
+  }
+
   // Distinct objects the handle is building now: active claims still Claimed or Changes requested.
   objectsHeld(handle, now = Date.now()) {
-    return new Set(this.activeClaimsOf(handle, now).filter((c) => c.state === 'Claimed' || c.state === 'Changes requested').map((c) => c.object_id || c.task_id));
+    return new Set(this.activeClaimsOf(handle, now).filter((c) => c.state === 'Claimed' || c.state === 'Changes requested').map((c) => this.objectKey(c)));
   }
 
   // Distinct objects the handle has awaiting review.
   objectsInReview(handle) {
-    return new Set(this.listClaims().filter((c) => c.handle === handle && c.state === 'In review' && !this.isOpenBundleMember(c) && !this.bundleLapsed(c)).map((c) => c.object_id || c.task_id));
+    return new Set(this.listClaims().filter((c) => c.handle === handle && c.state === 'In review' && !this.isOpenBundleMember(c) && !this.bundleLapsed(c)).map((c) => this.objectKey(c)));
   }
 
   inProgressTaskIds() {
@@ -264,9 +274,16 @@ export class Store {
 
   cooldownLeft(task, handle, now = Date.now()) {
     const c = this.getClaim(task.task_id);
-    if (!c || c.handle !== handle || c.state !== 'Claimed') return 0;
-    const exp = Date.parse(c.expires_at);
-    if (exp > now) return 0;
+    if (!c || c.invalid || c.handle !== handle || !ACTIVE.includes(c.state)) return 0;
+    const running = (x) => x.state === 'Claimed' || x.state === 'Changes requested';
+    let exp = running(c) ? Date.parse(c.expires_at) : null;
+    // A member that had passed submit has no clock of its own. When its bundle's claim expired,
+    // the wait runs from that expiry, so one atom of the bundle cannot be taken back alone at once.
+    if (exp == null && this.bundleLapsed(c, now)) {
+      const o = this.getClaim(c.bundle);
+      if (o && !o.invalid && o.handle === handle && running(o)) exp = Date.parse(o.expires_at);
+    }
+    if (exp == null || exp > now) return 0;
     return Math.max(0, exp + COOLDOWN_MS - now);
   }
 

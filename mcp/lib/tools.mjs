@@ -113,7 +113,7 @@ export const TOOL_DEFS = [
   {
     name: 'release',
     title: 'Release a claim',
-    description: 'Give a claim back with no penalty. The task becomes Open again. Work already on your branch stays there. Releasing an object task also releases its member claims that are still Claimed or Changes requested; members already In review are kept.',
+    description: 'Give a claim back with no penalty. The task becomes Open again. Work already on your branch stays there. Releasing an object task releases every member claim of its bundle, including atoms that had passed submit. One atom of a bundle cannot be released alone, and a claim that has already expired cannot be released.',
     inputSchema: { type: 'object', properties: { task_id: TASK_ID, reason: text(300) }, required: ['task_id'], additionalProperties: false },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   },
@@ -629,7 +629,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const cap = TRUST_CAPS[Math.min(Math.max(trust, 0), 3)];
     if (!isMember) {
       const inReview = store.objectsInReview(handle);
-      const key = claim.object_id || claim.task_id;
+      const key = store.objectKey(claim);
       if (!inReview.has(key) && inReview.size >= cap.review) {
         return {
           isError: false,
@@ -653,7 +653,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
         next: isMember
           ? `Do not open a pull request yet. This atom belongs to the bundle ${claim.bundle}. When every member task of that bundle has passed submit (or is Merged), call submit with the object task ${claim.bundle} and its assembly folder. A SKIP is not a pass: read the skipped checks in data.report.`
           : isObject
-            ? `Next step is one pull request for the whole bundle. The server does not run git: commit the folder of ${a.task_id} and the folder of each atom you built for it (${mineInReview.length ? `member tasks: ${mineInReview.join(', ')}` : 'none: every member was already merged'}) to branch ${claim.branch}, push it, and open one pull request that names ${a.task_id} and each of those member tasks. Atoms that were already merged are not part of the pull request. Claim files under tasks/claims are this clone's own record and Git ignores them; leave them out. A SKIP is not a pass: read the skipped checks in data.report.`
+            ? `Next step is one pull request for the whole bundle. The server does not run git: commit the folder of ${a.task_id} and the folder of each atom you built for it (${mineInReview.length ? `member tasks: ${mineInReview.join(', ')}` : 'none: every member is already merged or was submitted on its own'}) to branch ${claim.branch}, push it, and open one pull request that names ${a.task_id} and each of those member tasks. Atoms that were already merged are not part of the pull request, and an atom you claimed and submitted on its own keeps its own pull request. Claim files under tasks/claims are this clone's own record and Git ignores them; leave them out. A SKIP is not a pass: read the skipped checks in data.report.`
             : `Next step is a pull request. The server does not run git: commit the asset folder to branch ${claim.branch}, push it, and open a pull request that names ${a.task_id}. Claim files under tasks/claims are this clone's own record and Git ignores them; leave them out. A SKIP is not a pass: read the skipped checks in data.report.`,
       },
       data: { report },

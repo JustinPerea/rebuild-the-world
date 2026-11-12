@@ -278,6 +278,8 @@ test('when the object claim expires, a member that had passed submit is Open aga
   const back = await c.call('claim', { task_id: SEDAN });
   assert.equal(back.isError, true);
   assert.match(back.body.instructions.error, /cannot reclaim it for another/);
+  // nor can one atom of it be taken back alone, the one that had passed included
+  for (const id of [BODY, DOOR]) assert.match((await c.call('claim', { task_id: id })).body.instructions.error, /cannot reclaim it for another/, id);
   // another builder gets the whole bundle
   const other = new StdioClient(['--repo', repo, '--as', 'second', '--trust', '0']);
   cleanups.push(async () => { await other.close(); });
@@ -293,6 +295,7 @@ test('when the object claim expires, a member that had passed submit is Open aga
 
 test('a member that is itself an object has its own members reserved too', async () => {
   const { c, claimOf } = fixture({
+    trust: 1,
     extra: (repo, t) => {
       t('task_bun_hub_01', { asset_id: 'veh_hub_01', object_id: 'veh_axle_01', slot: 'hub' });
       t('task_bun_axle_01', { size: 'M', asset_id: 'veh_axle_01', object_id: 'veh_axle_01', depends_on: ['task_bun_hub_01'], dimensions_m: undefined });
@@ -307,6 +310,10 @@ test('a member that is itself an object has its own members reserved too', async
     assert.equal(claimOf(id).bundle, 'task_bun_cart_01');
     assert.equal(claimOf(id).branch, 'claim/task_bun_cart_01');
   }
+  // the whole nest counts as one object held: trust 1 holds three, and two more can be claimed
+  assert.equal((await c.call('claim', { task_id: SEDAN })).isError, false);
+  assert.equal((await c.call('claim', { task_id: 'task_bun_wagon_01' })).isError, false);
+  assert.equal([...new Set(['task_bun_axle_01', 'task_bun_hub_01', 'task_solo_01', 'task_bun_cart_01'].map((id) => claimOf(id).bundle))].length, 1);
   // the inner object waits for its own atom
   const s = await c.call('submit', { task_id: 'task_bun_axle_01', asset_path: 'veh/veh_axle_01' });
   assert.equal(s.isError, true);
