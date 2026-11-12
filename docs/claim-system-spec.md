@@ -241,6 +241,35 @@ Proposed on 2026-11-12, with the same standing as "Claiming a place". A region o
 - The gate is Dressed and not True exterior. A true exterior needs references, and the project does not control where open photos exist. With True exterior as the gate, the first block would not open its neighbours: photos give a usable image of 9 of its 48 visible walls.
 - Maintainers choose which neighbour opens, and favour the one with the most reference coverage.
 
+### Home blocks
+
+Proposed on 2026-11-12. The owner asked whether claims should stay in one area or open across the world, so that people join to build where they live, and said yes to this being written up as a proposal. The details are Claude's and are not confirmed.
+
+A contributor may open one block anywhere on Earth as their home block. The project keeps one featured region, which it works to finish first.
+
+- **Why open the world.** People want to build their own street. A person who lives on a block can also photograph it, and photos are what a true exterior needs: in the first block, 114 of 150 buildings are shown by no open photo.
+- **One home block each.** It is a square of the same size as a region's start block. It opens when open map data has building outlines there and the blockout tool accepts them. It needs no contributor count, so the three conditions above apply to featured regions only.
+- **The same rules inside it.** Places are claimed as in "Claiming a place", by the person who opened the block or by anyone else. Its neighbours open as in "Blocks inside a region".
+- **One library.** Atoms are built once and used everywhere. A home block's facade plans name library atoms, and an atom built for one block is there for every other.
+- **The featured region stays the goal.** A hundred home blocks do not make a place to walk through. The demo slice, the wanted list and the maintainers' review time go to the featured region first.
+- **Kits by region.** A window in Lisbon is not a window in Tokyo. A home block far from any built region will ask for facade atoms the library lacks, and each is a new atom with the usual check against near-duplicates.
+
+Where no city model exists, a home block's pack comes from OpenStreetMap (`tools/data-pack/osm_block.py`). A test on 2026-11-12 cut and blocked out a 300 m square in five places, and counted the Mapillary photos around each:
+
+| Place | Buildings | Height tagged | From storeys | Assumed | Photos nearby | Buildings with a photo within 30 m |
+| --- | --- | --- | --- | --- | --- | --- |
+| Alfama, Lisbon | 399 | 15 | 52 | 332 | 7,078 | 398 |
+| Bedford-Stuyvesant, New York | 246 | 246 | 0 | 0 | 39 | 69 |
+| North End, Boise | 165 | 0 | 15 | 150 | 1,420 | 92 |
+| Eastleigh, Nairobi | 117 | 0 | 34 | 83 | 18 | 13 |
+| Vila Madalena, Sao Paulo | 199 | 196 | 0 | 3 | 2,337 | 152 |
+
+- Every one of the five blocked out. Outlines exist; heights often do not. A building with no height and no storey count gets an assumed 6 m, and its record says so.
+- An OpenStreetMap pack has no roof shapes and no ground levels, and its outlines were traced by volunteers from aerial imagery. Nothing here measured how far they sit from the real walls.
+- Photo coverage varies more than outlines do, from 18 photos to 7,078. A photo nearby is not a wall reference: the reference tool has run only on the Tokyo block.
+- A pack made from OpenStreetMap is a derived database under the Open Database License. It must credit OpenStreetMap's contributors and stay under that licence, which bears on the project's own licence choice. The five test packs were not committed.
+- Overture Maps, which adds heights from other sources, was not tested.
+
 ### When other kinds of things open
 
 The owner suggested building in stages: blocks first, and trees, cars and trains only after buildings reach high accuracy. This draft proposes a narrower gate, and the owner has not chosen between the two.
@@ -262,6 +291,9 @@ The owner suggested building in stages: blocks first, and trees, cars and trains
 - [ ] Should a slow builder lose only the atom in progress, or the whole object?
 - [ ] Which model does the review, and who pays for its usage?
 - [ ] Is 100 active contributors the right region gate, and who picks the next region?
+- [ ] Are home blocks opened to everyone from the start, or only once the featured region has a finished block to show?
+- [ ] Who corrects an assumed height on a home block, and from what: the contributor's own measurement, storey counts, or Overture?
+- [ ] Can packs made from OpenStreetMap live in the repository under ODbL beside assets under the project's licence? This needs the lawyer.
 - [ ] Is "every building Dressed" the right gate for opening a neighbouring block, or should a share of the block be enough?
 - [ ] Do trees, vehicles and trains wait for accurate buildings (the owner's first suggestion), or open on the narrower gates proposed under "When other kinds of things open"?
 - [ ] Is photographing a building a claimable task, and who checks that the photos show the place they claim to?

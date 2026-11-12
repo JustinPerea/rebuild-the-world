@@ -80,3 +80,5 @@ jobs:
         run: |
           python -m pip install --quiet numpy==2.5.4 opencv-python-headless==5.0.0.93   # the pins in tools/refs/requirements.txt
           python tools/refs/test_wallrefs.py
+      - name: OpenStreetMap data pack tool, offline tests
+        run: python tools/data-pack/test_osm_block.py
