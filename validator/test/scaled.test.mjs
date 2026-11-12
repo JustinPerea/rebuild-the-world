@@ -179,3 +179,82 @@ test('registry: mating_axes must name an axis and a dimension the type lists', (
     assert.match(loadRegistry(file(['x'])).error, /must be an object/);
   } finally { rmrf(dir); }
 });
+
+// ---- review findings --------------------------------------------------------------------------------
+
+const AXLE = (lib) => validAtom(lib, 'veh_axle_01', { glb: { connectors: [conn('conn_wheel_hub_a_01', [0.5, 0, 0], 90)] }, meta: { variation: { scale: { x: [1, 2], y: [1, 2], z: [1, 2] } }, connectors: [connMeta('conn_wheel_hub_a_01', { mating: { diameter: 0.5 } })] } });
+
+test('an unevenly scaled atom cannot be exposed through a connector with a mating dimension that has no axis', async () => {
+  const lib = newLib();
+  const reg = writeRegistry(root);
+  AXLE(lib);
+  const inner = (s) => ({ origin: { ref: 'axle' }, atoms: [ent('axle', 'veh_axle_01', s)], joints: [], exposes: { hub: 'axle:conn_wheel_hub_a_01' } });
+  failing(await run(writeAssembly(lib, 'veh_axleasm_01', inner([1.5, 1, 1]), { library: 'test' }), lib, reg), 'Variation', 'veh_axleasm_01', 'exposes "hub"', 'axle', 'diameter', 'no "mating_axes" entry');
+  passing(await run(writeAssembly(lib, 'veh_axleasm_01', inner(1.5), { library: 'test' }), lib, reg), 'Variation');
+});
+
+test('an unevenly scaled atom cannot be exposed through a connector whose frame is not along its axes', async () => {
+  const lib = newLib();
+  const connectors = [conn('conn_facade_edge_a_01', [1, 0, 0], 30)];
+  validAtom(lib, 'bld_skew_01', { glb: { connectors }, meta: { variation: { scale: { x: [1, 2] } }, connectors: [connMeta('conn_facade_edge_a_01', { mating: FACADE })] } });
+  // the atom itself fails its own Variation check, so the exposure is what is tested here
+  const m = { origin: { ref: 'a' }, atoms: [ent('a', 'bld_skew_01', [1.5, 1, 1])], joints: [], exposes: { edge: 'a:conn_facade_edge_a_01' } };
+  failing(await run(build(lib, m), lib), 'Variation', 'exposes "edge"', 'not parallel');
+});
+
+test('an exposed connector of an assembly placed at an even scale carries the scaled mating dimensions', async () => {
+  const lib = newLib();
+  panel(lib, 'bld_panel_01', { variation: { scale: [1, 2] } });
+  writeAssembly(lib, 'bld_wall_01', { origin: { ref: 'a' }, atoms: [ent('a', 'bld_panel_01')], joints: [], exposes: { edge: 'a:conn_facade_edge_a_01' } }, { library: 'test', variation: { scale: [0.5, 2] } });
+  const m = (s, t) => ({ origin: { ref: 'w' }, atoms: [ent('w', 'bld_wall_01', s), ent('p', 'bld_panel_01', t)], joints: [{ a: 'w:edge', b: 'p:conn_facade_edge_b_01' }] });
+  const ok = await run(build(lib, m(1.1, 1.1)), lib);
+  passing(ok, 'Assembly');
+  failing(await run(build(lib, m(1.1)), lib), 'Assembly', 'storey_height', 'gives 3.08 m', 'gives 2.8 m');
+  failing(await run(build(lib, m(1.1, 1.2)), lib), 'Assembly', 'storey_height', 'gives 3.08 m', 'gives 3.36 m');
+});
+
+test('a mirrored atom scaled per axis: connectors and extents follow the mirror and the scale', async () => {
+  const lib = newLib();
+  panel(lib, 'bld_panel_01', { variation: { scale: { x: [1, 2], y: [1, 2] } } });
+  const ml = path.join(lib, 'bld', 'bld_panel_01', 'asset.json');
+  const meta = JSON.parse(fs.readFileSync(ml, 'utf8'));
+  fs.writeFileSync(ml, JSON.stringify({ ...meta, mirror_safe: true }));
+  // extents: x from 0 to 1 mirrors to -1..0 and scales to -1.5..0
+  const single = { origin: { ref: 'a' }, atoms: [{ ...ent('a', 'bld_panel_01', [1.5, 1.1, 1]), mirror: true }], joints: [] };
+  const r = await run(build(lib, single, { dimensions_m: [1.5, 3.08, 0.15] }), lib);
+  passing(r, 'Scale');
+  assert.match(status(r, 'Scale').messages[0], /x from -1\.5 to 0,/);
+  // a mirrored, scaled panel joined to an unscaled one: its a-edge sits at x = -1.5 and the joint mates
+  const pair2 = (s) => ({ origin: { ref: 'a' }, atoms: [{ ...ent('a', 'bld_panel_01', s), mirror: true }, { ...ent('b', 'bld_panel_01'), mirror: true }], joints: [{ a: 'a:conn_facade_edge_a_01', b: 'b:conn_facade_edge_b_01' }] });
+  const ok = await run(build(lib, pair2([1.5, 1, 1]), { dimensions_m: [2.5, 2.8, 0.15] }), lib);
+  passing(ok, 'Assembly');
+  passing(ok, 'Variation');
+  failing(await run(build(lib, pair2([1.5, 1.1, 1])), lib), 'Assembly', 'storey_height');
+});
+
+test('an uneven scale along an axis no mating dimension lies on leaves the joint intact (and the wrong axis would break it)', async () => {
+  const lib = newLib();
+  panel(lib, 'bld_panel_01', { variation: { scale: { x: [1, 2] } } });
+  const m = (s) => ({ origin: { ref: 'a' }, atoms: [ent('a', 'bld_panel_01', s), ent('b', 'bld_panel_01')], joints: [{ a: 'a:conn_facade_edge_a_01', b: 'b:conn_facade_edge_b_01' }] });
+  // storey_height lies along y and wall_thickness along the connector frame's x, which is the atom's z: x scaling changes neither
+  passing(await run(build(lib, m([1.5, 1, 1])), lib), 'Assembly');
+  passing(await run(build(lib, m([2, 1, 1])), lib), 'Assembly');
+});
+
+test('a scale written as [0.30000000000000004, 0.3, 0.3] counts as even', async () => {
+  const lib = newLib();
+  panel(lib, 'bld_panel_01', { variation: { scale: [0.2, 0.5] } });
+  const m = { origin: { ref: 'a' }, atoms: [ent('a', 'bld_panel_01', [0.30000000000000004, 0.3, 0.3])], joints: [] };
+  passing(await run(build(lib, m), lib), 'Variation');
+});
+
+test('a profile without mating_tolerance_m still compares mating dimensions', async () => {
+  const lib = newLib();
+  panel(lib, 'bld_panel_01', { variation: { scale: { y: [1, 1.2] } } });
+  const base = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'validator', 'profile-1.json'), 'utf8'));
+  delete base.mating_tolerance_m;
+  const pf = path.join(root, 'noprofile.json');
+  fs.writeFileSync(pf, JSON.stringify(base));
+  const m = { origin: { ref: 'a' }, atoms: [ent('a', 'bld_panel_01', [1, 1.1, 1]), ent('b', 'bld_panel_01')], joints: [{ a: 'a:conn_facade_edge_a_01', b: 'b:conn_facade_edge_b_01' }] };
+  failing(await validate(build(lib, m), { registry: REGISTRY, library: lib, profile: pf }), 'Assembly', 'storey_height');
+});

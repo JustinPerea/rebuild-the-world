@@ -4,7 +4,7 @@ import { glbConnectors } from '../lib/context.mjs';
 import { collectGeometry } from '../lib/glb.mjs';
 import { bboxOfFaces, visiblePrims } from '../lib/geom.mjs';
 import { angleDeg } from '../lib/math.mjs';
-import { resolvePin, entryScale, isEvenScale, axisOf } from '../lib/library.mjs';
+import { resolvePin, entryScale, isEvenScale, sameScale, axisOf, entryConnector } from '../lib/library.mjs';
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const pair = (v) => Array.isArray(v) && v.length === 2 && v.every(isNum) && v[0] <= v[1];
@@ -95,7 +95,7 @@ export function scaleRanges(r) {
   const lo = ['x', 'y', 'z'].map((k) => (r[k] ? r[k][0] : 1));
   const hi = ['x', 'y', 'z'].map((k) => (r[k] ? r[k][1] : 1));
   // Uneven scales are possible unless every axis is held to one and the same value.
-  const canDiffer = lo.some((v, k) => v !== hi[k]) || lo.some((v) => v !== lo[0]);
+  const canDiffer = lo.some((v, k) => !sameScale(v, hi[k])) || lo.some((v) => !sameScale(v, lo[0]));
   return { form: 'axes', ok: true, lo, hi, canDiffer };
 }
 
@@ -222,6 +222,20 @@ export function variation(ctx) {
           else if (!decl.materials?.includes(mat)) msgs.push(`${where}: slot "${slot}" is set to "${mat}", which ${entry.asset} does not list (allowed: ${(decl.materials || []).join(', ')})`);
         }
       }
+    }
+    // An exposed connector is a way to join the atom later, so it follows the same two rules as a joint here.
+    for (const [name, target] of Object.entries(a.manifest?.exposes && typeof a.manifest.exposes === 'object' ? a.manifest.exposes : {})) {
+      const sep = typeof target === 'string' ? target.indexOf(':') : -1;
+      const ent = sep < 0 ? null : an.entries.get(target.slice(0, sep));
+      if (!ent?.rec || ent.entry.scale === undefined) continue;
+      const sv = entryScale(ent.entry);
+      if (isEvenScale(sv)) continue;
+      const c = entryConnector(ent.rec, ent.entry, target.slice(sep + 1), ctx);
+      if (c.error) continue;
+      const who = `assembly "${a.meta?.asset_id ?? ctx.asset.manifest?.asset_id ?? ''}" exposes "${name}" (${target}), a connector of atom "${ent.entry.ref}" (${ent.entry.asset}) scaled unevenly to ${JSON.stringify(ent.entry.scale)}`;
+      touched = true;
+      if (c.mating.skewed) msgs.push(`${who}, but its +Z or +Y is not parallel to one of the atom's axes; an unevenly scaled atom joins only through connectors along its own axes`);
+      if (c.mating.axisLess.length) msgs.push(`${who}, but its type "${c.type}" gives no "mating_axes" entry for ${c.mating.axisLess.join(', ')}; an unevenly scaled atom joins nothing through a mating dimension with no axis`);
     }
     for (const [i, j] of (a.manifest?.joints || []).entries()) {
       if (j?.motion !== undefined) { touched = true; checkMotion(j.motion, `joint ${i}`, msgs); }

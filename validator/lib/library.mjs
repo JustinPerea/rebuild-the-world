@@ -13,6 +13,7 @@ export const categoryOf = (id) => String(id).split('_')[0];
 export const libraryDir = (lib, id) => path.join(lib, categoryOf(id), id);
 
 const MAX_DEPTH = 8;
+const DEFAULT_MATING_TOLERANCE_M = 0.001;
 
 // Look up "id@version" in the library.
 export function resolvePin(pin, libDir) {
@@ -43,7 +44,9 @@ export function entryScale(entry) {
   if (Array.isArray(s) && s.length === 3 && s.every(isPos)) return [s[0], s[1], s[2]];
   return [1, 1, 1];
 }
-export const isEvenScale = (sv) => sv[0] === sv[1] && sv[1] === sv[2];
+// Two scale factors are the same when they differ by no more than 1e-9 of their size, so 0.30000000000000004 and 0.3 agree.
+export const sameScale = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(Math.abs(a), Math.abs(b));
+export const isEvenScale = (sv) => sameScale(sv[0], sv[1]) && sameScale(sv[1], sv[2]);
 const vscale3 = (a, s) => [a[0] * s[0], a[1] * s[1], a[2] * s[2]];
 
 // Which axis (0, 1 or 2) of the atom a direction lies along, and whether it does so within the angle tolerance.
@@ -77,7 +80,7 @@ function scaledMating(reg, base, frame, sv, tolD) {
 }
 
 // Connector of a placed entry, in the entry's own coordinates (mirrored and scaled when the entry is).
-function entryConnector(rec, entry, connName, ctx) {
+export function entryConnector(rec, entry, connName, ctx) {
   let c;
   let base;
   if (rec.kind === 'atom') {
@@ -166,7 +169,8 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
   // Joints
   const tolP = profile.connector_position_tolerance_m;
   const tolD = profile.connector_direction_tolerance_deg;
-  const tolM = profile.mating_tolerance_m;
+  // profile-1.json states 1 mm; a profile that leaves the key out gets the same value, so the comparison is never off.
+  const tolM = Number.isFinite(profile.mating_tolerance_m) ? profile.mating_tolerance_m : DEFAULT_MATING_TOLERANCE_M;
   const joints = Array.isArray(manifest.joints) ? manifest.joints : [];
   if (!Array.isArray(manifest.joints)) err('"joints" must be an array (it may be empty only for a one-atom assembly)');
   const parsed = [];
