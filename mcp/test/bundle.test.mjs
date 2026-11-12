@@ -227,6 +227,27 @@ test('an object with a blueprint: submit waits until each built slot is pinned, 
   assert.equal(s.body.data.report.checks.find((x) => x.name === 'Scale').status, 'PASS');
 });
 
+test('a sub-assembly task, whose object_id names its parent, is not held to the parent blueprint or folder', async () => {
+  const PAIR = 'task_bun_pair_01';
+  const f = fixture({
+    extra: (repo, t) => {
+      t(PAIR, { size: 'M', asset_id: 'veh_pair_01', object_id: 'veh_sedan_01', slot: 'pair', depends_on: [BODY, DOOR], dimensions_m: undefined });
+      writeJson(path.join(repo, 'assets', 'veh', 'veh_sedan_01', 'blueprint.json'), { object_id: 'veh_sedan_01', description: 'A sedan', slots: [{ slot: 'pair', count: 1, connectors: [{ type: 'door_hinge', side: 'a' }], dimensions_m: { width: 1 }, atom: 'new' }] });
+    },
+  });
+  const { c, assets } = f;
+  assert.equal((await c.call('claim', { task_id: PAIR })).isError, false);
+  writeBody(assets); writeDoor(assets);
+  for (const [id, p] of [[BODY, 'veh/veh_body_01'], [DOOR, 'veh/veh_door_01']]) assert.equal((await c.call('submit', { task_id: id, asset_path: p })).body.instructions.verdict, 'PASSED');
+  writeAssembly(assets, 'veh_pair_01', {
+    origin: { ref: 'body', offset_m: [0, 0.31, 0] },
+    atoms: [{ ref: 'body', asset: 'veh_body_01@1.0.0' }, { ref: 'door', asset: 'veh_door_01@1.0.0' }],
+    joints: [{ a: 'body:conn_door_hinge_a_01', b: 'door:conn_door_hinge_b_01' }, { a: 'body:conn_door_hinge_a_02', b: 'door:conn_door_hinge_b_02' }],
+  }, { library: 'test', task_id: PAIR });
+  const s = await c.call('submit', { task_id: PAIR, asset_path: 'veh/veh_pair_01' });
+  assert.equal(s.body.instructions.verdict, 'PASSED', s.isError ? s.body.instructions.error : checks(s));
+});
+
 test('the fit search checks a task\'s mating_m and lists connectors the slot does not ask for', async () => {
   const { c, assets } = fixture({
     extra: (repo, t) => {
@@ -246,6 +267,9 @@ test('the fit search checks a task\'s mating_m and lists connectors the slot doe
   validAtom(assets, 'prop_twice_01', { glb: { connectors: three }, meta: { connectors: three.map((x) => ({ name: x.name, type: 'door_hinge', side: 'a', limits: [-100, 0], rest: 0, mating: { leaf: 1 } })) } });
   const twice = (await c.call('find_atoms', { task_id: 'task_fit_01' })).body.data.fits.find((x) => x.asset_id === 'prop_twice_01');
   assert.deepEqual(twice.extra_connectors.map((x) => x.name), ['conn_door_hinge_a_02']);
+  // a requirement with no count asks for one, as rule 1 does
+  const bySlot = (await c.call('find_atoms', { connectors: [{ type: 'door_hinge', side: 'a' }] })).body.data.fits.find((x) => x.asset_id === 'prop_twice_01');
+  assert.deepEqual(bySlot.extra_connectors.map((x) => x.name), ['conn_door_hinge_a_02']);
   const miss = (await c.call('find_atoms', { task_id: 'task_fit_02' })).body.data;
   assert.ok(!miss.fits.some((x) => x.asset_id === 'prop_both_01'));
   assert.deepEqual(miss.near_matches.find((x) => x.asset_id === 'prop_both_01').failed_rules, [2]);

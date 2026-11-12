@@ -570,6 +570,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       return fail(`your claim on ${a.task_id} expired at ${claim.expires_at}; the task is Open again. Claim it again if nobody else has (a 24-hour wait applies).`);
     }
     const isObject = t.task.depends_on.length > 0;
+    const buildsObject = isObject && !!t.task.object_id && t.task.asset_id === t.task.object_id;
     const isMember = !!claim.bundle && claim.bundle !== claim.task_id;
     if (isMember && store.bundleLapsed(claim, now)) {
       return fail(`${a.task_id} was reserved under the bundle ${claim.bundle}, and your claim on ${claim.bundle} has expired or been released, so this task is Open again. Claim ${claim.bundle} again if nobody else has (a 24-hour wait applies after an expiry).`);
@@ -600,7 +601,9 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       }
       // Each slot a member task fills must be pinned to the asset that task asked for. The validator
       // then holds the manifest to the blueprint's counts, so a slot cannot be filled by a different atom.
-      const bp = t.task.object_id ? store.getBlueprint(t.task.object_id) : { error: 'none' };
+      // Only for a task that builds the object itself. A sub-assembly task names its parent as
+      // object_id and has no blueprint of its own.
+      const bp = buildsObject ? store.getBlueprint(t.task.object_id) : { error: 'none' };
       if (!bp.error && Array.isArray(bp.blueprint.slots)) {
         const wrong = [];
         for (const d of t.task.depends_on) {
@@ -619,7 +622,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     if (r.error) return fail(r.error);
     const folderName = path.basename(r.dir);
     // The blueprint the server just read and the one the validator will read must be the same file.
-    const objectDir = isObject && t.task.object_id ? store.findObjectDir(t.task.object_id) : null;
+    const objectDir = buildsObject ? store.findObjectDir(t.task.object_id) : null;
     if (objectDir && realish(objectDir) !== r.dir) return fail(`the assembly for ${a.task_id} must be written in the object's own folder under assets/, beside its blueprint.json; the folder given is a different one`);
     const problems = [];
     if (t.task.asset_id && folderName !== t.task.asset_id) problems.push(`the task asks for asset "${t.task.asset_id}" but the folder is named "${folderName}"`);

@@ -50,7 +50,7 @@ export function evaluate(atom, req, tol, ruleText) {
   // Rule 1: connectors
   if (req.connectors?.length) {
     const miss = [];
-    for (const r of req.connectors) {
+    for (const r of req.connectors.filter(isObj)) {
       const want = r.count ?? 1;
       const have = (meta.connectors || []).filter((c) => c?.type === r.type && c?.side === r.side).length;
       if (have < want) miss.push(`needs ${want} "${r.type}" side ${r.side}, has ${have}`);
@@ -91,11 +91,11 @@ export function evaluate(atom, req, tol, ruleText) {
 }
 
 // Connectors an atom carries beyond what the slot asks for: a type and side the slot does not
-// name, or more of one than the count it states.
+// name, or more of one than the count it states (1 where none is stated, as in rule 1).
 function extraConnectors(have, want) {
   if (!Array.isArray(want) || !want.length) return [];
   const left = new Map();
-  for (const r of want) if (r && typeof r === 'object') left.set(`${r.type}/${r.side}`, typeof r.count === 'number' ? (left.get(`${r.type}/${r.side}`) || 0) + r.count : Infinity);
+  for (const r of want) if (r && typeof r === 'object') left.set(`${r.type}/${r.side}`, (left.get(`${r.type}/${r.side}`) || 0) + (typeof r.count === 'number' ? r.count : 1));
   const out = [];
   for (const c of Array.isArray(have) ? have : []) {
     if (!c || typeof c !== 'object') continue;
@@ -116,7 +116,7 @@ export function search(atoms, req, tol, ruleText, limit = 5) {
       version: a.meta.version ?? null,
       description: a.meta.description ?? null,
       dimensions_m: a.meta.dimensions_m ?? null,
-      connectors: (a.meta.connectors || []).map((c) => ({ name: c.name, type: c.type, side: c.side })),
+      connectors: (Array.isArray(a.meta.connectors) ? a.meta.connectors : []).filter(isObj).map((c) => ({ name: c.name, type: c.type, side: c.side })),
       // Connectors the slot does not ask for. An atom that carries some is usually a different kind of part.
       extra_connectors: extraConnectors(a.meta.connectors, req.connectors),
       failed_rules: e.failed,
