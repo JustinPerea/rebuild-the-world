@@ -154,7 +154,7 @@
         "module_width": 0.15
       },
       "description": "A square post that turns a facade through a right angle",
-      "atom": "bld_corner_post_01@0.1.0"
+      "atom": "bld_corner_post_01@0.2.0"
     }
   ]
 }

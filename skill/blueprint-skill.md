@@ -1,6 +1,6 @@
 # Blueprint skill: drafting one building for Earth, Again
 
-Version 0.1, for survey plans version 1 and the blueprint kit in `tools/blueprint/`. Written by the project maintainers. This file is the instructions a contributor's agent follows to turn one real building into a blueprint that other contributors can build from. Every rule and number in it is a proposal that the project owner has not confirmed, and it has been rehearsed twice by an agent on four buildings of one block in Tokyo.
+Version 0.2, for survey plans version 1 and the blueprint kit in `tools/blueprint/`. Written by the project maintainers. This file is the instructions a contributor's agent follows to turn one real building into a blueprint that other contributors can build from. Every rule and number in it is a proposal that the project owner has not confirmed, and it has been rehearsed twice by an agent on four buildings of one block in Tokyo.
 
 ## Files this job produces
 
@@ -9,7 +9,7 @@ For one building you write one file, the plan, and a tool writes the rest from i
 | File | Written by | Content |
 | --- | --- | --- |
 | `survey/<region>/plans/<building>.json` | You | The building's storeys, and along each wall the bays: strips of wall one storey high with one opening or none |
-| `assets/bld/<object id>/blueprint.json` | `blueprint.mjs draft --write` | One slot for each distinct piece the walls need |
+| `assets/bld/<object id>/blueprint.json` | `blueprint.mjs draft --write` | One slot for plain wall, one for each kind of corner post, and one for each distinct size of opening bay and door leaf |
 | `assets/bld/<object id>/layout.json` | The same command | Every placed piece and every joint between pieces |
 | `tasks/task_<…>.json` | The same command | One task for each piece the library does not have, and one for the whole building |
 
@@ -90,7 +90,7 @@ The plan goes in the file that `show` names under `file`. List a wall in `facade
 
 **Every wall.**
 
-- Where a wall ends at an outside corner, the row's first or last bay is a plain `wall` bay at least 0.3 m wide. A corner post stands in the first 0.15 m.
+- Where a wall ends at an outside corner, the row's first or last bay is a plain `wall` bay at least 0.2 m wide. A corner post stands in the first 0.15 m.
 - A wall you list needs a row for every storey. A storey of that wall with no opening is a row with one `wall` bay as long as the wall.
 - Reuse a bay from `used_so_far` when it matches what you want within 5 cm in every size. Each new size is a new piece that somebody must build.
 - The format has no place for an awning, a sign, a pipe, an air-conditioning unit, a projecting balcony slab or a wall that is not flat. Leave them out and list what you left out in `notes`.
@@ -126,7 +126,7 @@ Read the result before writing anything.
 | --- | --- |
 | `unsupported` | The kit cannot draft this outline. Keep the plan: it is still a valid survey plan. Stop here for this building and say why in your report |
 | `problems` | Fix the plan as each line says, check it, and draft again |
-| `summary` and `slots` | Read `slots`. Each one with the state `needs_task` is a piece nobody has built. If two opening bays you wrote differ by 5 cm or less and the reference does not show the difference, make them the same in the plan and draft again. The kit sets the widths of plain wall pieces and the pieces of the base and top bands, so leave those |
+| `summary` and `slots` | Read `slots`. Each one with the state `needs_task` is a piece nobody has built. Plain wall and the corner posts are three base atoms that the kit places scaled to each width and height, so they add no sizes. `distinct_sizes` is how many pieces the building would need if nothing were scaled. Each opening bay and door leaf of a new size is still a piece to build: if two you wrote differ by 5 cm or less and the reference does not show the difference, make them the same in the plan and draft again. The kit sets the widths of plain wall pieces and the pieces of the base and top bands, so leave those |
 
 Then write the files:
 
@@ -156,4 +156,4 @@ Once the pull request is merged, the building's task appears in `whats_needed`. 
 - A plan drawn from a reference is as good as that image and the reading of it. Nothing measures a plan against the real wall except the overlay you look at in step 7. In the rehearsals two readers of the same image chose different storey counts, so a reviewer should open the overlay too.
 - One wall with a reference does not make the building a true exterior. The walls you could not see are typical, and the plan says which is which.
 - The kit makes the outline square before it drafts and reports how far a corner moved (`max_shift_m`). Above 0.10 m it refuses.
-- Every distinct size is its own piece today. Stretching pieces to size is being added to the specs, and until then a careful plan keeps sizes few.
+- Plain wall and corner posts are scaled copies of three base atoms, but a bay with an opening is still one atom per distinct size, and the same window appears once for each storey height. A careful plan keeps opening sizes few. Pieces that stretch along a marked span, which would merge those, are proposed in the asset spec and nobody has built them.

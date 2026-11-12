@@ -133,7 +133,7 @@ if (command === 'draft') {
     try { r = draft(reg, p.place, p.plan, { library, tasks: tasksDir }); } catch (e) { console.log(`${name}  crash: ${e.stack}`); process.exitCode = 1; continue; }
     if (r.unsupported) { totals.unsupported++; byReason[r.unsupported] = (byReason[r.unsupported] ?? 0) + 1; console.log(`${name}  unsupported: ${r.unsupported} (${r.detail})`); }
     else if (r.problems.length) { totals.problems++; console.log(`${name}  problems: ${r.problems.join('; ')}`); }
-    else { totals.ok++; r.slots.forEach((s) => allSlots.add(s.asset_id)); console.log(`${name}  ok: ${r.summary.pieces} pieces, ${r.summary.distinct_slots} slots`); }
+    else { totals.ok++; r.slots.forEach((s) => allSlots.add(s.asset_id)); console.log(`${name}  ok: ${r.summary.pieces} pieces, ${r.summary.distinct_slots} slots (${r.summary.distinct_sizes} distinct sizes unscaled)`); }
   }
   console.log(`ok ${totals.ok}, problems ${totals.problems}, unsupported ${totals.unsupported}${Object.keys(byReason).length ? ` (${Object.entries(byReason).map(([k, v]) => `${k} ${v}`).join(', ')})` : ''}, skipped ${totals.skipped}; ${allSlots.size} distinct slots across the ok buildings`);
 } else {

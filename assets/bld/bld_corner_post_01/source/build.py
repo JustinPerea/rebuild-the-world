@@ -23,8 +23,8 @@ rtw.export_glb(os.path.join(ASSET, "asset.glb"))
 mating = {"storey_height": H, "wall_thickness": T}
 stack = {"module_width": T, "wall_thickness": T}
 rtw.write_metadata(os.path.join(ASSET, "asset.json"), {
-    "asset_id": "bld_corner_post_01", "version": "0.1.0", "task_id": "task_bld_corner_post_01",
-    "spec_version": "0.5", "profile": "Profile 1 (2026)", "style_version": "0.3",
+    "asset_id": "bld_corner_post_01", "version": "0.2.0", "task_id": "task_bld_corner_post_01",
+    "spec_version": "0.6", "profile": "Profile 1 (2026)", "style_version": "0.3",
     "library": "Earth, Again", "kind": "library", "class": "Facade module", "tier": 1, "size": "S",
     "dimensions_m": [round(hi[a] - lo[a], 4) for a in range(3)], "triangles": triangles,
     "connectors": [
@@ -33,10 +33,11 @@ rtw.write_metadata(os.path.join(ASSET, "asset.json"), {
         {"name": "conn_storey_stack_a_01", "type": "storey_stack", "side": "a", "mating": stack},
         {"name": "conn_storey_stack_b_01", "type": "storey_stack", "side": "b", "mating": stack},
     ],
+    "variation": {"scale": {"y": [0.01, 2.2]}},
     "mirror_safe": False,
     "materials": {"library": ["mat_render_cream_01"], "custom": []},
     "behaviours": [],
-    "description": "A square rendered post that turns a facade through a right angle at an outside corner. One storey high and as thick as the wall modules.",
+    "description": "A square rendered post that turns a facade through a right angle at an outside corner. One storey high and as thick as the wall modules. It is placed scaled in height to each course of a building.",
     "licence": "Not yet chosen for this project (see LICENSE.md)",
     "sources": [],
     "considered": [],

@@ -1,8 +1,8 @@
 {
   "asset_id": "bld_corner_post_01",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "task_id": "task_bld_corner_post_01",
-  "spec_version": "0.5",
+  "spec_version": "0.6",
   "profile": "Profile 1 (2026)",
   "style_version": "0.3",
   "library": "Earth, Again",
@@ -54,6 +54,14 @@
       }
     }
   ],
+  "variation": {
+    "scale": {
+      "y": [
+        0.01,
+        2.2
+      ]
+    }
+  },
   "mirror_safe": false,
   "materials": {
     "library": [
@@ -62,7 +70,7 @@
     "custom": []
   },
   "behaviours": [],
-  "description": "A square rendered post that turns a facade through a right angle at an outside corner. One storey high and as thick as the wall modules.",
+  "description": "A square rendered post that turns a facade through a right angle at an outside corner. One storey high and as thick as the wall modules. It is placed scaled in height to each course of a building.",
   "licence": "Not yet chosen for this project (see LICENSE.md)",
   "sources": [],
   "considered": [],
