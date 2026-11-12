@@ -10,7 +10,7 @@ import math
 FINEST = 17                # the level used from the equator to about 55 degrees
 COARSEST = 14              # the level used nearest the poles; a cell's level is decided per row of this level
 TARGET_M = 250.0           # the side a cell should have on the ground
-MAX_LAT = 85.0511          # the scheme stops here; nothing is built nearer the poles
+MAX_LAT = 85.0511287       # the scheme stops here (its exact limit is 85.05112878); nothing is built nearer the poles
 EQUATOR_M = 2 * math.pi * 6378137.0    # a level-0 tile's side on the ground at the equator
 
 
@@ -51,7 +51,9 @@ def cell_of(lat, lon):
 
 
 def bounds(z, x, y):
-    """A cell's edges in degrees: south, west, north, east."""
+    """A cell's edges in degrees: south, west, north, east. A point within about 1e-14 degrees of an edge can be
+    given by cell_of to the cell on the other side of it. Which cell a building belongs to is decided from these
+    edges rounded to 7 decimals (describe), which both neighbours share, so no building is held twice."""
     lon = lambda col: col / 2 ** z * 360.0 - 180.0
     return _row_lat(y + 1, z), lon(x), _row_lat(y, z), lon(x + 1)
 
@@ -73,6 +75,8 @@ def parse_id(text):
     want = level_of_row(y >> (z - COARSEST))
     if want != z:
         raise ValueError(f"{text!r} is not a cell: cells at its latitude are level {want}")
+    if cell_id(z, x, y) != text:        # one spelling per cell: the ID names a folder and, later, a claim
+        raise ValueError(f"{text!r} is not written the way cell IDs are: {cell_id(z, x, y)}")
     return z, x, y
 
 

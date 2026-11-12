@@ -30,7 +30,8 @@ class Grid(unittest.TestCase):
         self.assertEqual(grid.cell_id(*grid.cell_of(*PLACES["Lisbon"])), "c17-62211-50227")
         self.assertEqual(grid.cell_id(*grid.cell_of(*PLACES["Oshiage"])), "c17-116439-51599")
         self.assertEqual(grid.cell_id(*grid.cell_of(*PLACES["Helsinki"])), "c16-37307-18969")
-        for bad in ("c13-1-2", "c18-1-2", "c17-1", "c17-1-2-3", "c17-a-2", "c17-131072-0", "../c17-1-2", "c17--1-2", "c-1-2", "x17-1-2", "c1\u0667-1-2"):
+        for bad in ("c13-1-2", "c18-1-2", "c17-1", "c17-1-2-3", "c17-a-2", "c17-131072-0", "../c17-1-2", "c17--1-2", "c-1-2", "x17-1-2", "c1\u0667-1-2",
+                    "c17-062211-50227", "c17-62211-050227", "c017-62211-50227", "C17-62211-50227", "c17-62211-50227 "):
             with self.assertRaises(ValueError, msg=bad):
                 grid.parse_id(bad)
 
@@ -90,9 +91,11 @@ class Grid(unittest.TestCase):
         self.assertNotIn("south", grid.neighbours(14, 3, 2 ** 14 - 1))
 
     def test_nothing_is_built_near_the_poles(self):
-        for lat in (86, -86, 90):
+        for lat in (86, -86, 90, 85.0512):
             with self.assertRaises(ValueError):
                 grid.cell_of(lat, 0)
+        self.assertEqual(grid.cell_of(85.05112, 0)[::2], (14, 0))                        # the top row is covered to its edge
+        self.assertEqual(grid.cell_of(-85.05112, 0)[::2], (14, 2 ** 14 - 1))
 
     def test_cells_are_square(self):
         size = lambda name: grid.describe(*grid.cell_of(*PLACES[name]))["size_m"]
