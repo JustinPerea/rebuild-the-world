@@ -103,7 +103,7 @@
         "leaf_height": 2.0
       },
       "description": "A rendered wall module with a door opening and the frame side of a hinge",
-      "atom": "new"
+      "atom": "bld_door_bay_01@0.1.0"
     },
     {
       "slot": "door_leaf",
@@ -154,7 +154,7 @@
         "module_width": 0.15
       },
       "description": "A square post that turns a facade through a right angle",
-      "atom": "new"
+      "atom": "bld_corner_post_01@0.1.0"
     }
   ]
 }

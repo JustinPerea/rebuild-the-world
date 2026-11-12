@@ -194,7 +194,8 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     return {
       connectors: task?.required_connectors?.length ? task.required_connectors : slot?.connectors,
       dimensions_m: task?.dimensions_m || slot?.dimensions_m,
-      mating_dimensions_m: task?.mating_dimensions_m || slot?.mating_dimensions_m,
+      // A task states its mating sizes as "mating_m" (asset spec, "File shapes").
+      mating_dimensions_m: task?.mating_dimensions_m || task?.mating_m || slot?.mating_dimensions_m,
     };
   }
 
@@ -438,8 +439,8 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
           steps: [
             `The server does not run git. Create one branch named ${branch} from the current main branch. Every folder of this bundle goes on it.`,
             `Build each reserved atom as its own asset folder under the workspace (reserved task ids: ${reservedIds.length ? reservedIds.join(', ') : 'none'}), laid out as <category>/<asset_id>/ with asset.glb, asset.json, preview/ and source/ (asset spec, "Files, naming and metadata"). Set "task_id" in each asset.json to that atom's own task id, and call submit for each with its task_id and folder. A failing report leaves that atom open: fix and submit again. Do not open a pull request per atom.`,
-            'data.bundle.members holds each atom task whole. Its connector_frames give each connector\'s exact position and the directions of its +Z and +Y, and its mating_m gives the sizes that must match the neighbouring atoms. Before building, read the fitting_atoms and near_matches of each member and reuse an atom where it is the same kind of part (fit rule 4 is your judgement). List each atom you looked at in asset.json "considered".',
-            `When every member task is Merged or has passed submit, write the assembly folder for the object (assembly.json, asset.json, preview/ and source/) and call submit with the object task_id ${task.task_id} and that folder. The assembly is checked against the atoms in the repo assets/ folder, so build the bundle there.`,
+            'data.bundle.members holds each atom task whole. Its connector_frames give each connector\'s exact position and the directions of its +Z and +Y, and its mating_m gives the sizes that must match the neighbouring atoms. Before building, read the fitting_atoms and near_matches of each member and reuse an atom where it is the same kind of part. fitting_atoms passed only the rules a script can check; fit rule 4, whether it is the same kind of part, is your judgement, and an atom with extra_connectors (connectors the slot does not ask for) is usually a different kind of part. List each atom you looked at in asset.json "considered".',
+            `When every member task is Merged or has passed submit, write the assembly folder for the object (assembly.json, asset.json, preview/ and source/) and call submit with the object task_id ${task.task_id} and that folder. The assembly is checked against the atoms in the repo assets/ folder, so build the bundle there. Two things are checked that are easy to miss. If the object's folder already holds blueprint.json, set "atom" in each slot you built to that atom's pin, "<asset_id>@<version>", in place of "new": the manifest must place each slot's atom exactly "count" times and nothing else. And asset.json "dimensions_m" must be the measured size of the whole object, which the validator measures from the placed atoms and compares with the task.`,
             `After that submit passes, commit all the folders to ${branch}, push the branch and open ONE pull request that names ${task.task_id} and lists each atom task. The server does not do that for you.`,
             `The deadline covers the whole bundle. An atom that passes submit does not stop the clock; it stops when ${task.task_id} passes submit. If the deadline passes first, every task of the bundle is Open again, the atoms that had passed included.`,
             `If an atom is held by another builder (data.bundle.waiting_on_others), build the rest and wait for it. To give the work back, call release with ${task.task_id}: that releases the whole bundle, and one atom of it cannot be released alone. If a rule is unclear or missing, call leave_feedback.`,
@@ -474,7 +475,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
           `The server does not run git. Create a branch named ${record.branch} from the current main branch and work on it.`,
           `Build the asset as a folder named after its asset_id${task.asset_id ? ` (${task.asset_id})` : ''} under the workspace, laid out as <category>/<asset_id>/ with asset.glb, asset.json, preview/ and source/ (asset spec, "Files, naming and metadata"). Set "task_id": "${task.task_id}" in asset.json.`,
           'data.task is the whole task. Its connector_frames give each connector\'s exact position and the directions of its +Z and +Y (and limits and rest for one that moves), and its mating_m gives the sizes that must match the neighbouring atoms. Build to those numbers: the validator measures them.',
-          'Before building a new atom, read fitting_atoms and near_matches in data. An atom in fitting_atoms passed the fit rules a script can check (connectors, mating sizes, overall size). Fit rule 4 is yours to judge: read its description, and reuse it only if it is the same kind of part the task asks for. A window module is not a plain wall module, though both have the same size and connectors. List each atom you looked at in asset.json "considered" with the reason it does not fit; the validator passes that list on to the reviewer.',
+          'Before building a new atom, read fitting_atoms and near_matches in data. An atom in fitting_atoms passed the fit rules a script can check (connectors, mating sizes, overall size). Fit rule 4 is yours to judge: read its description, and reuse it only if it is the same kind of part the task asks for. An atom with extra_connectors (connectors the task does not ask for) is usually a different kind of part. A window module is not a plain wall module, though both have the same size and connectors. List each atom you looked at in asset.json "considered" with the reason it does not fit; the validator passes that list on to the reviewer.',
           'When the build is done, call submit with this task_id and the asset folder. A failing report leaves the claim open: fix and submit again.',
           'After a passing submit, commit the asset folder, push the branch and open a pull request. The server does not do that for you.',
           'If you cannot finish, call release. If a rule is unclear or missing, call leave_feedback.',
@@ -596,6 +597,23 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
       }
       if (realish(workspace) !== realish(store.assetsDir)) {
         return fail('an object task is validated against the atoms in the repo assets/ folder, so its bundle must be built there. Start the server with --workspace set to the repo assets/ folder (the default), and build every folder of the bundle in it.');
+      }
+      // Each slot a member task fills must be pinned to the asset that task asked for. The validator
+      // then holds the manifest to the blueprint's counts, so a slot cannot be filled by a different atom.
+      const bp = t.task.object_id ? store.getBlueprint(t.task.object_id) : { error: 'none' };
+      if (!bp.error && Array.isArray(bp.blueprint.slots)) {
+        const wrong = [];
+        for (const d of t.task.depends_on) {
+          const dt = store.getTask(d);
+          if (dt.error || !dt.task.slot || !dt.task.asset_id || dt.task.object_id !== t.task.object_id) continue;
+          const s = bp.blueprint.slots.find((x) => isObj(x) && x.slot === dt.task.slot);
+          if (!s) continue;
+          const ok = typeof s.atom === 'string' && s.atom.startsWith(`${dt.task.asset_id}@`);
+          if (!ok) wrong.push({ slot: dt.task.slot, task_id: d, asset_the_task_asks_for: dt.task.asset_id, blueprint_atom: typeof s.atom === 'string' ? s.atom.slice(0, 100) : null });
+        }
+        if (wrong.length) {
+          return fail(`blueprint.json of ${t.task.object_id} does not name the atoms built for ${wrong.length} slot(s), listed in data.slots. In each of those slots set "atom" to "<asset_id>@<version>" of the asset its task asks for, then submit again.`, { slots: wrong });
+        }
       }
     }
     const r = resolveAssetFolder(a.asset_path);

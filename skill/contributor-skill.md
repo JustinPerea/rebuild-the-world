@@ -1,6 +1,6 @@
 # Contributor skill: building an asset for Earth, Again
 
-Version 0.2, for asset spec v0.5 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
+Version 0.3, for asset spec v0.5 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
 
 ## The one rule about text
 
@@ -12,7 +12,7 @@ Work is claimed by object. One claim covers an object's unbuilt atoms and its as
 
 1. `whats_needed` lists the open tasks. An object's row names the atom tasks that a claim would reserve for you.
 2. `get_object` shows the object's blueprint and the state of every slot.
-3. `find_atoms` searches the library for an atom that already fits a slot. If one fits, reuse it and build nothing for that slot.
+3. `find_atoms` searches the library for an atom that already fits a slot. If one fits, reuse it and build nothing for that slot. "Fits" there means the rules a script can check: connectors, mating sizes and overall size. Whether it is the same kind of part is your judgement. An atom listed with `extra_connectors`, connectors the slot does not ask for, is usually a different kind of part: a door module is not a plain wall module.
 4. `claim` the object's task. The work order holds the object's task, each atom task reserved for you with its slot and reference pack, the pinned spec versions and this file. Make the one branch it names.
 5. Build each atom in its own folder (see "Building an atom"). Run the validator yourself and fix every FAIL.
 6. `submit` each atom's task. It runs the same validator and records the result. A failing report leaves the claim open. Do not open a pull request for an atom that is part of a bundle.
@@ -180,7 +180,8 @@ An assembly is `assembly.json`, a list of atoms and the joints between them. It 
 - Read each task's or atom's connector positions to see which edge is which. For the facade modules here, side `a` of `facade_edge` is the right-hand edge seen from outside and side `b` the left-hand edge, so a module's `a` joins the `b` of the module to its right. Side `a` of `storey_stack` is the top and joins the `b` at the bottom of the piece above.
 - Pin every atom to the exact version in its `asset.json`.
 - Every atom needs at least one joint. Add every joint that is physically there, including the one that closes a ring of walls: only a joint that closes a loop lets the validator measure whether the atoms really meet.
-- Write the manifest with a script kept in `source/`, and write `asset.json` beside it. It has the same fields as an atom's, with these differences: `kind` is still `"library"` or `"unique"` (the file `assembly.json` is what makes it an assembly), `triangles` is the sum over every placed atom, `dimensions_m` is the size of the whole object, `connectors` is `[]` unless the assembly exposes some, and `considered` is `[]`.
+- Write the manifest with a script kept in `source/`, and write `asset.json` beside it. It has the same fields as an atom's, with these differences: `kind` is still `"library"` or `"unique"` (the file `assembly.json` is what makes it an assembly), `triangles` is the sum over every placed atom, `dimensions_m` is the bounding box of every placed atom (the validator measures it and prints it in the Scale check, and it must also be within 2% of the task's `dimensions_m`), `connectors` is `[]` unless the assembly exposes some, and `considered` is `[]`.
+- If the object's folder already holds `blueprint.json`, write the assembly beside it and fill the blueprint in: in each slot whose atom you built, set `"atom"` to that atom's pin, `"<asset_id>@<version>"`, in place of `"new"`. Change nothing else in it. The validator's Blueprint check fails while a slot is still `new`, and fails unless the manifest places each slot's atom exactly `count` times and no other atom. `submit` also refuses a slot pinned to a different asset than its task asked for.
 - The validator's Assembly check reports the largest gap and angle among the joints it measured. Quote that line in your pull request.
 
 ## What never goes in an asset

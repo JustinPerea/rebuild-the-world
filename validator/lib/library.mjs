@@ -1,9 +1,11 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { loadAssetDir, glbConnectors, countTriangles } from './context.mjs';
+import { collectGeometry } from './glb.mjs';
+import { visiblePrims, usedVertices } from './geom.mjs';
 import { symmetryCount } from './registry.mjs';
 import {
-  applyPose, mirrorFrame, orthoFrame, poseBetween, rotateAbout, translation, vscale, vsub, len, angleDeg,
+  applyPose, mirrorFrame, orthoFrame, poseBetween, rotateAbout, translation, vscale, vsub, len, angleDeg, point,
 } from './math.mjs';
 
 export const PIN_RE = /^([a-z0-9]+(?:_[a-z0-9]+)*)@(\d+\.\d+\.\d+)$/;
@@ -215,4 +217,47 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
     }
   }
   return res;
+}
+
+// The bounding box of an analysed assembly: every vertex of every placed atom, in the assembly's
+// own coordinates (its origin at 0). Nested assemblies are measured through their own poses.
+// Returns null when nothing could be placed.
+export function assemblyBounds(res) {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  const points = new Map();
+  const pointsOf = (rec) => {
+    if (!points.has(rec.dir)) {
+      const out = [];
+      for (const p of visiblePrims(collectGeometry(rec.asset.glb).prims)) {
+        if (p.mode !== 4) continue;
+        for (const v of usedVertices(p)) out.push([p.positions[v * 3], p.positions[v * 3 + 1], p.positions[v * 3 + 2]]);
+      }
+      points.set(rec.dir, out);
+    }
+    return points.get(rec.dir);
+  };
+  const visit = (r, up) => {
+    for (const [ref, ent] of r.entries) {
+      const pose = r.poses.get(ref);
+      if (!ent.rec || !pose) continue;
+      const s = typeof ent.entry.scale === 'number' && ent.entry.scale > 0 ? ent.entry.scale : 1;
+      const mirrored = ent.entry.mirror === true;
+      // Same order as a connector's frame: mirrored in the entry's own coordinates, scaled, then placed.
+      const place = (p) => up(point(pose, vscale(mirrored ? [-p[0], p[1], p[2]] : p, s)));
+      if (ent.rec.kind === 'atom') {
+        if (!ent.rec.asset.glb) continue;
+        for (const p of pointsOf(ent.rec)) {
+          const q = place(p);
+          for (let k = 0; k < 3; k++) {
+            if (q[k] < min[k]) min[k] = q[k];
+            if (q[k] > max[k]) max[k] = q[k];
+          }
+        }
+      } else if (ent.rec.nested) visit(ent.rec.nested, place);
+    }
+  };
+  visit(res, (p) => p);
+  if (min[0] === Infinity) return null;
+  return { min, max, size: [max[0] - min[0], max[1] - min[1], max[2] - min[2]] };
 }

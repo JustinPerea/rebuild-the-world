@@ -28,6 +28,8 @@ Changed in v0.4 (owner, 2026-11-11): an atom may vary where it does not meet ano
 
 Changed in v0.5, from building the validator and the first two atoms: the registry states where each side of a connector sits, a task may fix each connector's frame, the shapes of `asset.json` and the task file are written down, and the spec says what an assembly check can and cannot measure. See "File shapes".
 
+Added on 2026-11-12 after the first rehearsal of a bundle, with no change of version: the Scale check measures an assembly, and the Blueprint check compares an assembly with the blueprint beside it. Before this, an assembly's recorded size and the number of each atom it placed were not checked.
+
 ## Libraries
 
 A library is a set of assets that share one look, one policy on copying the real world and one capability profile. This contract is shared by every library, so the same connectors, manifests and checks work in all of them (owner, 2026-11-10).
@@ -322,7 +324,8 @@ An existing atom fits a slot when all four hold:
 4. Its description matches what the slot asks for.
 
 - A slot marked `new` becomes an atom task. Its metadata lists the library atoms that were considered and why none fits.
-- When every slot is filled by a merged atom, the blueprint is complete and the assembly manifest can be written from it.
+- When every slot is filled by a merged atom, the blueprint is complete and the assembly manifest can be written from it. In a bundle, whoever builds a slot's atom sets the slot's `atom` to its pin in the same pull request.
+- The assembly is written into the object's folder, beside the blueprint. The validator then holds the manifest to the blueprint: each slot's atom the stated number of times, and nothing else.
 - A blueprint is versioned like an asset. A higher tier may split one slot into several under a new version.
 
 ## Materials and textures
@@ -356,7 +359,7 @@ One asset is one folder, holding the model, a metadata file, its previews, and e
 veh_sedan_door_fl_01/
   asset.glb        the model, glTF 2.0 binary (atoms and materials)
   assembly.json    the manifest (assemblies only, in place of asset.glb)
-  blueprint.json   the list of atom slots (objects only)
+  blueprint.json   the list of atom slots (objects, and kept beside the assembly once it is written)
   asset.json       metadata
   preview/         renders from the standard scene
   source/          generation script, parameters, prompts
@@ -400,7 +403,7 @@ These are the shapes the validator reads. They were chosen while building it, wh
 
 | Field or file | Shape |
 | --- | --- |
-| `dimensions_m` | `[width, height, depth]` along X, Y and Z, in metres |
+| `dimensions_m` | `[width, height, depth]` along X, Y and Z, in metres. For an assembly, the bounding box of every placed atom |
 | `connectors` | One entry per connector node: `{ "name", "type", "side", "mating" }`, plus `"limits": [min, max]` and `"rest"` for a moving type, in degrees or metres. `mating` is `{ dimension: metres }` for the mating dimensions the type lists |
 | `materials` | `{ "library": [ids], "custom": [names] }` |
 | `size` | `S`, `M` or `L`, the task's size |
@@ -467,14 +470,14 @@ The validator runs on every pull request and names each failing check. Contribut
 | File validity | The official glTF validator reports no errors | Contract |
 | Folder and naming | Required files exist and names match the pattern | Contract |
 | Metadata | Every required field is present and matches the file's contents | Contract |
-| Scale | The bounding box matches the task's dimensions | Profile |
+| Scale | The bounding box matches the task's dimensions. An assembly is measured from its atoms as its joints place them, and its recorded `dimensions_m` must be that measured size | Profile |
 | Transforms | The root node has no translation, rotation or scale | Contract |
 | Triangle budget | LOD0 is within the class budget | Profile |
 | Mesh health | No zero-area or duplicate faces, and solid meshes are watertight | Profile |
 | Connectors | Every connector the task requires is present, with a registered type and a valid up direction, every moving connector states its limits, and every connector whose frame the task fixes sits in that frame | Contract |
 | Assembly | Every atom is a merged version, an origin is named, every joint mates in its recorded orientation, no atom is unjoined, and every connector reached on a placed assembly is one it exposes | Contract |
 | Variation | Every declared range passes the other checks at both of its ends, and every scale, span, motion and material a manifest chooses is within what was declared | Contract |
-| Blueprint | Every slot names its connectors and dimensions, and is filled by a fitting atom or marked `new` | Contract |
+| Blueprint | Every slot names its connectors and dimensions, and is filled by a fitting atom or marked `new`. Where a blueprint sits beside an assembly, no slot is still `new`, and the manifest places each slot's atom exactly `count` times and no other atom | Contract |
 | Reuse | A new atom lists the library atoms it considered, and none of them fits its slot | Contract |
 | Clip | Every joint a clip moves exists in its blueprint version, and every motion stays within the joint's limits and scale range | Contract |
 | Collision | Convex shapes are present, within the allowed count | Profile |

@@ -4,7 +4,7 @@ import { sceneRoots, isIdentityNode, collectGeometry, COL_RE, pngSize, readAcces
 import { glbConnectors, countTriangles } from '../lib/context.mjs';
 import { normClass } from '../lib/profile.mjs';
 import { bboxOfFaces, visiblePrims, usedVertices, vtx, triArea, triNormal, dot } from '../lib/geom.mjs';
-import { libraryDir } from '../lib/library.mjs';
+import { libraryDir, assemblyBounds } from '../lib/library.mjs';
 import { analyze } from './analysis.mjs';
 import { norm, vsub, len } from '../lib/math.mjs';
 
@@ -174,7 +174,36 @@ export function metadata(ctx) {
 }
 
 // ---------------------------------------------------------------------------
+// An assembly has no mesh of its own: its size is measured from its atoms, placed through the joints.
+function assemblyScale(ctx) {
+  const an = analyze(ctx);
+  if (!an || an.errors.length) return skip('the assembly could not be placed, so it cannot be measured; see Assembly');
+  const box = assemblyBounds(an);
+  if (!box) return fail('no placed atom has triangles to measure');
+  const tol = ctx.profile.scale_tolerance;
+  const names = ['width (x)', 'height (y)', 'depth (z)'];
+  const msgs = [];
+  const notes = [`measured from the placed atoms: ${box.size.map((v) => fmt(v)).join(' by ')} m (x from ${fmt(box.min[0])} to ${fmt(box.max[0])}, y from ${fmt(box.min[1])} to ${fmt(box.max[1])}, z from ${fmt(box.min[2])} to ${fmt(box.max[2])})`];
+  const own = ctx.asset.meta?.dimensions_m;
+  if (own !== undefined) {
+    if (!Array.isArray(own) || own.length !== 3 || !own.every(isNum)) msgs.push('asset.json "dimensions_m" must be three numbers [width, height, depth] in metres');
+    else names.forEach((n, k) => {
+      if (Math.abs(box.size[k] - own[k]) > Math.max(0.001, 0.001 * box.size[k])) msgs.push(`asset.json dimensions_m gives ${n} as ${own[k]} m, the placed atoms measure ${fmt(box.size[k])} m; record the measured size of the whole object`);
+    });
+  } else notes.push('asset.json records no dimensions_m');
+  const dims = ctx.task?.dimensions_m;
+  if (!ctx.task) notes.push('no --task given, so the size was not compared with a task');
+  else if (dims === undefined) notes.push('the task gives no dimensions_m, so the size was not compared with it');
+  else if (!Array.isArray(dims) || dims.length !== 3 || !dims.every(isNum)) msgs.push('task file "dimensions_m" must be three numbers [width, height, depth] in metres');
+  else names.forEach((n, k) => {
+    const rel = Math.abs(box.size[k] - dims[k]) / dims[k];
+    if (rel > tol) msgs.push(`${n} is ${fmt(box.size[k])} m, the task asks for ${dims[k]} m: off by ${fmt(rel * 100, 2)}% (allowed ${tol * 100}%)`);
+  });
+  return msgs.length ? fail([...msgs, ...notes]) : pass(notes);
+}
+
 export function scale(ctx) {
+  if (ctx.asset.kind === 'assembly') return assemblyScale(ctx);
   const s = needAtom(ctx);
   if (s) return s;
   const dims = ctx.task?.dimensions_m;

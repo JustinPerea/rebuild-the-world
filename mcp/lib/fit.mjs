@@ -100,6 +100,10 @@ export function search(atoms, req, tol, ruleText, limit = 5) {
       description: a.meta.description ?? null,
       dimensions_m: a.meta.dimensions_m ?? null,
       connectors: (a.meta.connectors || []).map((c) => ({ name: c.name, type: c.type, side: c.side })),
+      // Connectors the slot does not ask for. An atom that carries some is usually a different kind of part.
+      extra_connectors: req.connectors?.length
+        ? (a.meta.connectors || []).filter((c) => !req.connectors.some((r) => r.type === c?.type && r.side === c?.side)).map((c) => ({ name: c.name, type: c.type, side: c.side }))
+        : [],
       failed_rules: e.failed,
       rules: e.rules,
       _passed: e.passed,

@@ -190,7 +190,9 @@ export function variation(ctx) {
 // ---------------------------------------------------------------------------
 export function blueprint(ctx) {
   const a = ctx.asset;
-  if (a.kind !== 'object') return skip(`applies to objects (blueprint.json); this is ${a.kind ? `an ${a.kind}` : 'an unrecognised folder'}`);
+  const beside = a.kind === 'assembly' && a.files.includes('blueprint.json');
+  if (a.kind === 'assembly' && !beside) return skip('this assembly has no blueprint.json beside it; an assembly placed as a part of another object needs none');
+  if (a.kind !== 'object' && !beside) return skip(`applies to objects (blueprint.json); this is ${a.kind ? `an ${a.kind}` : 'an unrecognised folder'}`);
   const b = a.blueprint;
   if (!b) return fail(a.blueprintError || 'blueprint.json is missing');
   const msgs = [];
@@ -217,7 +219,34 @@ export function blueprint(ctx) {
       msgs.push(...fitMessages(ctx, s, rec, w));
     }
   }
-  return msgs.length ? fail(msgs) : pass(['description match is not tested by a script (spec open question)']);
+  const notes = ['description match is not tested by a script (spec open question)'];
+  if (beside) {
+    // The assembly must be the object its blueprint lists: every slot filled, and each slot's
+    // atom used the stated number of times, with nothing else in the manifest.
+    const want = new Map();
+    for (const s of b.slots) {
+      if (!s || typeof s.slot !== 'string' || !Number.isInteger(s.count)) continue;
+      if (s.atom === 'new') { msgs.push(`slot "${s.slot}": still marked "new". Before the assembly is submitted, set "atom" to the atom that fills the slot, as "<asset_id>@<version>"`); continue; }
+      if (typeof s.atom !== 'string') continue;
+      const e = want.get(s.atom) || { count: 0, slots: [] };
+      e.count += s.count;
+      e.slots.push(s.slot);
+      want.set(s.atom, e);
+    }
+    const used = new Map();
+    for (const e of Array.isArray(a.manifest?.atoms) ? a.manifest.atoms : []) {
+      if (e && typeof e.asset === 'string') used.set(e.asset, (used.get(e.asset) || 0) + 1);
+    }
+    for (const [pin, e] of want) {
+      const n = used.get(pin) || 0;
+      if (n !== e.count) msgs.push(`the blueprint asks for ${e.count} of ${pin} (slot${e.slots.length > 1 ? 's' : ''} ${e.slots.map((x) => `"${x}"`).join(', ')}), the manifest places ${n}`);
+    }
+    for (const [pin, n] of used) {
+      if (!want.has(pin)) msgs.push(`the manifest places ${n} of ${pin}, which no blueprint slot names`);
+    }
+    notes.unshift(`${b.slots.length} slot(s) compared with the manifest's ${[...used.values()].reduce((x, y) => x + y, 0)} atom(s)`);
+  }
+  return msgs.length ? fail(msgs) : pass(notes);
 }
 
 const BOX = { width: 0, height: 1, depth: 2 };

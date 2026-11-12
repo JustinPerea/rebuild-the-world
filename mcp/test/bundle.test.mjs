@@ -196,6 +196,52 @@ test('a member that is already Merged is not reserved and is left out of the pul
   assert.ok(!s.body.instructions.next.includes(DOOR), 'the merged atom is not named for the pull request');
 });
 
+test('an object with a blueprint: submit waits until each built slot is pinned, then the validator holds the manifest to the counts', async () => {
+  const f = fixture();
+  const { c, assets } = f;
+  const slot = (name, side, atom) => ({ slot: name, count: 1, connectors: [{ type: 'door_hinge', side }], dimensions_m: { width: 1 }, atom });
+  const blueprint = (body, door) => writeJson(path.join(assets, 'veh', 'veh_sedan_01', 'blueprint.json'), { object_id: 'veh_sedan_01', description: `A body and a door ${MARK}`, slots: [slot('body', 'a', body), slot('door', 'b', door)] });
+  await c.call('claim', { task_id: SEDAN });
+  writeBody(assets); writeDoor(assets);
+  for (const [id, p] of [[BODY, 'veh/veh_body_01'], [DOOR, 'veh/veh_door_01']]) assert.equal((await c.call('submit', { task_id: id, asset_path: p })).body.instructions.verdict, 'PASSED');
+  writeSedan(assets);
+  blueprint('veh_body_01@1.0.0', `new ${MARK}`);
+  const early = await c.call('submit', { task_id: SEDAN, asset_path: 'veh/veh_sedan_01' });
+  assert.equal(early.isError, true);
+  assert.match(early.body.instructions.error, /does not name the atoms built for 1 slot/);
+  assert.ok(!JSON.stringify(early.body.instructions).includes(MARK));
+  assert.deepEqual(early.body.data.slots.map((x) => [x.slot, x.task_id, x.asset_the_task_asks_for]), [['door', DOOR, 'veh_door_01']]);
+  // a slot pinned to a different atom than its task asked for is refused too
+  blueprint('veh_body_01@1.0.0', 'veh_body_01@1.0.0');
+  assert.equal((await c.call('submit', { task_id: SEDAN, asset_path: 'veh/veh_sedan_01' })).isError, true);
+  blueprint('veh_body_01@1.0.0', 'veh_door_01@1.0.0');
+  const s = await c.call('submit', { task_id: SEDAN, asset_path: 'veh/veh_sedan_01' });
+  assert.equal(s.body.instructions.verdict, 'PASSED', checks(s));
+  const bp = s.body.data.report.checks.find((x) => x.name === 'Blueprint');
+  assert.equal(bp.status, 'PASS');
+  assert.match(bp.messages[0], /2 slot\(s\) compared with the manifest's 2 atom\(s\)/);
+  assert.equal(s.body.data.report.checks.find((x) => x.name === 'Scale').status, 'PASS');
+});
+
+test('the fit search checks a task\'s mating_m and lists connectors the slot does not ask for', async () => {
+  const { c, assets } = fixture({
+    extra: (repo, t) => {
+      t('task_fit_01', { asset_id: 'prop_fit_01', category: 'prop', required_connectors: [{ type: 'door_hinge', side: 'a', count: 1 }], mating_m: { leaf: 1 } });
+      t('task_fit_02', { asset_id: 'prop_fit_02', category: 'prop', required_connectors: [{ type: 'door_hinge', side: 'a', count: 1 }], mating_m: { leaf: 2 } });
+    },
+  });
+  // a merged atom with the asked connector, one more besides, and leaf = 1
+  const two = [conn('conn_door_hinge_a_01', [0.5, 0, 0], 90), conn('conn_door_hinge_b_01', [-0.5, 0, 0], -90)];
+  validAtom(assets, 'prop_both_01', { glb: { connectors: two }, meta: { connectors: two.map((x) => ({ name: x.name, type: 'door_hinge', side: x.name.includes('_a_') ? 'a' : 'b', limits: [-100, 0], rest: 0, mating: { leaf: 1 } })) } });
+  const hit = (await c.call('find_atoms', { task_id: 'task_fit_01' })).body.data.fits.find((x) => x.asset_id === 'prop_both_01');
+  assert.ok(hit, 'the atom fits rules 1 to 3');
+  assert.equal(hit.rules.find((r) => r.rule === 2).result, 'pass');
+  assert.deepEqual(hit.extra_connectors.map((x) => x.name), ['conn_door_hinge_b_01']);
+  const miss = (await c.call('find_atoms', { task_id: 'task_fit_02' })).body.data;
+  assert.ok(!miss.fits.some((x) => x.asset_id === 'prop_both_01'));
+  assert.deepEqual(miss.near_matches.find((x) => x.asset_id === 'prop_both_01').failed_rules, [2]);
+});
+
 test('trust 0: with one object In review a second can be claimed, and a passing submit for it is not submitted', async () => {
   const f = fixture({ trust: 0 });
   const { c, assets, claimOf } = f;

@@ -155,3 +155,64 @@ test('Assembly uses atoms of its own library only', async () => {
   bodyDoor(lib);
   failing(await run(build(lib, manifest(), { library: 'other' }), lib), 'Assembly', 'own library only');
 });
+
+test('Scale (assembly): the size is measured from the placed atoms and held to asset.json and the task', async () => {
+  const lib = newLib();
+  bodyDoor(lib);
+  // two 1 m boxes side by side along x
+  const plain = await run(build(lib), lib);
+  passing(plain, 'Scale');
+  assert.match(status(plain, 'Scale').messages[0], /^measured from the placed atoms: 2 by 1 by 1 m \(x from -0\.5 to 1\.5, y from -0\.81 to 0\.19, /);
+  assert.ok(status(plain, 'Scale').messages.some((m) => m.includes('no --task')));
+  passing(await run(build(lib, manifest(), { dimensions_m: [2, 1, 1] }), lib, { task: { dimensions_m: [2.02, 1, 1] } }), 'Scale');
+  failing(await run(build(lib, manifest(), { dimensions_m: [2, 1, 1] }), lib, { task: { dimensions_m: [2.5, 1, 1] } }), 'Scale', 'width (x) is 2 m', 'the task asks for 2.5 m');
+  failing(await run(build(lib, manifest(), { dimensions_m: [3, 1, 1] }), lib), 'Scale', 'asset.json dimensions_m gives width (x) as 3 m', 'measure 2 m');
+  // an assembly that cannot be placed is not measured
+  const off = newLib();
+  bodyDoor(off, { doorB2y: 0.305 });
+  assert.equal(status(await run(build(off), off), 'Scale').status, 'SKIP');
+});
+
+test('Scale (assembly): a nested assembly is measured through its own placement', async () => {
+  const lib = newLib();
+  const beamConns = [conn('conn_tab_four_a_01', [0.5, 0, 0], 90), conn('conn_tab_four_b_01', [-0.5, 0, 0], -90)];
+  validAtom(lib, 'veh_beam_01', { glb: { connectors: beamConns } });
+  writeAssembly(lib, 'veh_pair_01', {
+    origin: { ref: 'one' },
+    atoms: [{ ref: 'one', asset: 'veh_beam_01@1.0.0' }, { ref: 'two', asset: 'veh_beam_01@1.0.0' }],
+    joints: [{ a: 'one:conn_tab_four_a_01', b: 'two:conn_tab_four_b_01' }],
+    exposes: { left: 'one:conn_tab_four_b_01', right: 'two:conn_tab_four_a_01' },
+  }, { library: 'test', triangles: 24 });
+  const r = await run(build(lib, {
+    origin: { ref: 'beam' },
+    atoms: [{ ref: 'beam', asset: 'veh_beam_01@1.0.0' }, { ref: 'pair', asset: 'veh_pair_01@1.0.0' }],
+    joints: [{ a: 'beam:conn_tab_four_a_01', b: 'pair:left' }],
+  }, { triangles: 36, dimensions_m: [3, 1, 1] }), lib);
+  passing(r, 'Scale');
+  assert.match(status(r, 'Scale').messages[0], /3 by 1 by 1 m \(x from -0\.5 to 2\.5,/);
+});
+
+test('Blueprint (assembly): a blueprint beside the manifest must be filled, and the manifest must match its counts', async () => {
+  const slot = (name, side, atom, count = 1) => ({ slot: name, count, connectors: [{ type: 'door_hinge', side }], dimensions_m: { width: 1 }, atom });
+  const withBlueprint = (slots) => {
+    const lib = newLib();
+    bodyDoor(lib);
+    const dir = build(lib);
+    fs.writeFileSync(path.join(dir, 'blueprint.json'), JSON.stringify({ object_id: 'veh_sedan_01', description: 'A body and a door', slots }));
+    return run(dir, lib);
+  };
+  const ok = await withBlueprint([slot('body', 'a', 'veh_body_01@1.0.0'), slot('door', 'b', 'veh_door_01@1.0.0')]);
+  passing(ok, 'Blueprint');
+  assert.match(status(ok, 'Blueprint').messages[0], /^2 slot\(s\) compared with the manifest's 2 atom\(s\)$/);
+  for (const c of ok.checks) assert.notEqual(c.status, 'FAIL', `${c.name}: ${c.messages.join(' | ')}`);
+  failing(await withBlueprint([slot('body', 'a', 'veh_body_01@1.0.0'), slot('door', 'b', 'new')]), 'Blueprint', 'slot "door": still marked "new"', 'places 1 of veh_door_01@1.0.0, which no blueprint slot names');
+  failing(await withBlueprint([slot('body', 'a', 'veh_body_01@1.0.0'), slot('door', 'b', 'veh_door_01@1.0.0', 2)]), 'Blueprint', 'asks for 2 of veh_door_01@1.0.0 (slot "door"), the manifest places 1');
+  // one atom named by two slots: the counts add
+  failing(await withBlueprint([slot('body', 'a', 'veh_body_01@1.0.0'), slot('door', 'b', 'veh_door_01@1.0.0'), slot('spare', 'b', 'veh_door_01@1.0.0')]), 'Blueprint', 'asks for 2 of veh_door_01@1.0.0 (slots "door", "spare")');
+  // a slot whose atom does not fit still fails, as it does for an object
+  failing(await withBlueprint([slot('body', 'b', 'veh_body_01@1.0.0'), slot('door', 'b', 'veh_door_01@1.0.0')]), 'Blueprint', 'does not carry a connector of type "door_hinge" side "b"');
+  // without a blueprint beside it the check does not apply
+  const lib = newLib();
+  bodyDoor(lib);
+  assert.equal(status(await run(build(lib), lib), 'Blueprint').status, 'SKIP');
+});
