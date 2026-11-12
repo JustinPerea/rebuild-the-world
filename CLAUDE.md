@@ -25,6 +25,7 @@ Two owner directions from 2026-11-10 shape everything: the goal is an **accurate
 - `docs/open-an-area.md` : the guide for a contributor who opens a new area with `tools/region-kit/kit.py`.
 - `spec/spec.json` : the specs' tables as data. The visualizer in `tools/spec-visualizer/` reads it, and `scripts/check-spec-sync.mjs` fails if it drifts from the docs.
 - `film/` : source of a 30-second pitch film (see `film/README.md`). Reference only.
+- `RISK-TIERS.md` : which changes merge on green checks and agent review, and which need the owner's own OK first. `.claude/hooks/verify.py` runs the matching checks as you work and when you stop.
 
 ## Decisions already made (treat as defaults, flag before changing)
 
