@@ -18,3 +18,10 @@ site/api/earth-again/*
 LICENSE.md
 docs/accuracy-and-data.md
 .gitattributes
+
+# Controls that enforce these tiers (a change here could weaken them)
+.claude/high-tier-paths
+.claude/settings.json
+.claude/hooks/*
+RISK-TIERS.md
+.github/workflows/*

@@ -23,6 +23,8 @@ merges, and Justin checks the result afterwards.
 
 ## High
 
+The tier controls themselves are high tier: `RISK-TIERS.md`, `.claude/high-tier-paths`, `.claude/settings.json`, `.claude/hooks/` and `.github/workflows/`. A change to them can weaken every other gate.
+
 - `validator/` and `registry/` (the admission gates)
 - `spec/` and `docs/*-spec.md` (contract changes)
 - `site/api/earth-again/` (the waitlist endpoint stores emails)
