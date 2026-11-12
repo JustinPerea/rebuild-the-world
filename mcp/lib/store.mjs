@@ -6,10 +6,10 @@ import { readJson, writeJsonAtomic, listDirs, isObj, TASK_ID_RE, HANDLE_RE, ASSE
 export const ACTIVE = ['Claimed', 'In review', 'Changes requested'];
 export const SIZES = ['S', 'M', 'L'];
 export const TRUST_CAPS = [
-  { objects: 1, review: 2 },
-  { objects: 2, review: 2 },
-  { objects: 3, review: 4 },
-  { objects: 5, review: Infinity },
+  { objects: 1, review: 1 },
+  { objects: 3, review: 3 },
+  { objects: 10, review: 10 },
+  { objects: 20, review: Infinity },
 ];
 const COOLDOWN_MS = 24 * 3600000;
 export const CLAIM_STATES = [...ACTIVE, 'Merged', 'Released'];
@@ -23,7 +23,9 @@ export function claimProblem(c, fileId) {
   if (!CLAIM_STATES.includes(c.state)) return 'state is not a claim state';
   if (c.expires_at != null && !isIsoDate(c.expires_at)) return 'expires_at is not an ISO date';
   if (ACTIVE.includes(c.state) && !isIsoDate(c.expires_at)) return 'an active claim needs expires_at';
-  if (c.branch != null && c.branch !== `claim/${fileId}`) return 'branch is not claim/<task_id>';
+  if (c.bundle != null && (typeof c.bundle !== 'string' || !TASK_ID_RE.test(c.bundle))) return 'bundle is not a task id';
+  const branchOwner = c.bundle != null ? c.bundle : fileId;
+  if (c.branch != null && c.branch !== `claim/${branchOwner}`) return c.bundle != null ? 'branch is not claim/<bundle>' : 'branch is not claim/<task_id>';
   if (c.versions != null) {
     if (!isObj(c.versions)) return 'versions is not an object';
     for (const [key, pin] of Object.entries(c.versions)) {
@@ -171,6 +173,7 @@ export class Store {
   // The state a task is in right now, from its file and its claim.
   stateOf(task, claim, now = Date.now(), depth = 0) {
     if (claim && claim.invalid) return { state: 'Locked', claim_invalid: true };
+    if (claim && ACTIVE.includes(claim.state) && this.bundleLapsed(claim, now)) return { state: 'Open', expired_claim: true };
     if (claim && ACTIVE.includes(claim.state)) {
       const expiring = claim.state === 'Claimed' || claim.state === 'Changes requested';
       if (expiring && Date.parse(claim.expires_at) <= now) return { state: 'Open', expired_claim: true };
@@ -178,19 +181,71 @@ export class Store {
     }
     if (claim && claim.state === 'Merged') return { state: 'Merged' };
     const base = task.state || 'Open';
+    // An object task (one with depends_on) opens when no member is Locked or unreadable. Members
+    // that are unmerged, claimed or in review do not hold it: claiming the object reserves them.
     if (base === 'Open' && task.depends_on.length && depth < 8) {
-      const open = task.depends_on.filter((d) => {
+      const stuck = task.depends_on.filter((d) => {
         const dt = this.getTask(d);
         if (dt.error) return true;
-        return this.stateOf(dt.task, this.getClaim(d), now, depth + 1).state !== 'Merged';
+        return this.stateOf(dt.task, this.getClaim(d), now, depth + 1).state === 'Locked';
       });
-      if (open.length) return { state: 'Locked', waiting_on: open };
+      if (stuck.length) return { state: 'Locked', waiting_on: stuck };
     }
     return { state: base };
   }
 
   activeClaimsOf(handle, now = Date.now()) {
-    return this.listClaims().filter((c) => c.handle === handle && ACTIVE.includes(c.state) && !((c.state === 'Claimed' || c.state === 'Changes requested') && Date.parse(c.expires_at) <= now));
+    return this.listClaims().filter((c) => c.handle === handle && ACTIVE.includes(c.state) && !((c.state === 'Claimed' || c.state === 'Changes requested') && Date.parse(c.expires_at) <= now) && !this.bundleLapsed(c, now));
+  }
+
+  // A member claim lives only as long as the object claim it was reserved under. Once that claim has
+  // expired, been released or passed to another builder, the member is Open again, In review or not:
+  // an atom of a bundle is in review only through the bundle's one pull request.
+  bundleLapsed(c, now = Date.now()) {
+    if (!c.bundle || c.bundle === c.task_id) return false;
+    const o = this.getClaim(c.bundle);
+    if (!o) return true;
+    if (o.invalid) return false;
+    if (o.handle !== c.handle || o.bundle !== c.bundle || o.state === 'Released') return true;
+    return (o.state === 'Claimed' || o.state === 'Changes requested') && Date.parse(o.expires_at) <= now;
+  }
+
+  // Every task under an object task: its members, and the members of a member that is itself an object.
+  memberIds(task, depth = 0, seen = new Set()) {
+    for (const d of task.depends_on || []) {
+      if (seen.has(d)) continue;
+      seen.add(d);
+      const dt = this.getTask(d);
+      if (!dt.error && depth < 8) this.memberIds(dt.task, depth + 1, seen);
+    }
+    return depth ? null : [...seen].filter((d) => d !== task.task_id);
+  }
+
+  // A member of a bundle whose object claim is still being worked on does not count as awaiting review.
+  isOpenBundleMember(c) {
+    if (!c.bundle || c.bundle === c.task_id) return false;
+    const o = this.getClaim(c.bundle);
+    return !!o && !o.invalid && (o.state === 'Claimed' || o.state === 'Changes requested');
+  }
+
+  // The object a claim counts toward. Every claim of a bundle counts as the bundle's object, so a
+  // member that is itself an object (with its own object_id) does not count as a second one.
+  objectKey(c) {
+    if (c.bundle && c.bundle !== c.task_id) {
+      const o = this.getTask(c.bundle);
+      return (!o.error && o.task.object_id) || c.bundle;
+    }
+    return c.object_id || c.task_id;
+  }
+
+  // Distinct objects the handle is building now: active claims still Claimed or Changes requested.
+  objectsHeld(handle, now = Date.now()) {
+    return new Set(this.activeClaimsOf(handle, now).filter((c) => c.state === 'Claimed' || c.state === 'Changes requested').map((c) => this.objectKey(c)));
+  }
+
+  // Distinct objects the handle has awaiting review.
+  objectsInReview(handle) {
+    return new Set(this.listClaims().filter((c) => c.handle === handle && c.state === 'In review' && !this.isOpenBundleMember(c) && !this.bundleLapsed(c)).map((c) => this.objectKey(c)));
   }
 
   inProgressTaskIds() {
@@ -219,9 +274,16 @@ export class Store {
 
   cooldownLeft(task, handle, now = Date.now()) {
     const c = this.getClaim(task.task_id);
-    if (!c || c.handle !== handle || c.state !== 'Claimed') return 0;
-    const exp = Date.parse(c.expires_at);
-    if (exp > now) return 0;
+    if (!c || c.invalid || c.handle !== handle || !ACTIVE.includes(c.state)) return 0;
+    const running = (x) => x.state === 'Claimed' || x.state === 'Changes requested';
+    let exp = running(c) ? Date.parse(c.expires_at) : null;
+    // A member that had passed submit has no clock of its own. When its bundle's claim expired,
+    // the wait runs from that expiry, so one atom of the bundle cannot be taken back alone at once.
+    if (exp == null && this.bundleLapsed(c, now)) {
+      const o = this.getClaim(c.bundle);
+      if (o && !o.invalid && o.handle === handle && running(o)) exp = Date.parse(o.expires_at);
+    }
+    if (exp == null || exp > now) return 0;
     return Math.max(0, exp + COOLDOWN_MS - now);
   }
 

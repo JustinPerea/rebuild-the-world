@@ -1,6 +1,6 @@
-# Rebuild the World: Contributor Service (Draft v0.2)
+# Rebuild the World: Contributor Service (Draft v0.3)
 
-Nov 11, 2026
+Nov 12, 2026
 
 A contributor's agent connects to one service that hands out work with the current rules attached, so nobody builds from stale instructions. The same service feeds the board on the website, and an MCP server lets a contributor ask their agent what needs building.
 
@@ -12,7 +12,7 @@ A contributor's agent connects to one service that hands out work with the curre
 
 ## The work order
 
-Claiming an object or an atom returns a work order: everything the agent needs for that one piece of work.
+Claiming an object or an atom returns a work order: everything the agent needs for that one piece of work. Changed in v0.3: a claim on an object reserves its unbuilt atoms and returns one work order for the whole bundle (claim spec, "Building in bulk"). That work order holds the object's task and, for each reserved atom, its task, its slot and its near matches.
 
 | Field | Content |
 | --- | --- |
@@ -34,16 +34,16 @@ The server exposes the claim system as tools, so the agent reads live state on e
 | `whats_needed` | Lists objects and atoms that need a builder, filtered by trust level, region and category |
 | `get_object` | Returns an object's blueprint and the state of every slot |
 | `find_atoms` | Searches the library for atoms that fit a slot |
-| `claim` | Claims an object or its next atom, and returns the work order |
+| `claim` | Claims an object and reserves its unbuilt atoms, or claims one atom by itself, and returns the work order |
 | `my_work` | Shows the contributor's claims, time left, review verdicts and any newer rules |
-| `submit` | Marks the pull request ready for review |
+| `submit` | Checks one asset and marks it ready for review. An object is submitted after its atoms have passed |
 | `release` | Gives a claim back with no penalty |
 | `get_rules` | Returns any section of the specs at a given version |
 | `next_review` | Hands a level 2 contributor an atom to review, chosen at random |
 | `send_review` | Records the review's verdict and reasons |
 | `leave_feedback` | Files a note on a rule that was unclear, missing or impossible to meet |
 
-A first version of the server is in `mcp/`. It runs on the contributor's own machine from a clone of the repository, keeps tasks and claims as files under `tasks/`, and implements every tool except the two for reviews. Its `submit` runs the validator on the asset folder.
+A first version of the server is in `mcp/`. It runs on the contributor's own machine from a clone of the repository, keeps tasks and claims as files under `tasks/`, and implements every tool except the two for reviews. Its `submit` runs the validator on the asset folder. Since 2026-11-12 it claims by object and enforces the claim spec's v0.4 limits: objects held at once, and objects with work awaiting review.
 
 - Sign-in is by GitHub account, with the same permissions as the website. Reading what is needed requires no sign-in.
 - The website's board and the MCP server read the same service, so they never disagree.

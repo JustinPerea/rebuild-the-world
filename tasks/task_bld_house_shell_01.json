@@ -7,7 +7,7 @@
   "class": "Facade module",
   "object_id": "bld_house_shell_01",
   "slot": null,
-  "size": "M",
+  "size": "L",
   "min_trust_level": 0,
   "depends_on": [
     "task_bld_wall_panel_01",

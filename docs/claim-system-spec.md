@@ -76,7 +76,9 @@ Three rules of v0.3 made a loop wait: a new contributor built one atom at a time
 - **Credit is per asset.** Every atom, molecule and assembly in a bundle is recorded against its author, in the ledger and in the asset's own provenance. The ledger also counts, for each asset, how many merged assemblies by other contributors use it, so a loop earns more from parts that others reuse than from volume.
 - **A loop pays for its own checking first.** The contributor's agent runs the validator before submitting, so the reviewer model sees only what already passes. Who pays for the reviewer model is still open, and loops make the answer matter more.
 
-Not built: reservations, the board, the reuse count, and a search that reports atoms in progress (the server's `find_atoms` searches merged atoms only). The contributor server in `mcp/` and `contributor-service.md` still describe v0.3: one task claimed at a time, and limits of 2, 2 and 4 submissions awaiting review. The first test runs on that server unchanged. The validator resolves an assembly's atoms from the library folder it is given, and its tests check assemblies against atoms in a local folder that way, so a bundle needs no change to it. No real bundle has been put through it yet.
+Built in the contributor server (`mcp/`) on 2026-11-12, and run only by its own tests: a claim on an object reserves its open atoms, the atoms and the assembly share one branch, the object is submitted after its atoms have passed, and the limits count objects held and objects with work awaiting review. A bundle has one deadline: an atom that has passed the checks stays reserved only while the object's claim lasts, so an expired or released object claim returns every task of the bundle to the pool, and one atom of a bundle cannot be released alone. The first test now runs this way.
+
+Not built: the board, the reuse count, the hold when first-review approval falls, the 30-atom cap, per-asset review verdicts, sending one atom of a bundle in alone ahead of its object, and a search that reports atoms in progress (the server's `find_atoms` searches merged atoms only). The validator resolves an assembly's atoms from the library folder it is given, and its tests check assemblies against atoms in a local folder that way, so a bundle needs no change to it. No real bundle has been put through it yet.
 
 ## The board
 
@@ -321,7 +323,6 @@ The owner suggested building in stages: blocks first, and trees, cars and trains
 - [ ] May a bundle be assembled against an atom in another contributor's open bundle, so that nobody waits for a shared atom to merge?
 - [ ] May a level 0 contributor split an object into molecules, or does a maintainer approve the split?
 - [ ] Should the asset spec say "merged or in the same bundle" where it says "merged atoms"? That is a new asset spec version, which the skill file and the two finished atoms pin.
-- [ ] When does the contributor service change to bundles: its `claim` tool, its work order and the limits the server enforces?
 - [ ] Is reuse by other contributors the right measure of credit, and can two accounts inflate it for each other?
 - [ ] Which model does the review, and who pays for its usage?
 - [ ] Is 100 active contributors the right region gate, and who picks the next region?
