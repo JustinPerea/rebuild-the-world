@@ -63,6 +63,22 @@ class Geometry(unittest.TestCase):
         np.testing.assert_allclose(along, (-1, 0), atol=0.02)
         self.assertIsNone(w.fit_wall(clutter[:40], edge, 9.0))
 
+    def test_a_plane_far_from_the_outline_is_not_accepted_as_the_wall(self):
+        self.assertIsNone(w.plane_problem(0.3))
+        self.assertIsNone(w.plane_problem(-0.9))
+        self.assertIn("2.52 m", w.plane_problem(2.52))
+        self.assertIn("2.44 m", w.plane_problem(-2.44))
+
+    def test_views_of_the_same_surface_agree_and_shifted_ones_do_not(self):
+        rng = np.random.default_rng(4)
+        wall = rng.integers(0, 255, (80, 120, 3)).astype(np.uint8)
+        mask = np.ones((80, 120), bool)
+        same = [(wall, mask)] * 4
+        self.assertEqual(w.view_spread(same), 0.0)
+        shifted = [(np.roll(wall, 7 * k, axis=1), mask) for k in range(4)]
+        self.assertGreater(w.view_spread(shifted), w.MAX_VIEW_SPREAD)
+        self.assertIsNone(w.view_spread(same[:2]))
+
     def test_projection_matches_a_plain_pinhole_without_distortion(self):
         pts = np.array([[0.5, -0.25, 2.0], [0.0, 0.0, 1.0]])
         for model, params in (("SIMPLE_PINHOLE", [1000, 960, 540]), ("SIMPLE_RADIAL", [1000, 960, 540, 0.0]),

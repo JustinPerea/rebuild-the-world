@@ -39,6 +39,8 @@ CROP_PX, CROP_FOV = 2048, 90.0   # the pinhole view cut from a panorama towards 
 CAMERA_HEIGHT_M = 1.5  # assumed height of the cameras above the street
 PLANE_SEARCH_M = 4.0   # how far from the outline the real wall may sit
 PLANE_TOL_M = 0.12
+MAX_VIEW_SPREAD = 19       # of 255; above this the views disagree about what is on the plane. Set from 11 walls: a weak figure
+MAX_PLANE_OFFSET_M = 1.0   # a plane further than this from the outline is something else: a fence, a tree, the neighbour
 
 
 def die(msg):
@@ -457,6 +459,17 @@ def fit_wall(points, e, top_m):
     return origin, a2, o2, float(icpt + slope * length / 2), rms, best[0]
 
 
+def plane_problem(offset_m):
+    """Why a fitted plane is not accepted as the wall, or None when it is.
+
+    In the first full run every image whose plane sat more than a metre from the outline was
+    smeared or showed something standing in front of the building.
+    """
+    if abs(offset_m) > MAX_PLANE_OFFSET_M:
+        return f"the plane found is {abs(offset_m):.2f} m from the outline, more than {MAX_PLANE_OFFSET_M:g} m: probably not this wall"
+    return None
+
+
 def rectify(rec, im, geo, origin, along, length, height, ppm):
     """One photo resampled onto the wall: returns (image, mask of valid pixels, median source px per m)."""
     import cv2
@@ -521,6 +534,33 @@ def fuse(views):
     return ref, np.clip(fused, 0, 255).astype(np.uint8), count
 
 
+def view_spread(views):
+    """How much the views disagree where three or more see the same spot, on a 0 to 255 scale.
+
+    For each such pixel: the median distance of the views' brightness from their median. The
+    figure returned is the 75th percentile over those pixels, or None when too few pixels are
+    seen three times. Photos thrown onto the plane they really show agree; on a wrong plane
+    they do not.
+    """
+    import numpy as np
+    ref, ref_mask = views[0]
+    ref_l = ref.astype(np.float32).mean(2)
+    lum, masks = [], []
+    for img, mask in views:
+        f = img.astype(np.float32).mean(2)
+        both = mask & ref_mask
+        if both.sum() > 500:
+            f = f * min(1.4, max(0.7, float(np.median(ref_l[both])) / max(1.0, float(np.median(f[both])))))
+        lum.append(np.where(mask, f, np.nan))
+        masks.append(mask)
+    many = np.sum(masks, axis=0) >= 3
+    if many.sum() < 2000:
+        return None
+    s = np.stack([l[many] for l in lum])
+    mad = np.nanmedian(np.abs(s - np.nanmedian(s, axis=0)), axis=0)
+    return round(float(np.percentile(mad, 75)), 1)
+
+
 def build_place(reg, tok, walls, photos, p, sid, reuse=False):
     import cv2
     import numpy as np
@@ -535,7 +575,7 @@ def build_place(reg, tok, walls, photos, p, sid, reuse=False):
     for sub in ("img/photo", "img/pano"):
         (work / sub).mkdir(parents=True, exist_ok=True)
     photo_names, crop_names, where, source, seq, crop_f = [], [], {}, {}, {}, None
-    for pid in list(cand_ids) + support:
+    for pid in sorted(cand_ids) + support:          # sorted: a set's order changes from run to run
         q = by_id[pid]
         orig = fetch_original(reg, tok, pid)
         if orig is None:
@@ -590,6 +630,11 @@ def build_place(reg, tok, walls, photos, p, sid, reuse=False):
             report["walls"].append({"edge": int(e), "problem": "too few reconstructed points on this wall to find its plane"})
             continue
         origin, along, outward, offset, rms, inliers = fit
+        if plane_problem(offset):
+            report["walls"].append({"edge": int(e), "problem": plane_problem(offset)})
+            for old in (out_dir / f"edge{int(e):02d}_best.jpg", out_dir / f"edge{int(e):02d}_fused.jpg"):
+                old.unlink(missing_ok=True)
+            continue
         length = edge["length_m"]
         names = [n for n in registered if source[n] in {c["id"] for c in cs} and (n.startswith("photo/") or n.endswith(f"_e{e}.jpg"))]
         probe = [(n, rectify(rec, registered[n], geo, origin, along, length, height, 20)) for n in names]
@@ -609,6 +654,7 @@ def build_place(reg, tok, walls, photos, p, sid, reuse=False):
             used.append({"image_id": q["id"], "creator": q["creator"], "captured_at": q["captured_at"], "panorama": q["pano"], "source_px_per_m": round(r[2])})
             credits[q["id"]] = q["creator"]
         best, fused, count = fuse(views)
+        spread = view_spread(views)
         stem = out_dir / f"edge{int(e):02d}"
         cv2.imwrite(f"{stem}_best.jpg", best, [cv2.IMWRITE_JPEG_QUALITY, 90])
         cv2.imwrite(f"{stem}_fused.jpg", fused, [cv2.IMWRITE_JPEG_QUALITY, 90])
@@ -618,6 +664,8 @@ def build_place(reg, tok, walls, photos, p, sid, reuse=False):
             "plane": {"offset_from_outline_m": round(offset, 2), "rms_m": round(rms, 3), "points": inliers},
             "seen": {"any_view": round(float((count > 0).mean()), 2), "three_or_more_views": round(float((count >= 3).mean()), 2)},
             "views": used,
+            "views_disagree": spread,
+            **({"doubt": f"the views disagree ({spread} of 255, over {MAX_VIEW_SPREAD}): the plane may not be this wall. Check the image by eye"} if spread is not None and spread > MAX_VIEW_SPREAD else {}),
         })
     report["assumed_camera_height_m"] = CAMERA_HEIGHT_M
     report["licence"] = "Images derived from Mapillary photos, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). Credit the photographers listed under each wall."
@@ -641,7 +689,7 @@ def cmd_build(reg, args):
         done = [w for w in r["walls"] if "files" in w]
         print(f"{sid}: {r['photos_placed']} of {r['photos_given']} photos placed, {len(done)} of {len(r['walls'])} walls written, {time.time() - t0:.0f} s")
         for w in r["walls"]:
-            print(f"   edge {w['edge']}: " + (w["problem"] if "problem" in w else f"{w['px_per_m']} px/m, {len(w['views'])} views, plane {w['plane']['offset_from_outline_m']:+.2f} m from the outline (rms {w['plane']['rms_m']} m), {int(w['seen']['any_view'] * 100)}% of the wall seen"))
+            print(f"   edge {w['edge']}: " + (w["problem"] if "problem" in w else f"{w['px_per_m']} px/m, {len(w['views'])} views, plane {w['plane']['offset_from_outline_m']:+.2f} m from the outline (rms {w['plane']['rms_m']} m), {int(w['seen']['any_view'] * 100)}% of the wall seen" + (", DOUBTFUL: the views disagree" if "doubt" in w else "")))
 
 
 def main():
