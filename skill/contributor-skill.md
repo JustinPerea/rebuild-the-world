@@ -101,6 +101,8 @@ Two atoms meet when their connectors are the same type, one side `a` and one sid
 
 A connector whose type moves, such as `door_hinge`, also needs `limits` (`[min, max]`) and `rest` in `asset.json`, in degrees for a hinge. The task gives them under the same names in that connector's `connector_frames` entry, and the validator compares the two.
 
+A task may carry `variation`, with a `scale` range. Copy it into `asset.json` as `variation`: the same atom is placed at other sizes, and the validator fails an atom that allows less than its task asks. Build such an atom so that it still looks right stretched, with no modelled detail tied to one size.
+
 ## asset.json
 
 Fill in every field. The corner post's file is a complete example.
