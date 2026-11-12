@@ -44,6 +44,21 @@ Results go to `data/<region>/refs/<building>/`:
 
 `data/*/refs/` is ignored by Git for now. See "Licence".
 
+## Measuring from an image
+
+```sh
+python tools/refs/sheet.py bldg_e4639cfe-aa87-42b0-afb1-618c2e74eb92
+```
+
+`sheet.py` writes two more images beside each wall reference. It reads local files only and needs numpy and opencv.
+
+| File | Content |
+| --- | --- |
+| `edgeNN_grid.jpg` | The reference under a grid with a line every 0.5 m, numbered in metres from the wall's left end and from the ground. Bay widths, sill heights and storey heights are read off it |
+| `edgeNN_plan.jpg` | The reference with the building's survey plan drawn over it: storey lines, bay edges and each opening as a coloured box. Written when `survey/<region>/plans/<building>.json` lists that wall. An opening drawn where the image shows wall means the plan is off there |
+
+`--edge N` does one wall and `--image best` uses the sharpest single photo, which is the one to look at where the combined image is smeared. Both sheets are ignored by Git with the rest of `refs/`.
+
 ## How far to trust an image
 
 `refs.json` carries the figures to judge it by.
