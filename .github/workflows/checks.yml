@@ -39,6 +39,8 @@ jobs:
         run: node --test mcp/test/
       - name: Survey tool tests
         run: node --test tools/survey/test/
+      - name: Blueprint tool tests
+        run: node --test tools/blueprint/test/
       - name: Every survey plan passes
         run: node tools/survey/survey.mjs check
       - name: The two finished atoms pass with their tasks
