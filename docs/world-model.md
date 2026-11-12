@@ -27,7 +27,7 @@ An atom is the smallest piece that is reused across objects or moves on its own.
 - A wheel, a bearing, a door and a window bay are atoms. A skateboard, a car and a building are assembled from them.
 - Before anyone builds an atom, they check whether the library already has one that fits (claim system spec, "Building an object").
 - An atom is fixed where it meets another atom. Elsewhere it may vary in size, look and motion within ranges it declares, so one atom serves many objects (asset spec, "Variation").
-- How deep atoms go rises with the fidelity tier. At Tier 1 an engine is one atom. At a higher tier it becomes an assembly of pistons and valves under the same ID, and nothing built from it has to change.
+- How deep atoms go rises with the fidelity tier. At Tier 1 an engine is one atom. At a higher tier it becomes a molecule of pistons and valves under the same ID, and nothing built from it has to change.
 
 ## Two kinds of asset
 

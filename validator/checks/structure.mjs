@@ -12,7 +12,7 @@ const pair = (v) => Array.isArray(v) && v.length === 2 && v.every(isNum) && v[0]
 // ---------------------------------------------------------------------------
 export function connectors(ctx) {
   const a = ctx.asset;
-  if (a.kind !== 'atom') return skip(`applies to atoms; ${a.kind === 'assembly' ? 'an assembly reaches connectors through its joints (see Assembly)' : 'a blueprint has no connectors'}`);
+  if (a.kind !== 'atom') return skip(`applies to atoms; ${a.kind === 'molecule' ? 'a molecule reaches connectors through its joints (see Molecule)' : 'a blueprint has no connectors'}`);
   if (!a.glb) return fail(`asset.glb cannot be read: ${a.glbError}`);
   const msgs = [];
   if (ctx.registry.error) return fail(ctx.registry.error);
@@ -71,8 +71,8 @@ export function connectors(ctx) {
 }
 
 // ---------------------------------------------------------------------------
-export function assembly(ctx) {
-  if (ctx.asset.kind !== 'assembly') return skip(`applies to assemblies (assembly.json); this is ${ctx.asset.kind ? `an ${ctx.asset.kind}` : 'an unrecognised folder'}`);
+export function molecule(ctx) {
+  if (ctx.asset.kind !== 'molecule') return skip(`applies to molecules (molecule.json); this is ${ctx.asset.kind ? `${ctx.asset.kind === 'molecule' ? 'a' : 'an'} ${ctx.asset.kind}` : 'an unrecognised folder'}`);
   if (ctx.registry.error) return fail(ctx.registry.error);
   const an = analyze(ctx);
   if (an.errors.length) return fail(an.errors);
@@ -170,7 +170,7 @@ export function variation(ctx) {
     checkDeclared(v, 'asset.json', msgs, a.glb, ctx);
     if (v.spans?.length) notes.push('note: spans are proposed, not built; only their shape is checked, not both ends of each range');
   }
-  if (a.kind === 'assembly') {
+  if (a.kind === 'molecule') {
     const an = analyze(ctx);
     const atoms = a.manifest?.atoms || [];
     for (const entry of atoms) {
@@ -190,7 +190,7 @@ export function variation(ctx) {
             const r = rec.meta.variation?.scale;
             const rr = r === undefined ? null : scaleRanges(r);
             if (!r) msgs.push(`${where}: scaled to ${shown} but ${entry.asset} declares no variation.scale`);
-            else if (rec.kind === 'assembly' && !even) msgs.push(`${where}: scaled to ${shown}, but a placed assembly scales evenly only (one number, or three equal numbers)`);
+            else if (rec.kind === 'molecule' && !even) msgs.push(`${where}: scaled to ${shown}, but a placed molecule scales evenly only (one number, or three equal numbers)`);
             else if (rr?.ok && rr.form === 'even') {
               if (!even) msgs.push(`${where}: scaled to ${shown} but ${entry.asset} declares variation.scale ${JSON.stringify(r)}, which allows an even scale only`);
               else if (sv[0] < r[0] || sv[0] > r[1]) msgs.push(`${where}: scale ${sv[0]} is outside the declared range [${r[0]}, ${r[1]}] of ${entry.asset}`);
@@ -232,7 +232,7 @@ export function variation(ctx) {
       if (isEvenScale(sv)) continue;
       const c = entryConnector(ent.rec, ent.entry, target.slice(sep + 1), ctx);
       if (c.error) continue;
-      const who = `assembly "${a.meta?.asset_id ?? ctx.asset.manifest?.asset_id ?? ''}" exposes "${name}" (${target}), a connector of atom "${ent.entry.ref}" (${ent.entry.asset}) scaled unevenly to ${JSON.stringify(ent.entry.scale)}`;
+      const who = `molecule "${a.meta?.asset_id ?? ctx.asset.manifest?.asset_id ?? ''}" exposes "${name}" (${target}), a connector of atom "${ent.entry.ref}" (${ent.entry.asset}) scaled unevenly to ${JSON.stringify(ent.entry.scale)}`;
       touched = true;
       if (c.mating.skewed) msgs.push(`${who}, but its +Z or +Y is not parallel to one of the atom's axes; an unevenly scaled atom joins only through connectors along its own axes`);
       if (c.mating.axisLess.length) msgs.push(`${who}, but its type "${c.type}" gives no "mating_axes" entry for ${c.mating.axisLess.join(', ')}; an unevenly scaled atom joins nothing through a mating dimension with no axis`);
@@ -248,9 +248,9 @@ export function variation(ctx) {
 // ---------------------------------------------------------------------------
 export function blueprint(ctx) {
   const a = ctx.asset;
-  const beside = a.kind === 'assembly' && a.files.includes('blueprint.json');
-  if (a.kind === 'assembly' && !beside) return skip('this assembly has no blueprint.json beside it; an assembly placed as a part of another object needs none');
-  if (a.kind !== 'object' && !beside) return skip(`applies to objects (blueprint.json); this is ${a.kind ? `an ${a.kind}` : 'an unrecognised folder'}`);
+  const beside = a.kind === 'molecule' && a.files.includes('blueprint.json');
+  if (a.kind === 'molecule' && !beside) return skip('this molecule has no blueprint.json beside it; a molecule placed as a part of another object needs none');
+  if (a.kind !== 'object' && !beside) return skip(`applies to objects (blueprint.json); this is ${a.kind ? `${a.kind === 'molecule' ? 'a' : 'an'} ${a.kind}` : 'an unrecognised folder'}`);
   const b = a.blueprint;
   if (!b) return fail(a.blueprintError || 'blueprint.json is missing');
   const msgs = [];
@@ -279,12 +279,12 @@ export function blueprint(ctx) {
   }
   const notes = ['description match is not tested by a script (spec open question)'];
   if (beside) {
-    // The assembly must be the object its blueprint lists: every slot filled, and each slot's
+    // The molecule must be the object its blueprint lists: every slot filled, and each slot's
     // atom used the stated number of times, with nothing else in the manifest.
     const want = new Map();
     for (const s of b.slots) {
       if (!s || typeof s.slot !== 'string' || !Number.isInteger(s.count)) continue;
-      if (s.atom === 'new') { msgs.push(`slot "${s.slot}": still marked "new". Before the assembly is submitted, set "atom" to the atom that fills the slot, as "<asset_id>@<version>"`); continue; }
+      if (s.atom === 'new') { msgs.push(`slot "${s.slot}": still marked "new". Before the molecule is submitted, set "atom" to the atom that fills the slot, as "<asset_id>@<version>"`); continue; }
       if (typeof s.atom !== 'string') continue;
       const e = want.get(s.atom) || { count: 0, slots: [] };
       e.count += s.count;
@@ -332,7 +332,7 @@ function fitMessages(ctx, slot, rec, w) {
 // ---------------------------------------------------------------------------
 export function reuse(ctx) {
   const a = ctx.asset;
-  if (a.kind !== 'atom') return skip('applies to atoms; objects and assemblies reuse by construction');
+  if (a.kind !== 'atom') return skip('applies to atoms; objects and molecules reuse by construction');
   const c = a.meta?.considered;
   if (!Array.isArray(c)) return fail('asset.json "considered" is missing; list the library atoms looked at as [{ "asset": "<id>@<version>", "reason": "why it does not fit" }], or [] if the library has nothing similar');
   const msgs = [];

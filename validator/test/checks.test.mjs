@@ -45,7 +45,7 @@ test('valid atom passes every applicable check and every check is reported', asy
   for (const c of r.checks) assert.notEqual(c.status, 'FAIL', `${c.name}: ${c.messages.join(' | ')}`);
   const st = Object.fromEntries(r.checks.map((c) => [c.name, c.status]));
   for (const k of ['File validity', 'Folder and naming', 'Metadata', 'Scale', 'Transforms', 'Triangle budget', 'Mesh health', 'Connectors', 'Reuse', 'Collision', 'Textures', 'Materials', 'File size', 'Licence']) assert.equal(st[k], 'PASS', k);
-  for (const k of ['Assembly', 'Blueprint', 'Clip']) assert.equal(st[k], 'SKIP', k);
+  for (const k of ['Molecule', 'Blueprint', 'Clip']) assert.equal(st[k], 'SKIP', k);
   assert.equal(r.kind, 'atom');
   assert.equal(r.summary.ok, true);
   assert.equal(status(r, 'File validity').status, 'PASS', 'gltf-validator must be installed for this test');
@@ -70,6 +70,20 @@ test('Folder and naming: bad folder name and missing asset.json fail', async () 
   failing(await run(d2), 'Folder and naming', 'asset.json');
   const d3 = atomIn('prop_box_03', { meta: { asset_id: 'prop_other_01' } });
   failing(await run(d3), 'Folder and naming', 'prop_other_01');
+});
+
+test('Folder and naming: a manifest under its old name, assembly.json, fails and says what to rename', async () => {
+  // beside a blueprint the folder would otherwise read as an object, and the manifest would never be checked
+  const d = path.join(fresh(), 'bld_old_house_01');
+  fs.mkdirSync(d);
+  fs.writeFileSync(path.join(d, 'assembly.json'), '{}');
+  fs.writeFileSync(path.join(d, 'blueprint.json'), '{}');
+  failing(await run(d), 'Folder and naming', 'assembly.json was renamed', 'molecule.json');
+  // alone, it is not mistaken for an empty folder either
+  const d2 = path.join(fresh(), 'bld_old_house_02');
+  fs.mkdirSync(d2);
+  fs.writeFileSync(path.join(d2, 'assembly.json'), '{}');
+  failing(await run(d2), 'Folder and naming', 'assembly.json was renamed');
 });
 
 test('Metadata: missing field, wrong triangles, wrong dimensions, unlisted connector', async () => {

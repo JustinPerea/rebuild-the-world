@@ -6,7 +6,7 @@ Every asset is a glTF 2.0 file in metres with named connector points, so atoms m
 
 ## Scope
 
-This spec fixes what must stay true of every asset: coordinates, connectors, assemblies, material layout, files and metadata. Three other documents cover the rest.
+This spec fixes what must stay true of every asset: coordinates, connectors, molecules, material layout, files and metadata. Three other documents cover the rest.
 
 | Question | Document |
 | --- | --- |
@@ -20,17 +20,19 @@ Three rules shape every choice below:
 - **Machine-checkable.** Every requirement can be tested by a script, so contributors get the same answer the reviewer does.
 - **Regenerable.** Each asset keeps the inputs used to make it, so better tools can rebuild it later at higher quality.
 
-Changed in v0.2: numeric limits moved to the capability profile, connectors gained an up direction and a symmetry setting, assemblies became manifests, objects gained blueprints, "part" was renamed "atom", and the metadata gained fields for unique assets, stand-ins and behaviours.
+Changed in v0.2: numeric limits moved to the capability profile, connectors gained an up direction and a symmetry setting, molecules became manifests, objects gained blueprints, "part" was renamed "atom", and the metadata gained fields for unique assets, stand-ins and behaviours.
 
-Changed in v0.3, after the first object was rebuilt as atoms under this contract (a robot of 21 atoms in the Frontier Colony library): the contract now serves more than one library; connectors gained ball and slide motion, a motion axis and limits; assemblies gained an origin, mirrored atoms, recorded orientations and named states; and the spec gained sections on moving assemblies, animation clips, and effect and light markers.
+Changed in v0.3, after the first object was rebuilt as atoms under this contract (a robot of 21 atoms in the Frontier Colony library): the contract now serves more than one library; connectors gained ball and slide motion, a motion axis and limits; molecules gained an origin, mirrored atoms, recorded orientations and named states; and the spec gained sections on moving molecules, animation clips, and effect and light markers.
 
-Changed in v0.4 (owner, 2026-11-11): an atom may vary where it does not meet another atom. A placed atom or assembly may be scaled, an atom may stretch or repeat along a marked span, a joint may state its own motion, a material slot may be left open, and an assembly may expose named connectors so that it is placed as one piece. See "Variation".
+Changed in v0.4 (owner, 2026-11-11): an atom may vary where it does not meet another atom. A placed atom or molecule may be scaled, an atom may stretch or repeat along a marked span, a joint may state its own motion, a material slot may be left open, and a molecule may expose named connectors so that it is placed as one piece. See "Variation".
 
-Changed in v0.5, from building the validator and the first two atoms: the registry states where each side of a connector sits, a task may fix each connector's frame, the shapes of `asset.json` and the task file are written down, and the spec says what an assembly check can and cannot measure. See "File shapes".
+Changed in v0.5, from building the validator and the first two atoms: the registry states where each side of a connector sits, a task may fix each connector's frame, the shapes of `asset.json` and the task file are written down, and the spec says what a molecule check can and cannot measure. See "File shapes".
 
 Changed in v0.6 (owner, 2026-11-12): a placed atom may be scaled on each axis separately, and its connectors and mating dimensions scale with it. The owner asked for scaling to be allowed for most parts. The per-axis form, the registry field `mating_axes` and the rest of the rules in "Scale" are Claude's and unconfirmed. Before this, a scaled thing could not join anything through a connector that had mating dimensions, and scale was one number. See "Connectors" and "Scale".
 
-Added on 2026-11-12 after the first rehearsal of a bundle, with no change of version: the Scale check measures an assembly, and the Blueprint check compares an assembly with the blueprint beside it. Before this, an assembly's recorded size and the number of each atom it placed were not checked.
+Added on 2026-11-12 after the first rehearsal of a bundle, with no change of version: the Scale check measures a molecule, and the Blueprint check compares a molecule with the blueprint beside it. Before this, a molecule's recorded size and the number of each atom it placed were not checked.
+
+Renamed on 2026-11-12 at the owner's choice, with no change of version: what versions up to this one called an assembly is now a molecule, the manifest file is `molecule.json`, the validator's check is "Molecule", and the asset classes "Vehicle assembly" and "Character assembly" are "Vehicle molecule" and "Character molecule". The `kind` in `asset.json` is unchanged: `"library"` or `"unique"`. Frontier Colony's library uses the same word. The notes above use the new word for the old thing.
 
 ## Libraries
 
@@ -40,12 +42,12 @@ A library is a set of assets that share one look, one policy on copying the real
 | --- | --- |
 | Units, axes, pivots and named nodes | Its look: a style guide |
 | Connector rules and the registry format | What it may copy from the real world: an accuracy policy |
-| Blueprints and assembly manifests | Budgets and mesh rules: a capability profile |
+| Blueprints and molecule manifests | Budgets and mesh rules: a capability profile |
 | Folder layout, metadata and provenance | |
 
 - **Earth, Again** is the first library: real places in grounded realism, governed by `art-style-guide.md`, `accuracy-and-data.md` and Profile 1.
 - **Frontier Colony** is the second: an invented world with a cel look and its own material limit. Its robot was the first object rebuilt as atoms.
-- An asset records its library in its metadata. An assembly uses atoms from its own library only, until sharing between libraries is decided.
+- An asset records its library in its metadata. A molecule uses atoms from its own library only, until sharing between libraries is decided.
 
 ## How assets build up
 
@@ -53,13 +55,13 @@ The library has five levels, and each is built only from the one below. They are
 
 | Level | What it is | Built from the level below by |
 | --- | --- | --- |
-| City block | Assemblies and props placed on real street layouts from open map data | Placement by procedural rules |
-| Assembly (L task) | A complete car, room or building, made only from merged atoms and kits | Snapping together at connectors |
+| City block | Molecules and props placed on real street layouts from open map data | Placement by procedural rules |
+| Molecule (L task) | A complete car, room or building, made only from merged atoms and kits | Snapping together at connectors |
 | Kit (M task) | A matching set, such as facade modules or a wheel and axle set | Design as a matching set |
 | Atom (S task) | The smallest piece that is reused or moves on its own: a door, a wheel, a bearing, a window | Reference to shared materials by ID |
 | Shared material | Brick, concrete, glass, painted metal, used by every atom | |
 
-City blocks are never modelled by hand: rules place assemblies on real street layouts.
+City blocks are never modelled by hand: rules place molecules on real street layouts.
 
 ## Coordinates, units and scale
 
@@ -131,9 +133,9 @@ A type and a side do not say where on an atom a connector goes, and two builders
 
 Building grid: facade modules are sized in multiples of 0.5 m horizontally. Storey height is set per building kit and recorded in its metadata.
 
-## Assemblies
+## Molecules
 
-An assembly is a manifest, not a mesh: a list of merged atoms and the connector pairs that join them. The pipeline places the atoms and builds the combined model.
+A molecule is a manifest, not a mesh: a list of merged atoms and the connector pairs that join them. The pipeline places the atoms and builds the combined model.
 
 ```json
 {
@@ -156,14 +158,14 @@ An assembly is a manifest, not a mesh: a list of merged atoms and the connector 
 - Every atom is pinned to an exact version of a merged asset.
 - Every atom is joined to the rest by at least one joint. No atom is placed by hand-typed coordinates.
 - A manifest states every joint that is physically there, including the one that closes a ring. A joint that only places an atom cannot be measured, because the atom is put where the joint says. Positions are measured only where joints close a loop.
-- The manifest names an `origin`: the root atom, and where the assembly's own origin sits relative to it. Joints fix the atoms relative to each other, and the origin fixes the whole.
+- The manifest names an `origin`: the root atom, and where the molecule's own origin sits relative to it. Joints fix the atoms relative to each other, and the origin fixes the whole.
 - `"mirror": true` reflects an atom in its own X before it is placed, so one door or one arm serves both sides. It is allowed only when the atom's metadata marks it `mirror_safe`, and an atom that carries text or a handed detail is not.
 - Where a connector type's symmetry allows more than one orientation, the joint records the one chosen as `turn_deg`, a rotation about the connector's Z. A manifest must rebuild the same way every time. A generator that picks each atom's orientation alone can seat it turned away from its own children.
-- An assembly's triangle count is the sum of its atoms and must fit the profile's budget for its class.
-- An assembly may itself be used inside a larger assembly, such as a furnished room inside a building or an arm on a robot. It lists the connectors it `exposes`, each a name for one connector of one atom inside it, and a joint in the larger manifest reaches it only through those names, as `arm_r:shoulder`.
-- Mirroring a placed assembly mirrors every atom in it. An atom inside is addressed as `<entry ref>/<ref inside>`, for example `arm_l/forearm`, and clip tracks use those names. Frontier Colony saves an arm, a leg, a tire-rotor and a mast this way.
-- Replacing an atom with a newer version is a new version of the assembly, checked again by the validator.
-- An assembly may list named `states`, each replacing some of the joints, for an object that reconfigures, such as a folding roof. A state may use a connector that no other state uses, and a connector on a scaled atom moves with the scale. One state change has been checked this way, over one clip, to 0.0005 mm.
+- A molecule's triangle count is the sum of its atoms and must fit the profile's budget for its class.
+- A molecule may itself be used inside a larger molecule, such as a furnished room inside a building or an arm on a robot. It lists the connectors it `exposes`, each a name for one connector of one atom inside it, and a joint in the larger manifest reaches it only through those names, as `arm_r:shoulder`.
+- Mirroring a placed molecule mirrors every atom in it. An atom inside is addressed as `<entry ref>/<ref inside>`, for example `arm_l/forearm`, and clip tracks use those names. Frontier Colony saves an arm, a leg, a tire-rotor and a mast this way.
+- Replacing an atom with a newer version is a new version of the molecule, checked again by the validator.
+- A molecule may list named `states`, each replacing some of the joints, for an object that reconfigures, such as a folding roof. A state may use a connector that no other state uses, and a connector on a scaled atom moves with the scale. One state change has been checked this way, over one clip, to 0.0005 mm.
 
 ## Variation
 
@@ -171,7 +173,7 @@ An atom is fixed where it meets another atom and may vary anywhere else, within 
 
 | What varies | Declared by | Chosen by | Example |
 | --- | --- | --- | --- |
-| Scale | The atom or assembly, as a range for all axes together or for each axis | A manifest entry or a placement rule | One tree placed at 0.8 to 1.3 times its size, a wall module stretched to 1.5 times its width |
+| Scale | The atom or molecule, as a range for all axes together or for each axis | A manifest entry or a placement rule | One tree placed at 0.8 to 1.3 times its size, a wall module stretched to 1.5 times its width |
 | Span | The atom, as a marked span that stretches or repeats one part and keeps the ends rigid | A manifest entry or a placement rule | A beam from 2 m to 7 m, a stair of 3 to 20 steps |
 | Motion | The connector type and the atom's limits, as defaults | The joint in a manifest | A hinged ankle that also rolls 12 degrees |
 | Look | The atom, as an open material slot | A manifest entry or a placement rule | One sedan in twelve paint colours |
@@ -201,9 +203,9 @@ Every choice is written into the manifest or the placement record, so the same i
 
 - A manifest entry's `scale` is one positive number, applied equally on all three axes, or `[x, y, z]`, three positive numbers along the placed thing's own axes. It is applied about the thing's origin, after mirroring and before placement.
 - An atom declares what it allows in `variation.scale`. `[min, max]` allows an even scale only, and the entry's scale must then be one number, or three equal numbers, inside the range. `{ "x": [min, max], "y": [min, max], "z": [min, max] }` gives each axis its own range, and an axis left out is fixed at 1. Each component of the entry's scale must then lie inside its own axis's range. An atom that declares no `variation.scale` cannot be scaled.
-- A placed assembly scales evenly only, with one number or three equal numbers. Everything inside it scales with it, so the fits inside it hold, and the mating dimensions of a connector it exposes multiply by that number.
+- A placed molecule scales evenly only, with one number or three equal numbers. Everything inside it scales with it, so the fits inside it hold, and the mating dimensions of a connector it exposes multiply by that number.
 - A connector's position is multiplied by the scale, axis by axis. Its directions do not change. For that to hold under an uneven scale, an atom that declares a per-axis range in which the axes can differ must have the +Z and +Y of every connector parallel to one of its own axes, within the profile's connector direction tolerance. Its +X is then parallel to an axis too.
-- Mating dimensions scale as well. On a scaled atom, a mating dimension's value is its value at scale 1 times the scale factor of the atom axis that the connector's frame axis, named by the type's `mating_axes`, is parallel to. A dimension with no entry in `mating_axes` scales only under an even scale, by that number. An unevenly scaled atom joins nothing through a connector that has such a dimension. The same holds for a connector an assembly exposes: the Variation check fails an assembly that exposes such a connector of an unevenly scaled atom, or one whose frame axes are not parallel to the atom's axes.
+- Mating dimensions scale as well. On a scaled atom, a mating dimension's value is its value at scale 1 times the scale factor of the atom axis that the connector's frame axis, named by the type's `mating_axes`, is parallel to. A dimension with no entry in `mating_axes` scales only under an even scale, by that number. An unevenly scaled atom joins nothing through a connector that has such a dimension. The same holds for a connector a molecule exposes: the Variation check fails a molecule that exposes such a connector of an unevenly scaled atom, or one whose frame axes are not parallel to the atom's axes.
 - A joint holds when the two sides match after scaling: for every mating dimension of the connector type, the two sides' scaled values agree within the profile's mating tolerance. A wall module scaled to `[1.5, 1, 1]` still mates with an unscaled one through `facade_edge`, because its storey height and wall thickness lie along axes that did not change, while a module scaled to `[1, 1.1, 1]` does not, because its storey height is now 3.08 m and its neighbour's is 2.8 m.
 - A file is still authored and measured at scale 1. The atom's own checks do not change.
 - A per-axis scale stretches the whole atom, including any frame or trim on it. A span (proposed, below) stretches one part of an atom and keeps its ends rigid.
@@ -278,9 +280,9 @@ The first two show how the first robot's ankle roll of 12 degrees and its tire s
 - Asset IDs, units and axes, and connector names, types and sides. Connector positions and mating dimensions are stored at scale 1.
 - A merged file. An atom reshaped beyond its declared variation is a new asset that records `derived_from`.
 
-## Moving assemblies
+## Moving molecules
 
-An assembly whose joints move needs no separate skeleton file. The pipeline derives the skeleton from the manifest: one bone for each moving joint, named by the atom's `ref`.
+A molecule whose joints move needs no separate skeleton file. The pipeline derives the skeleton from the manifest: one bone for each moving joint, named by the atom's `ref`.
 
 - Every atom is rigid: all of it follows one joint. Skin that bends, such as a creature's body, cloth or a hose, waits for a later capability profile.
 - A joint may state a `scale_range`, the range a clip may scale it within. Connector positions and mating dimensions are stored at scale 1 and follow the scale (see "Scale").
@@ -336,7 +338,7 @@ A blueprint lists the atoms an object is built from, and it is written before an
 | `connectors` | The connector types and sides the atom must carry |
 | `dimensions_m` | The sizes that decide whether an atom fits, such as wheel diameter |
 | `description` | What the atom is, in plain words |
-| `atom` | The library asset that fills the slot (an atom, a kit or an assembly), pinned to a version, or `new` if none fits |
+| `atom` | The library asset that fills the slot (an atom, a kit or a molecule), pinned to a version, or `new` if none fits |
 
 An existing atom fits a slot when all four hold:
 
@@ -346,8 +348,8 @@ An existing atom fits a slot when all four hold:
 4. Its description matches what the slot asks for.
 
 - A slot marked `new` becomes an atom task. Its metadata lists the library atoms that were considered and why none fits.
-- When every slot is filled by a merged atom, the blueprint is complete and the assembly manifest can be written from it. In a bundle, whoever builds a slot's atom sets the slot's `atom` to its pin in the same pull request.
-- The assembly is written into the object's folder, beside the blueprint. The validator then holds the manifest to the blueprint: each slot's atom the stated number of times, and nothing else.
+- When every slot is filled by a merged atom, the blueprint is complete and the molecule manifest can be written from it. In a bundle, whoever builds a slot's atom sets the slot's `atom` to its pin in the same pull request.
+- The molecule is written into the object's folder, beside the blueprint. The validator then holds the manifest to the blueprint: each slot's atom the stated number of times, and nothing else.
 - A blueprint is versioned like an asset. A higher tier may split one slot into several under a new version.
 
 ## Materials and textures
@@ -380,8 +382,8 @@ One asset is one folder, holding the model, a metadata file, its previews, and e
 ```text
 veh_sedan_door_fl_01/
   asset.glb        the model, glTF 2.0 binary (atoms and materials)
-  assembly.json    the manifest (assemblies only, in place of asset.glb)
-  blueprint.json   the list of atom slots (objects, and kept beside the assembly once it is written)
+  molecule.json    the manifest (molecules only, in place of asset.glb)
+  blueprint.json   the list of atom slots (objects, and kept beside the molecule once it is written)
   asset.json       metadata
   preview/         renders from the standard scene
   source/          generation script, parameters, prompts
@@ -400,7 +402,7 @@ Names are lowercase ASCII with underscores, as `<category>_<name>_<variant>`. Ca
 | `dimensions_m` | Bounding box width, height and depth in metres, measured from vertices that belong to faces |
 | `triangles` | Triangle count of LOD0 |
 | `connectors` | Each connector's name, type and side, and for a moving connector its limits and rest position |
-| `mirror_safe` | Whether an assembly may mirror the atom |
+| `mirror_safe` | Whether a molecule may mirror the atom |
 | `variation` | The scale range, spans and open material slots the asset allows, if any |
 | `materials` | Library material IDs used, plus any custom materials |
 | `behaviours` | Registered behaviours the asset supports, each with its settings, if any |
@@ -425,7 +427,7 @@ These are the shapes the validator reads. They were chosen while building it, wh
 
 | Field or file | Shape |
 | --- | --- |
-| `dimensions_m` | `[width, height, depth]` along X, Y and Z, in metres. For an assembly, the bounding box of every placed atom |
+| `dimensions_m` | `[width, height, depth]` along X, Y and Z, in metres. For a molecule, the bounding box of every placed atom |
 | `connectors` | One entry per connector node: `{ "name", "type", "side", "mating" }`, plus `"limits": [min, max]` and `"rest"` for a moving type, in degrees or metres. `mating` is `{ dimension: metres }` for the mating dimensions the type lists |
 | `materials` | `{ "library": [ids], "custom": [names] }` |
 | `size` | `S`, `M` or `L`, the task's size |
@@ -435,7 +437,7 @@ These are the shapes the validator reads. They were chosen while building it, wh
 | A library material in a model | A glTF material whose name is the library material's ID |
 | A reference's licence note | `refs/<file>.licence.txt` beside the file |
 | Blueprint slot | `connectors` as `[{ "type", "side" }]`, and `dimensions_m` as `{ name: metres }`, where `width`, `height` and `depth` are the atom's size and any other name is a mating dimension |
-| `exposes` in an assembly | `{ "name": "<atom ref>:<connector name>" }` |
+| `exposes` in a molecule | `{ "name": "<atom ref>:<connector name>" }` |
 
 A task is one file, `tasks/<task_id>.json`:
 
@@ -492,14 +494,14 @@ The validator runs on every pull request and names each failing check. Contribut
 | File validity | The official glTF validator reports no errors | Contract |
 | Folder and naming | Required files exist and names match the pattern | Contract |
 | Metadata | Every required field is present and matches the file's contents | Contract |
-| Scale | The bounding box matches the task's dimensions. An assembly is measured from its atoms as its joints place them, and its recorded `dimensions_m` must be that measured size | Profile |
+| Scale | The bounding box matches the task's dimensions. A molecule is measured from its atoms as its joints place them, and its recorded `dimensions_m` must be that measured size | Profile |
 | Transforms | The root node has no translation, rotation or scale | Contract |
 | Triangle budget | LOD0 is within the class budget | Profile |
 | Mesh health | No zero-area or duplicate faces, and solid meshes are watertight | Profile |
 | Connectors | Every connector the task requires is present, with a registered type and a valid up direction, every moving connector states its limits, and every connector whose frame the task fixes sits in that frame | Contract |
-| Assembly | Every atom is a merged version, an origin is named, every joint mates in its recorded orientation, no atom is unjoined, and every connector reached on a placed assembly is one it exposes | Contract |
+| Molecule | Every atom is a merged version, an origin is named, every joint mates in its recorded orientation, no atom is unjoined, and every connector reached on a placed molecule is one it exposes | Contract |
 | Variation | Every declared range passes the other checks at both of its ends, and every scale, span, motion and material a manifest chooses is within what was declared | Contract |
-| Blueprint | Every slot names its connectors and dimensions, and is filled by a fitting atom or marked `new`. Where a blueprint sits beside an assembly, no slot is still `new`, and the manifest places each slot's atom exactly `count` times and no other atom | Contract |
+| Blueprint | Every slot names its connectors and dimensions, and is filled by a fitting atom or marked `new`. Where a blueprint sits beside a molecule, no slot is still `new`, and the manifest places each slot's atom exactly `count` times and no other atom | Contract |
 | Reuse | A new atom lists the library atoms it considered, and none of them fits its slot | Contract |
 | Clip | Every joint a clip moves exists in its blueprint version, and every motion stays within the joint's limits and scale range | Contract |
 | Collision | Convex shapes are present, within the allowed count | Profile |
@@ -524,22 +526,22 @@ A merged asset is never edited in place. A fix or upgrade is published as a new 
 
 ## Open questions
 
-- [ ] glTF 2.0 or OpenUSD as the stored format? glTF is simpler to validate, and USD handles large assemblies better.
+- [ ] glTF 2.0 or OpenUSD as the stored format? glTF is simpler to validate, and USD handles large molecules better.
 - [ ] Is 0.5 m the right building grid, or should it follow each region's real construction modules? A window bay with a stretch span could fit a real facade width that is off the grid.
 - [ ] Which connector types go in the first registry? The first demo slice decides this.
 - [ ] Is a connector's up direction enough, or do some types need a keyed shape so they cannot be mated upside down?
 - [ ] Should provenance also record effort, such as time or model usage spent, so the project can see what an asset costs to make?
 - [ ] How is "its description matches" tested by a script: shared tags, or a model's judgement?
-- [ ] Should an assembly manifest allow an atom with no joint, placed by coordinates, for things like loose objects on a table? Frontier Colony places rocks and plants from a separate scene file that gives each a position, heading and scale. Scale at placement is now defined (see "Variation"), and placing an atom at a position with no joint is still undefined.
+- [ ] Should a molecule manifest allow an atom with no joint, placed by coordinates, for things like loose objects on a table? Frontier Colony places rocks and plants from a separate scene file that gives each a position, heading and scale. Scale at placement is now defined (see "Variation"), and placing an atom at a position with no joint is still undefined.
 - [ ] How are behaviours specified? The world model names the first eight, and none is defined.
 - [ ] Do unique structures such as landmarks need their own connector types, or are they single assets?
-- [ ] Do libraries share one connector registry, and may an assembly use atoms from another library?
+- [ ] Do libraries share one connector registry, and may a molecule use atoms from another library?
 - [ ] Does a named state replace some joints, or list all of them? One state change has been built and checked.
 - [ ] Does fit go by a size code? Since 2026-11-11 Frontier Colony gives every connector a size code such as `d128` with the dimensions behind it. Two connectors fit when type, side and every registered dimension agree within 0.5 mm, and no connector names the atom it was made for. Profile 1 here says 1 mm.
 - [ ] How is a clip named and filed, and who registers clip names?
 - [ ] May an effect be a mesh atom of its own, or only a marker the engine fills? One library built three effect atoms.
 - [ ] Mirrored copies in the first build differed from a true mirror by up to 0.039 mm. What tolerance does a vertex-exact comparison use?
-- [ ] Does an object's folder hold `blueprint.json` and `assembly.json` together, or is the assembly a second asset?
+- [ ] Does an object's folder hold `blueprint.json` and `molecule.json` together, or is the molecule a second asset?
 - [ ] What is a library material's own file layout? The first test uses `assets/mat/<id>/material.json` with flat values and no textures.
 - [ ] A clip has no file format or location yet, so the Clip check cannot run.
 - [ ] Several profile rules cannot be read from the files by a script: smallest feature, UV overlap, hidden faces, pixels per metre and ground contact. Do they move to review, or get a definition a script can test?
@@ -549,7 +551,7 @@ A merged asset is never edited in place. A fix or upgrade is published as a new 
 - [ ] Is a tint any colour, or one of a listed set?
 - [ ] Does the capability profile cap how wide a scale range or a span may be?
 - [ ] Texture density under scale: should a material on an atom with a scale range repeat in metres, with the import pipeline rescaling texture coordinates by the placement's scale? Until it does, a declared range is the author's statement that the atom looks right across it.
-- [ ] The validator reads the mating dimensions of a connector an assembly exposes from the atom inside, scaled by the entries that place it. It does not compare them with the `mating` an assembly's own `asset.json` may list for that connector, and an assembly that is placed scaled is held to an even scale only. Should an assembly record its exposed connectors' mating dimensions, and be checked against the derived values?
+- [ ] The validator reads the mating dimensions of a connector a molecule exposes from the atom inside, scaled by the entries that place it. It does not compare them with the `mating` a molecule's own `asset.json` may list for that connector, and a molecule that is placed scaled is held to an even scale only. Should a molecule record its exposed connectors' mating dimensions, and be checked against the derived values?
 - [ ] A joint compares a mating dimension only when both atoms state it in `asset.json`. Should a missing value fail?
 - [ ] Where do a behaviour's settings live until the behaviour registry exists?
 - [ ] Frontier Colony's library changed connector types to follow its clips, before joints could state their own motion. Does it move to joint overrides?

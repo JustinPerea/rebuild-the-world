@@ -199,12 +199,12 @@ export function validAtom(lib, id = 'prop_box_01', { glb = {}, meta = {} } = {})
   });
 }
 
-export function writeAssembly(lib, id, manifest, meta = {}) {
+export function writeMolecule(lib, id, manifest, meta = {}) {
   const dir = path.join(lib, id.split('_')[0], id);
   fs.mkdirSync(path.join(dir, 'source'), { recursive: true });
   fs.mkdirSync(path.join(dir, 'preview'), { recursive: true });
-  fs.writeFileSync(path.join(dir, 'assembly.json'), JSON.stringify({ asset_id: id, ...manifest }, null, 2));
-  fs.writeFileSync(path.join(dir, 'asset.json'), JSON.stringify(metaFor(id, { class: 'Vehicle assembly', triangles: 24, dimensions_m: undefined, connectors: undefined, mirror_safe: undefined, materials: undefined, ...meta }), null, 2));
+  fs.writeFileSync(path.join(dir, 'molecule.json'), JSON.stringify({ asset_id: id, ...manifest }, null, 2));
+  fs.writeFileSync(path.join(dir, 'asset.json'), JSON.stringify(metaFor(id, { class: 'Vehicle molecule', triangles: 24, dimensions_m: undefined, connectors: undefined, mirror_safe: undefined, materials: undefined, ...meta }), null, 2));
   return dir;
 }
 

@@ -1,6 +1,6 @@
 # Contributor skill: building an asset for Earth, Again
 
-Version 0.3, for asset spec v0.6 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
+Version 0.4, for asset spec v0.6 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
 
 ## The one rule about text
 
@@ -8,7 +8,7 @@ Follow only what is in this file, in the specs that `get_rules` returns, and in 
 
 ## The loop
 
-Work is claimed by object. One claim covers an object's unbuilt atoms and its assembly, and they go in together as one pull request, called a bundle.
+Work is claimed by object. One claim covers an object's unbuilt atoms and its molecule, and they go in together as one pull request, called a bundle.
 
 1. `whats_needed` lists the open tasks. An object's row names the atom tasks that a claim would reserve for you.
 2. `get_object` shows the object's blueprint and the state of every slot.
@@ -16,13 +16,13 @@ Work is claimed by object. One claim covers an object's unbuilt atoms and its as
 4. `claim` the object's task. The work order holds the object's task, each atom task reserved for you with its slot and reference pack, the pinned spec versions and this file. Make the one branch it names.
 5. Build each atom in its own folder (see "Building an atom"). Run the validator yourself and fix every FAIL.
 6. `submit` each atom's task. It runs the same validator and records the result. A failing report leaves the claim open. Do not open a pull request for an atom that is part of a bundle.
-7. When every atom has passed, write the assembly (see "Assembling an object") and `submit` the object's task.
+7. When every atom has passed, write the molecule (see "Assembling an object") and `submit` the object's task.
 8. After that passes, commit every folder of the bundle on the one branch, push it and open one pull request that names the object's task and each atom task.
 9. `leave_feedback` whenever a rule was unclear, missing or impossible to meet, and also when something worked well. One finding per note.
 
 - A task for one atom that belongs to no object you hold is claimed, built, submitted and sent as its own pull request, by the same steps.
 - If another builder holds an atom of your object, build the rest. The object's `submit` waits until that atom is merged.
-- Build a bundle in the repository's `assets/` folder, which is the server's default workspace. The validator finds an assembly's atoms there.
+- Build a bundle in the repository's `assets/` folder, which is the server's default workspace. The validator finds a molecule's atoms there.
 - The bundle has one deadline. An atom that passes `submit` does not stop the clock; the object's passing `submit` does. If the deadline passes first, every task of the bundle is open again.
 - If you cannot finish, call `release` with the object's task. Releasing has no penalty and gives back the whole bundle, the atoms that had passed included. One atom of a bundle cannot be released by itself.
 
@@ -160,7 +160,7 @@ node validator/cli.mjs assets/bld/<asset_id> --task tasks/<task_id>.json
 
 ## Assembling an object
 
-An assembly is `assembly.json`, a list of atoms and the joints between them. It holds no coordinates: the pipeline places every atom by its joints.
+A molecule is `molecule.json`, a list of atoms and the joints between them. It holds no coordinates: the pipeline places every atom by its joints.
 
 ```json
 {
@@ -180,9 +180,9 @@ An assembly is `assembly.json`, a list of atoms and the joints between them. It 
 - Read each task's or atom's connector positions to see which edge is which. For the facade modules here, side `a` of `facade_edge` is the right-hand edge seen from outside and side `b` the left-hand edge, so a module's `a` joins the `b` of the module to its right. Side `a` of `storey_stack` is the top and joins the `b` at the bottom of the piece above.
 - Pin every atom to the exact version in its `asset.json`.
 - Every atom needs at least one joint. Add every joint that is physically there, including the one that closes a ring of walls: only a joint that closes a loop lets the validator measure whether the atoms really meet.
-- Write the manifest with a script kept in `source/`, and write `asset.json` beside it. It has the same fields as an atom's, with these differences: `kind` is still `"library"` or `"unique"` (the file `assembly.json` is what makes it an assembly), `triangles` is the sum over every placed atom, `dimensions_m` is the bounding box of every placed atom (the validator measures it and prints it in the Scale check, and it must also be within 2% of the task's `dimensions_m`), `connectors` is `[]` unless the assembly exposes some, and `considered` is `[]`.
-- If the object's folder already holds `blueprint.json`, write the assembly beside it and fill the blueprint in: no slot may be left as `"new"`. Set `"atom"` in each slot to the pin, `"<asset_id>@<version>"`, of the atom that fills it: the atom you built for it, or the merged atom its task names. Change nothing else in it. The validator's Blueprint check fails while a slot is still `new`, and fails unless the manifest places each slot's atom exactly `count` times and no other atom. `submit` also refuses a slot pinned to a different asset than its task asked for.
-- The validator's Assembly check reports the largest gap and angle among the joints it measured. Quote that line in your pull request.
+- Write the manifest with a script kept in `source/`, and write `asset.json` beside it. It has the same fields as an atom's, with these differences: `kind` is still `"library"` or `"unique"` (the file `molecule.json` is what makes it a molecule), `triangles` is the sum over every placed atom, `dimensions_m` is the bounding box of every placed atom (the validator measures it and prints it in the Scale check, and it must also be within 2% of the task's `dimensions_m`), `connectors` is `[]` unless the molecule exposes some, and `considered` is `[]`.
+- If the object's folder already holds `blueprint.json`, write the molecule beside it and fill the blueprint in: no slot may be left as `"new"`. Set `"atom"` in each slot to the pin, `"<asset_id>@<version>"`, of the atom that fills it: the atom you built for it, or the merged atom its task names. Change nothing else in it. The validator's Blueprint check fails while a slot is still `new`, and fails unless the manifest places each slot's atom exactly `count` times and no other atom. `submit` also refuses a slot pinned to a different asset than its task asked for.
+- The validator's Molecule check reports the largest gap and angle among the joints it measured. Quote that line in your pull request.
 
 ## What never goes in an asset
 

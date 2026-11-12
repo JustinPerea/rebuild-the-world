@@ -1,6 +1,6 @@
 # Blueprint kit
 
-The blueprint kit turns one building's survey plan (`survey/<region>/plans/<source_id>.json`) into the files a builder needs to rebuild that building from atoms: a blueprint, a layout of every piece and joint, a task for each atom that does not exist yet, and, once every slot is pinned to a merged atom, the `assembly.json`. It reads a plan the survey tool has already accepted, so a plan that fails `node tools/survey/survey.mjs check` is returned as problems and nothing is drafted.
+The blueprint kit turns one building's survey plan (`survey/<region>/plans/<source_id>.json`) into the files a builder needs to rebuild that building from atoms: a blueprint, a layout of every piece and joint, a task for each atom that does not exist yet, and, once every slot is pinned to a merged atom, the `molecule.json`. It reads a plan the survey tool has already accepted, so a plan that fails `node tools/survey/survey.mjs check` is returned as problems and nothing is drafted.
 
 Every rule and number on this page is a proposal. The project owner has not confirmed any of them.
 
@@ -15,7 +15,7 @@ node tools/blueprint/blueprint.mjs check
 All three take `--region <name>` (default `tokyo-sumida-oshiage-2`) and `--repo <path>` (default: this clone). Run the tests with `node --test tools/blueprint/test/`.
 
 - `draft` prints the summary (`pieces`, `distinct_slots` and `distinct_sizes`), the slots, the problems and the reason for any unsupported outline as JSON. With `--write`, and only when there are no problems, it writes `assets/bld/<object_id>/blueprint.json`, `assets/bld/<object_id>/layout.json` and one file in `tasks/` for every slot that has neither an atom nor a task, plus the object's own task. It never overwrites a slot's task file that exists, and it rewrites the object's own task on every draft. It overwrites an existing blueprint only after carrying over every pin that blueprint holds, and its `version` when that has the form `1.2.3`; if the new draft has no slot for a pinned atom, it writes nothing and says so. A blueprint can arrive in a pull request, so a pin is carried over only when it is written `<asset id>@<major.minor.patch>`; anything else is dropped, and the report gives `ignored_pins` with a count and the slot names, never the value. A library atom whose `asset.json` version is not `major.minor.patch` counts as absent. Every file it writes must resolve inside the clone: if `assets/bld/<object id>` or `tasks` is a link that leaves the clone, it stops with exit 2 and writes nothing.
-- `assemble` writes `assets/bld/<object_id>/assembly.json` from the blueprint and layout in that folder. It refuses, and names each slot, while any slot is still `"new"`, when a slot's atom is not a pin of the form above, and unless the blueprint's and the layout's `object_id` both equal the folder's name. It will not write through a link that leaves the clone. Writing `asset.json` and running the validator are still the builder's steps (`skill/contributor-skill.md`, "Assembling an object").
+- `assemble` writes `assets/bld/<object_id>/molecule.json` from the blueprint and layout in that folder. It refuses, and names each slot, while any slot is still `"new"`, when a slot's atom is not a pin of the form above, and unless the blueprint's and the layout's `object_id` both equal the folder's name. It will not write through a link that leaves the clone. Writing `asset.json` and running the validator are still the builder's steps (`skill/contributor-skill.md`, "Assembling an object").
 - `check` drafts every plan of the region without writing, prints one line per building (ok, problems, unsupported with the reason, or skipped) and a total line that includes the number of distinct slots across all buildings that drafted. Each line gives the building's pieces, its slots, and its distinct sizes: how many atoms it would need if nothing were scaled. It exits 1 only on a crash.
 
 ## What a draft produces
@@ -23,7 +23,7 @@ All three take `--region <name>` (default `tokyo-sumida-oshiage-2`) and `--repo 
 | Output | Content |
 | --- | --- |
 | `blueprint.json` | One slot per distinct atom, in the shape of `bld_house_shell_01`. A base atom's slot has the base atom's `dimensions_m` and connectors, a `count` equal to the pieces placed, and a `variation` note with the range the atom must declare. `atom` is a pin (`<id>@<version>`) when the library holds the atom, otherwise `"new"`. |
-| `layout.json` | `origin`, `atoms` (`ref` and `slot` for every placed piece, and `scale` when it is not 1) and `joints`. It holds no coordinates, like an assembly. `assemble` copies each `scale` into the manifest entry. |
+| `layout.json` | `origin`, `atoms` (`ref` and `slot` for every placed piece, and `scale` when it is not 1) and `joints`. It holds no coordinates, like a molecule. `assemble` copies each `scale` into the manifest entry. |
 | `tasks/task_<asset id>.json` | One task per slot that is `needs_task`, in the shape of the hand-written `task_bld_*` files, plus `task_<object id>.json` with `depends_on` set to the tasks of every slot that is not already an atom. |
 
 The object id is `bld_place_<key>_01`. The key is the first 12 hex digits of a PLATEAU id with the dashes removed, or `w<number>` or `r<number>` with the whole number for an OpenStreetMap way or relation, so two ways never share an id.
@@ -61,5 +61,5 @@ The object id is `bld_place_<key>_01`. The key is the first 12 hex digits of a P
 - Roofs. The drafts are walls only.
 - Pieces with openings that stretch. Plain wall and corner posts are scaled copies of three base atoms, but a bay with an opening, and a door leaf, is still one atom per distinct size, and a window of one size appears once for each storey height it is used at. A span, which asset spec v0.6 proposes and nobody has built, would stretch the wall around an opening and keep the opening rigid; that is what would merge those atoms.
 - Interior walls and floors.
-- Placing the object in the region. The assembly's own axes put edge 0 along +x; turning and positioning it on the block's map is a separate step.
+- Placing the object in the region. The molecule's own axes put edge 0 along +x; turning and positioning it on the block's map is a separate step.
 - Kinds other than `door` that need a moving part (a sliding door or a garage door has no leaf).

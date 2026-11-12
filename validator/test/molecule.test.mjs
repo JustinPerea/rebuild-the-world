@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { validate } from '../validate.mjs';
 import { VALIDATOR_DIR } from '../lib/profile.mjs';
-import { tmpDir, rmrf, writeRegistry, validAtom, writeAssembly, conn, status } from './helpers.mjs';
+import { tmpDir, rmrf, writeRegistry, validAtom, writeMolecule, conn, status } from './helpers.mjs';
 
 let root, registry, n = 0;
 before(() => { root = tmpDir(); registry = writeRegistry(root); });
@@ -36,75 +36,75 @@ const manifest = (o = {}) => ({
   ],
   ...o.top,
 });
-const build = (lib, m = manifest(), meta = {}) => writeAssembly(lib, 'veh_sedan_01', m, { library: 'test', ...meta });
+const build = (lib, m = manifest(), meta = {}) => writeMolecule(lib, 'veh_sedan_01', m, { library: 'test', ...meta });
 const run = (dir, lib, extra = {}) => validate(dir, { registry, library: lib, ...extra });
 
-test('two atoms that mate: Assembly passes and the loop joint is measured', async () => {
+test('two atoms that mate: Molecule passes and the loop joint is measured', async () => {
   const lib = newLib();
   bodyDoor(lib);
   const r = await run(build(lib), lib);
-  passing(r, 'Assembly');
-  assert.match(status(r, 'Assembly').messages[0], /1 measured as loop closures/);
-  assert.match(status(r, 'Assembly').messages[1], /^measured joints: largest gap \d+\.\d{3} mm \(allowed 1 mm\), largest angle \d+\.\d{3} degrees \(allowed 0\.5\)$/);
+  passing(r, 'Molecule');
+  assert.match(status(r, 'Molecule').messages[0], /1 measured as loop closures/);
+  assert.match(status(r, 'Molecule').messages[1], /^measured joints: largest gap \d+\.\d{3} mm \(allowed 1 mm\), largest angle \d+\.\d{3} degrees \(allowed 0\.5\)$/);
   for (const c of r.checks) assert.notEqual(c.status, 'FAIL', `${c.name}: ${c.messages.join(' | ')}`);
-  assert.equal(r.kind, 'assembly');
+  assert.equal(r.kind, 'molecule');
   assert.equal(status(r, 'Triangle budget').status, 'PASS');
 });
 
-test('one connector moved 5 mm: Assembly fails and says by how much', async () => {
+test('one connector moved 5 mm: Molecule fails and says by how much', async () => {
   const lib = newLib();
   bodyDoor(lib, { doorB2y: 0.305 });
   const r = await run(build(lib), lib);
-  failing(r, 'Assembly', '5.00 mm', 'conn_door_hinge_a_02', 'conn_door_hinge_b_02');
+  failing(r, 'Molecule', '5.00 mm', 'conn_door_hinge_a_02', 'conn_door_hinge_b_02');
 });
 
 test('mirrored atom: fails without mirror_safe, passes with it', async () => {
   const lib = newLib();
   bodyDoor(lib);
-  failing(await run(build(lib, manifest({ door: { mirror: true } })), lib), 'Assembly', 'mirror_safe', 'door');
+  failing(await run(build(lib, manifest({ door: { mirror: true } })), lib), 'Molecule', 'mirror_safe', 'door');
   const lib2 = newLib();
   bodyDoor(lib2, { doorMeta: { mirror_safe: true } });
-  passing(await run(build(lib2, manifest({ door: { mirror: true } })), lib2), 'Assembly');
+  passing(await run(build(lib2, manifest({ door: { mirror: true } })), lib2), 'Molecule');
 });
 
-test('Assembly: unjoined atom, missing origin, unmerged version, wrong sides, unregistered type', async () => {
+test('Molecule: unjoined atom, missing origin, unmerged version, wrong sides, unregistered type', async () => {
   const lib = newLib();
   bodyDoor(lib);
   validAtom(lib, 'veh_extra_01');
   const m = manifest();
   m.atoms.push({ ref: 'extra', asset: 'veh_extra_01@1.0.0' });
-  failing(await run(build(lib, m), lib), 'Assembly', 'atom "extra"', 'not joined');
+  failing(await run(build(lib, m), lib), 'Molecule', 'atom "extra"', 'not joined');
   const noOrigin = manifest();
   delete noOrigin.origin;
-  failing(await run(build(newLibWith(bodyDoor), noOrigin), lastLib), 'Assembly', '"origin" is missing');
-  failing(await run(build(lib, manifest({ door: { asset: 'veh_door_01@2.0.0' } })), lib), 'Assembly', 'not a merged version');
-  failing(await run(build(lib, manifest({ door: { asset: 'veh_ghost_01@1.0.0' } })), lib), 'Assembly', 'not in the library');
+  failing(await run(build(newLibWith(bodyDoor), noOrigin), lastLib), 'Molecule', '"origin" is missing');
+  failing(await run(build(lib, manifest({ door: { asset: 'veh_door_01@2.0.0' } })), lib), 'Molecule', 'not a merged version');
+  failing(await run(build(lib, manifest({ door: { asset: 'veh_ghost_01@1.0.0' } })), lib), 'Molecule', 'not in the library');
   const sides = manifest();
   sides.joints[0] = { a: 'body:conn_door_hinge_a_01', b: 'body:conn_door_hinge_a_02' };
-  failing(await run(build(lib, sides), lib), 'Assembly', 'both connectors are side "a"');
+  failing(await run(build(lib, sides), lib), 'Molecule', 'both connectors are side "a"');
   const mystery = newLib();
   validAtom(mystery, 'veh_body_01', { glb: { connectors: [conn('conn_mystery_a_01', [0.5, 0, 0], 90)] } });
   validAtom(mystery, 'veh_door_01', { glb: { connectors: [conn('conn_mystery_b_01', [-0.5, 0, 0], -90)] } });
   const one = { origin: { ref: 'body' }, atoms: manifest().atoms, joints: [{ a: 'body:conn_mystery_a_01', b: 'door:conn_mystery_b_01' }] };
-  failing(await run(build(mystery, one), mystery), 'Assembly', 'mystery', 'registry');
+  failing(await run(build(mystery, one), mystery), 'Molecule', 'mystery', 'registry');
 });
 let lastLib;
 function newLibWith(fn) { lastLib = newLib(); fn(lastLib); return lastLib; }
 
-test('Assembly: turn_deg must be a valid turn for the type symmetry', async () => {
+test('Molecule: turn_deg must be a valid turn for the type symmetry', async () => {
   const lib = newLib();
   validAtom(lib, 'veh_host_01', { glb: { connectors: [conn('conn_tab_four_a_01', [0.5, 0, 0], 90)] } });
   validAtom(lib, 'veh_guest_01', { glb: { connectors: [conn('conn_tab_four_b_01', [-0.5, 0, 0], -90)] } });
   const mk = (turn) => ({ origin: { ref: 'host' }, atoms: [{ ref: 'host', asset: 'veh_host_01@1.0.0' }, { ref: 'guest', asset: 'veh_guest_01@1.0.0' }], joints: [{ a: 'host:conn_tab_four_a_01', b: 'guest:conn_tab_four_b_01', turn_deg: turn }] });
-  failing(await run(build(lib, mk(45)), lib), 'Assembly', 'multiples of 90');
-  passing(await run(build(lib, mk(90)), lib), 'Assembly');
+  failing(await run(build(lib, mk(45)), lib), 'Molecule', 'multiples of 90');
+  passing(await run(build(lib, mk(90)), lib), 'Molecule');
 });
 
-test('nested assembly: a joint reaches it only through an exposed name', async () => {
+test('nested molecule: a joint reaches it only through an exposed name', async () => {
   const lib = newLib();
   const beamConns = [conn('conn_tab_four_a_01', [0.5, 0, 0], 90), conn('conn_tab_four_b_01', [-0.5, 0, 0], -90)];
   validAtom(lib, 'veh_beam_01', { glb: { connectors: beamConns } });
-  writeAssembly(lib, 'veh_pair_01', {
+  writeMolecule(lib, 'veh_pair_01', {
     origin: { ref: 'one' },
     atoms: [{ ref: 'one', asset: 'veh_beam_01@1.0.0' }, { ref: 'two', asset: 'veh_beam_01@1.0.0' }],
     joints: [{ a: 'one:conn_tab_four_a_01', b: 'two:conn_tab_four_b_01' }],
@@ -116,21 +116,21 @@ test('nested assembly: a joint reaches it only through an exposed name', async (
     joints: [{ a: 'beam:conn_tab_four_a_01', b: `pair:${target}` }],
   });
   const ok = await run(build(lib, outer('left'), { triangles: 36 }), lib);
-  passing(ok, 'Assembly');
+  passing(ok, 'Molecule');
   passing(ok, 'Metadata');
-  failing(await run(build(lib, outer('conn_tab_four_b_01'), { triangles: 36 }), lib), 'Assembly', 'not exposed', 'left, right');
+  failing(await run(build(lib, outer('conn_tab_four_b_01'), { triangles: 36 }), lib), 'Molecule', 'not exposed', 'left, right');
 });
 
-test('Assembly triangle budget and recorded triangle total', async () => {
+test('Molecule triangle budget and recorded triangle total', async () => {
   const lib = newLib();
   bodyDoor(lib);
   const prof = path.join(root, `prof${n++}.json`);
-  fs.writeFileSync(prof, JSON.stringify({ ...JSON.parse(fs.readFileSync(path.join(VALIDATOR_DIR, 'profile-1.json'), 'utf8')), budgets: { vehicle_assembly: 20 } }));
+  fs.writeFileSync(prof, JSON.stringify({ ...JSON.parse(fs.readFileSync(path.join(VALIDATOR_DIR, 'profile-1.json'), 'utf8')), budgets: { vehicle_molecule: 20 } }));
   failing(await run(build(lib), lib, { profile: prof }), 'Triangle budget', '24 triangles', 'allows 20');
   failing(await run(build(lib, manifest(), { triangles: 99 }), lib), 'Metadata', 'triangles is 99', 'sum to 24');
 });
 
-test('Variation (assembly): scale, material and motion choices are held to what atoms declare', async () => {
+test('Variation (molecule): scale, material and motion choices are held to what atoms declare', async () => {
   const doorMeta = { variation: { scale: [0.8, 1.2], open_slots: [{ slot: 'paint', materials: ['mat_red_01', 'mat_blue_01'] }] } };
   const lib = newLib();
   bodyDoor(lib, { doorMeta });
@@ -151,13 +151,13 @@ test('Variation (assembly): scale, material and motion choices are held to what 
   passing(await run(build(lib2, w(1)), lib2), 'Variation');
 });
 
-test('Assembly uses atoms of its own library only', async () => {
+test('Molecule uses atoms of its own library only', async () => {
   const lib = newLib();
   bodyDoor(lib);
-  failing(await run(build(lib, manifest(), { library: 'other' }), lib), 'Assembly', 'own library only');
+  failing(await run(build(lib, manifest(), { library: 'other' }), lib), 'Molecule', 'own library only');
 });
 
-test('Scale (assembly): the size is measured from the placed atoms and held to asset.json and the task', async () => {
+test('Scale (molecule): the size is measured from the placed atoms and held to asset.json and the task', async () => {
   const lib = newLib();
   bodyDoor(lib);
   // two 1 m boxes side by side along x
@@ -170,17 +170,17 @@ test('Scale (assembly): the size is measured from the placed atoms and held to a
   failing(await run(build(lib, manifest(), { dimensions_m: [3, 1, 1] }), lib), 'Scale', 'asset.json dimensions_m gives width (x) as 3 m', 'measure 2 m');
   // a task size that is not positive is refused, not passed
   failing(await run(build(lib), lib, { task: { dimensions_m: [-2, 1, 1] } }), 'Scale', 'three positive numbers');
-  // an assembly that cannot be placed is not measured
+  // a molecule that cannot be placed is not measured
   const off = newLib();
   bodyDoor(off, { doorB2y: 0.305 });
   assert.equal(status(await run(build(off), off), 'Scale').status, 'SKIP');
 });
 
-test('Scale (assembly): a nested assembly is measured through its own placement', async () => {
+test('Scale (molecule): a nested molecule is measured through its own placement', async () => {
   const lib = newLib();
   const beamConns = [conn('conn_tab_four_a_01', [0.5, 0, 0], 90), conn('conn_tab_four_b_01', [-0.5, 0, 0], -90)];
   validAtom(lib, 'veh_beam_01', { glb: { connectors: beamConns } });
-  writeAssembly(lib, 'veh_pair_01', {
+  writeMolecule(lib, 'veh_pair_01', {
     origin: { ref: 'one' },
     atoms: [{ ref: 'one', asset: 'veh_beam_01@1.0.0' }, { ref: 'two', asset: 'veh_beam_01@1.0.0' }],
     joints: [{ a: 'one:conn_tab_four_a_01', b: 'two:conn_tab_four_b_01' }],
@@ -195,7 +195,7 @@ test('Scale (assembly): a nested assembly is measured through its own placement'
   assert.match(status(r, 'Scale').messages[0], /3 by 1 by 1 m \(x from -0\.5 to 2\.5,/);
 });
 
-test('Blueprint (assembly): a blueprint beside the manifest must be filled, and the manifest must match its counts', async () => {
+test('Blueprint (molecule): a blueprint beside the manifest must be filled, and the manifest must match its counts', async () => {
   const slot = (name, side, atom, count = 1) => ({ slot: name, count, connectors: [{ type: 'door_hinge', side }], dimensions_m: { width: 1 }, atom });
   const withBlueprint = (slots) => {
     const lib = newLib();
@@ -220,15 +220,15 @@ test('Blueprint (assembly): a blueprint beside the manifest must be filled, and 
   assert.equal(status(await run(build(lib), lib), 'Blueprint').status, 'SKIP');
 });
 
-test('Scale (assembly): a scaled entry grows about its own origin, and its connectors move with it', async () => {
+test('Scale (molecule): a scaled entry grows about its own origin, and its connectors move with it', async () => {
   const lib = newLib();
   bodyDoor(lib, { doorMeta: { variation: { scale: [0.5, 2] } } });
   // the door at scale 2 is a 2 m box whose hinge sits 1 m from its centre, so it runs from x = 0.5 to 2.5
   const one = { origin: { ref: 'body' }, atoms: [{ ref: 'body', asset: 'veh_body_01@1.0.0' }, { ref: 'door', asset: 'veh_door_01@1.0.0', scale: 2 }], joints: [{ a: 'body:conn_door_hinge_a_01', b: 'door:conn_door_hinge_b_01' }] };
   const r = await run(build(lib, one, { dimensions_m: [3, 2, 2] }), lib);
-  passing(r, 'Assembly');
+  passing(r, 'Molecule');
   passing(r, 'Scale');
   // with both hinges joined, the scaled door's second hinge no longer meets the body's, and the loop says so
-  failing(await run(build(lib, manifest({ door: { scale: 2 } })), lib), 'Assembly', 'positions differ by 300.00 mm');
+  failing(await run(build(lib, manifest({ door: { scale: 2 } })), lib), 'Molecule', 'positions differ by 300.00 mm');
   assert.match(status(r, 'Scale').messages.join(' | '), /measured from the placed atoms: 3 by 2 by 2 m \(x from -0\.5 to 2\.5,/);
 });

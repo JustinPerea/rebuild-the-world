@@ -8,7 +8,7 @@ Status: specs drafted (v0.1 to v0.5), announcement film posted, waitlist page li
 
 - [`docs/vision.md`](docs/vision.md): the goal, what must stay fixed, how the specs fit together. Start here.
 - [`docs/world-model.md`](docs/world-model.md): levels of scale, library and unique assets, accuracy levels, categories, behaviours.
-- [`docs/asset-spec.md`](docs/asset-spec.md): the durable contract, shared by every library: glTF conventions, connectors and their motion, blueprints, assembly manifests, moving assemblies, animation clips, materials, folders, metadata, automated checks.
+- [`docs/asset-spec.md`](docs/asset-spec.md): the durable contract, shared by every library: glTF conventions, connectors and their motion, blueprints, molecule manifests, moving molecules, animation clips, materials, folders, metadata, automated checks.
 - [`docs/capability-profiles.md`](docs/capability-profiles.md): the budgets, tolerances and mesh rules enforced today.
 - [`docs/contributor-service.md`](docs/contributor-service.md): work orders with pinned versions, and the MCP server contributors' agents connect to.
 - [`docs/accuracy-and-data.md`](docs/accuracy-and-data.md): what may match the real world, and allowed data sources.

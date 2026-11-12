@@ -149,7 +149,7 @@ Write one note per finding in `feedback/`, following `feedback/README.md`: a rul
 
 ## After the pull request is merged
 
-Once the pull request is merged, the building's task appears in `whats_needed`. A builder claims it, builds the pieces the library lacks, and runs `node tools/blueprint/blueprint.mjs assemble <object id>` to write the assembly from your layout.
+Once the pull request is merged, the building's task appears in `whats_needed`. A builder claims it, builds the pieces the library lacks, and runs `node tools/blueprint/blueprint.mjs assemble <object id>` to write the molecule from your layout.
 
 ## Limits to keep in mind
 

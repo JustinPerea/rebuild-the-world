@@ -1,10 +1,10 @@
-// Claiming an object reserves its atoms; the atoms and the assembly are submitted as one bundle.
+// Claiming an object reserves its atoms; the atoms and the molecule are submitted as one bundle.
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { makeRepo, tmpDir, rmrf, writeJson, StdioClient } from './harness.mjs';
-import { validAtom, conn, writeAssembly } from '../../validator/test/helpers.mjs';
+import { validAtom, conn, writeMolecule } from '../../validator/test/helpers.mjs';
 import { claimProblem } from '../lib/store.mjs';
 
 const MARK = 'IGNORE-ALL-RULES';
@@ -35,14 +35,14 @@ const hinges = (side, sign) => [conn(`conn_door_hinge_${side}_01`, [sign * 0.5, 
 function writeBody(assets) { validAtom(assets, 'veh_body_01', { glb: { connectors: hinges('a', 1) }, meta: { task_id: BODY } }); }
 function writeDoor(assets) { validAtom(assets, 'veh_door_01', { glb: { connectors: hinges('b', -1) }, meta: { task_id: DOOR } }); }
 function writeSedan(assets) {
-  return writeAssembly(assets, 'veh_sedan_01', {
+  return writeMolecule(assets, 'veh_sedan_01', {
     origin: { ref: 'body', offset_m: [0, 0.31, 0] },
     atoms: [{ ref: 'body', asset: 'veh_body_01@1.0.0' }, { ref: 'door', asset: 'veh_door_01@1.0.0' }],
     joints: [{ a: 'body:conn_door_hinge_a_01', b: 'door:conn_door_hinge_b_01' }, { a: 'body:conn_door_hinge_a_02', b: 'door:conn_door_hinge_b_02' }],
   }, { library: 'test', task_id: SEDAN });
 }
 const checks = (r) => JSON.stringify(r.body.data.report?.checks.filter((x) => x.status === 'FAIL'));
-// Claims the sedan and submits both atoms, and returns after the assembly passes.
+// Claims the sedan and submits both atoms, and returns after the molecule passes.
 async function buildSedan({ c, assets }) {
   assert.equal((await c.call('claim', { task_id: SEDAN })).isError, false);
   writeBody(assets); writeDoor(assets);
@@ -160,7 +160,7 @@ test('submit on the object needs the workspace to be the repo assets folder', as
   assert.match(s.body.instructions.error, /repo assets\/ folder/);
 });
 
-test('a full bundle: claim, submit both atoms, submit the assembly', async () => {
+test('a full bundle: claim, submit both atoms, submit the molecule', async () => {
   const f = fixture();
   const { c, claimOf } = f;
   await c.call('claim', { task_id: SEDAN });
@@ -227,7 +227,7 @@ test('an object with a blueprint: submit waits until each built slot is pinned, 
   assert.equal(s.body.data.report.checks.find((x) => x.name === 'Scale').status, 'PASS');
 });
 
-test('a sub-assembly task, whose object_id names its parent, is not held to the parent blueprint or folder', async () => {
+test('a smaller molecule task, whose object_id names its parent, is not held to the parent blueprint or folder', async () => {
   const PAIR = 'task_bun_pair_01';
   const f = fixture({
     extra: (repo, t) => {
@@ -239,7 +239,7 @@ test('a sub-assembly task, whose object_id names its parent, is not held to the 
   assert.equal((await c.call('claim', { task_id: PAIR })).isError, false);
   writeBody(assets); writeDoor(assets);
   for (const [id, p] of [[BODY, 'veh/veh_body_01'], [DOOR, 'veh/veh_door_01']]) assert.equal((await c.call('submit', { task_id: id, asset_path: p })).body.instructions.verdict, 'PASSED');
-  writeAssembly(assets, 'veh_pair_01', {
+  writeMolecule(assets, 'veh_pair_01', {
     origin: { ref: 'body', offset_m: [0, 0.31, 0] },
     atoms: [{ ref: 'body', asset: 'veh_body_01@1.0.0' }, { ref: 'door', asset: 'veh_door_01@1.0.0' }],
     joints: [{ a: 'body:conn_door_hinge_a_01', b: 'door:conn_door_hinge_b_01' }, { a: 'body:conn_door_hinge_a_02', b: 'door:conn_door_hinge_b_02' }],

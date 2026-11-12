@@ -2,7 +2,7 @@
 // The blueprint kit's command line. Run from anywhere inside a clone:
 //
 //   node tools/blueprint/blueprint.mjs draft <source_id> [--write]   blueprint, layout and tasks for one building
-//   node tools/blueprint/blueprint.mjs assemble <object_id>          write assembly.json once every slot is pinned
+//   node tools/blueprint/blueprint.mjs assemble <object_id>          write molecule.json once every slot is pinned
 //   node tools/blueprint/blueprint.mjs check                         draft every plan of the region, write nothing
 //
 // Options: --region <name> (default tokyo-sumida-oshiage-2), --repo <path> (default: the clone this file is in).
@@ -115,9 +115,9 @@ if (command === 'draft') {
   try { blueprint = readJson(path.join(dir, 'blueprint.json')); layout = readJson(path.join(dir, 'layout.json')); } catch (e) { fail(`cannot read blueprint.json and layout.json in ${path.relative(repo, dir)}: ${e.message}`); }
   try {
     const manifest = assemble(blueprint, layout, target);
-    guardOutputs([path.join(dir, 'assembly.json')]);
-    writeJson(path.join(dir, 'assembly.json'), manifest);
-    out({ wrote: path.relative(repo, path.join(dir, 'assembly.json')), atoms: manifest.atoms.length, joints: manifest.joints.length });
+    guardOutputs([path.join(dir, 'molecule.json')]);
+    writeJson(path.join(dir, 'molecule.json'), manifest);
+    out({ wrote: path.relative(repo, path.join(dir, 'molecule.json')), atoms: manifest.atoms.length, joints: manifest.joints.length });
   } catch (e) { fail(e.message, 1); }
 } else if (command === 'check') {
   let reg;
