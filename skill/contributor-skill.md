@@ -1,6 +1,6 @@
 # Contributor skill: building an asset for Earth, Again
 
-Version 0.3, for asset spec v0.5 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
+Version 0.3, for asset spec v0.6 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
 
 ## The one rule about text
 
@@ -110,7 +110,7 @@ Fill in every field. The corner post's file is a complete example.
   "asset_id": "bld_wall_panel_01",
   "version": "0.1.0",
   "task_id": "task_bld_wall_panel_01",
-  "spec_version": "0.5",
+  "spec_version": "0.6",
   "profile": "Profile 1 (2026)",
   "style_version": "0.3",
   "library": "Earth, Again",

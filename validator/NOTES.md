@@ -37,7 +37,7 @@ Each item says what the spec leaves open and what the validator does until it is
 ### Variation
 
 23. **Motion overrides.** The spec's Variation check says every motion a manifest chooses is "within what was declared", but a joint's `motion` may widen limits or add movement beyond the atom. The validator therefore checks only that a `motion` object is well formed: keys `locked`, `limits_deg`, `limits_m`, `also` (each entry has one of `turn` or `slide` naming `x`, `y` or `z`, and `limits_deg` or `limits_m` as `[min, max]`). The key names `limits_deg` and `limits_m` at the top level of `motion` are the validator's; the spec shows only `locked` and `also`.
-24. **Scale range.** The validator does not require the range to contain 1, though the file is authored at scale 1.
+24. **Scale range.** The validator does not require the range to contain 1, though the file is authored at scale 1. Since asset spec v0.6 a range may also be given per axis, and the comparison of a joint's two sides after scaling lives in `validator/lib/library.mjs` (`scaledMating`). A side that states no value for a mating dimension is not compared; the Assembly check notes how many.
 25. **"Passes the other checks at both of its ends."** The spec says every declared range is checked at both ends. The validator does not build the scaled or stretched asset, so it does not do this. Spans are proposed and unbuilt, so the validator checks only their shape and that no connector sits inside a stretch span.
 
 ### Blueprints

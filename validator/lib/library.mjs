@@ -5,7 +5,7 @@ import { collectGeometry } from './glb.mjs';
 import { visiblePrims, usedVertices } from './geom.mjs';
 import { symmetryCount } from './registry.mjs';
 import {
-  applyPose, mirrorFrame, orthoFrame, poseBetween, rotateAbout, translation, vscale, vsub, len, angleDeg, point,
+  applyPose, mirrorFrame, orthoFrame, poseBetween, rotateAbout, translation, vscale, vsub, len, angleDeg, point, frameX,
 } from './math.mjs';
 
 export const PIN_RE = /^([a-z0-9]+(?:_[a-z0-9]+)*)@(\d+\.\d+\.\d+)$/;
@@ -33,34 +33,80 @@ const joinPart = (s) => {
   return i < 0 ? null : { ref: s.slice(0, i), conn: s.slice(i + 1) };
 };
 
-const entryScale = (entry) => (typeof entry.scale === 'number' && Number.isFinite(entry.scale) && entry.scale > 0 ? entry.scale : 1);
+const isPos = (v) => typeof v === 'number' && Number.isFinite(v) && v > 0;
+
+// The three scale factors of a manifest entry, along the placed thing's own x, y and z. An entry's
+// "scale" is one positive number or three. Anything else reads as 1; the Variation check reports it.
+export function entryScale(entry) {
+  const s = entry.scale;
+  if (isPos(s)) return [s, s, s];
+  if (Array.isArray(s) && s.length === 3 && s.every(isPos)) return [s[0], s[1], s[2]];
+  return [1, 1, 1];
+}
+export const isEvenScale = (sv) => sv[0] === sv[1] && sv[1] === sv[2];
+const vscale3 = (a, s) => [a[0] * s[0], a[1] * s[1], a[2] * s[2]];
+
+// Which axis (0, 1 or 2) of the atom a direction lies along, and whether it does so within the angle tolerance.
+export function axisOf(v, tolD) {
+  let k = 0;
+  for (let i = 1; i < 3; i++) if (Math.abs(v[i]) > Math.abs(v[k])) k = i;
+  const e = [0, 0, 0];
+  e[k] = Math.sign(v[k]) || 1;
+  return { k, parallel: angleDeg(v, e) <= tolD };
+}
+
+// The mating dimensions of a placed connector, after scaling (asset spec, "Connectors", "Variation").
+// A dimension lies along one axis of the connector's own frame, named by the type's mating_axes; it is
+// multiplied by the scale factor of the atom axis that frame axis is parallel to. A dimension with no
+// axis follows an even scale only. Returns { values, axisLess, skewed }: values holds the numbers that
+// could be worked out, axisLess names the dimensions an uneven scale cannot reach, and skewed says that
+// a frame axis is not parallel to an atom axis, which an uneven scale cannot allow.
+function scaledMating(reg, base, frame, sv, tolD) {
+  const out = { values: {}, axisLess: [], skewed: false };
+  const dims = Array.isArray(reg?.mating_dimensions) ? reg.mating_dimensions : [];
+  const even = isEvenScale(sv);
+  const axes = { x: frameX(frame), y: frame.y, z: frame.z };
+  for (const a of Object.values(axes)) if (!axisOf(a, tolD).parallel) out.skewed = true;
+  for (const d of dims) {
+    const v = base?.[d];
+    const name = reg.mating_axes?.[d];
+    if (!even && !(name in axes)) out.axisLess.push(d);
+    else if (typeof v === 'number') out.values[d] = even ? v * sv[0] : v * sv[axisOf(axes[name], tolD).k];
+  }
+  return out;
+}
 
 // Connector of a placed entry, in the entry's own coordinates (mirrored and scaled when the entry is).
-function entryConnector(rec, entry, connName) {
+function entryConnector(rec, entry, connName, ctx) {
   let c;
+  let base;
   if (rec.kind === 'atom') {
     if (!rec.connectors) return { error: `atom "${rec.id}" cannot be read: ${rec.asset.glbError}` };
     c = rec.connectors.found.get(connName);
     if (!c) return { error: `atom "${rec.id}" has no connector node "${connName}"` };
+    base = (Array.isArray(rec.meta.connectors) ? rec.meta.connectors : []).find((m) => m?.name === connName)?.mating;
   } else {
     c = rec.nested.exposed.get(connName);
     if (!c) {
       const names = [...rec.nested.exposed.keys()];
       return { error: `connector "${connName}" is not exposed by assembly "${rec.id}" (it exposes: ${names.length ? names.join(', ') : 'nothing'}); join it through an exposed name` };
     }
+    base = c.mating;
   }
   let frame = entry.mirror ? mirrorFrame(c.frame) : c.frame;
-  // A placed thing scales about its own origin (asset spec, "Scale"), so its connectors move with it.
-  // assemblyBounds scales the vertices the same way.
-  const s = entryScale(entry);
-  if (s !== 1) frame = { ...frame, p: vscale(frame.p, s) };
-  return { type: c.type, side: c.side, frame, name: connName };
+  // A placed thing scales about its own origin (asset spec, "Scale"), axis by axis, so its connectors move with it.
+  // assemblyBounds scales the vertices the same way. Directions do not change.
+  const sv = entryScale(entry);
+  if (!(sv[0] === 1 && sv[1] === 1 && sv[2] === 1)) frame = { ...frame, p: vscale3(frame.p, sv) };
+  const reg = ctx.registry.types.get(c.type);
+  const mating = scaledMating(reg, base, frame, sv, ctx.profile.connector_direction_tolerance_deg);
+  return { type: c.type, side: c.side, frame, name: connName, mating };
 }
 
 export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
   const { libDir, registry, profile } = ctx;
   const res = {
-    errors: [], entries: new Map(), poses: new Map(), exposed: new Map(), joints: [], triangles: 0, rootRef: null, loopChecks: 0, worstGapM: 0, worstAngleDeg: 0,
+    errors: [], entries: new Map(), poses: new Map(), exposed: new Map(), joints: [], triangles: 0, rootRef: null, loopChecks: 0, worstGapM: 0, worstAngleDeg: 0, unstatedMating: 0,
   };
   const err = (m) => res.errors.push(m);
   if (stack.length > MAX_DEPTH) {
@@ -120,6 +166,7 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
   // Joints
   const tolP = profile.connector_position_tolerance_m;
   const tolD = profile.connector_direction_tolerance_deg;
+  const tolM = profile.mating_tolerance_m;
   const joints = Array.isArray(manifest.joints) ? manifest.joints : [];
   if (!Array.isArray(manifest.joints)) err('"joints" must be an array (it may be empty only for a one-atom assembly)');
   const parsed = [];
@@ -134,7 +181,7 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
       const ent = res.entries.get(part.ref);
       if (!ent) { err(`${label}: "${k}" names atom ref "${part.ref}", which is not in "atoms"`); bad = true; continue; }
       if (!ent.rec) { bad = true; continue; }
-      const c = entryConnector(ent.rec, ent.entry, part.conn);
+      const c = entryConnector(ent.rec, ent.entry, part.conn, ctx);
       if (c.error) { err(`${label}: ${c.error}`); bad = true; continue; }
       ends.push({ ...part, ...c, ent });
     }
@@ -153,6 +200,19 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
       if (Math.min(r, step - r) > 1e-6) {
         err(`${label}: turn_deg is ${turn} but type "${A.type}" has symmetry ${JSON.stringify(reg.symmetry)}, so the valid turns are multiples of ${step} degrees`);
         continue;
+      }
+    }
+    // Both sides must agree on every mating dimension once scaled (asset spec, "Connectors"). A side that
+    // states no value for a dimension cannot be compared; that is counted, and the Assembly check says so.
+    for (const d of Array.isArray(reg.mating_dimensions) ? reg.mating_dimensions : []) {
+      const va = A.mating.values[d];
+      const vb = B.mating.values[d];
+      if (typeof va !== 'number' || typeof vb !== 'number') {
+        if (!A.mating.axisLess.includes(d) && !B.mating.axisLess.includes(d)) res.unstatedMating += 1;
+        continue;
+      }
+      if (Math.abs(va - vb) > tolM) {
+        err(`${label}: mating dimension "${d}" of type "${A.type}" differs: ${A.ref} (${A.ent.entry.asset}) gives ${Number(va.toFixed(5))} m and ${B.ref} (${B.ent.entry.asset}) gives ${Number(vb.toFixed(5))} m after scaling (allowed ${tolM * 1000} mm)`);
       }
     }
     parsed.push({ i, label, A, B, turn, sym, raw: j });
@@ -216,9 +276,9 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
         const ent = p && res.entries.get(p.ref);
         if (!p || !ent) { err(`exposes "${name}": "${target}" must name "<atom ref>:<connector name>" of an atom in this manifest`); continue; }
         if (!ent.rec || !res.poses.has(p.ref)) continue;
-        const c = entryConnector(ent.rec, ent.entry, p.conn);
+        const c = entryConnector(ent.rec, ent.entry, p.conn, ctx);
         if (c.error) { err(`exposes "${name}": ${c.error}`); continue; }
-        res.exposed.set(name, { type: c.type, side: c.side, frame: applyPose(res.poses.get(p.ref), c.frame), target });
+        res.exposed.set(name, { type: c.type, side: c.side, frame: applyPose(res.poses.get(p.ref), c.frame), target, mating: c.mating.values });
       }
     }
   }
@@ -247,10 +307,10 @@ export function assemblyBounds(res) {
     for (const [ref, ent] of r.entries) {
       const pose = r.poses.get(ref);
       if (!ent.rec || !pose) continue;
-      const s = entryScale(ent.entry);
+      const sv = entryScale(ent.entry);
       const mirrored = ent.entry.mirror === true;
       // Same order as a connector's frame: mirrored in the entry's own coordinates, scaled, then placed.
-      const place = (p) => up(point(pose, vscale(mirrored ? [-p[0], p[1], p[2]] : p, s)));
+      const place = (p) => up(point(pose, vscale3(mirrored ? [-p[0], p[1], p[2]] : p, sv)));
       if (ent.rec.kind === 'atom') {
         if (!ent.rec.asset.glb) continue;
         for (const p of pointsOf(ent.rec)) {

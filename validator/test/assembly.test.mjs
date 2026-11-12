@@ -141,12 +141,13 @@ test('Variation (assembly): scale, material and motion choices are held to what 
   passing(await run(build(lib, manifest({ joint2: { motion: { also: [{ turn: 'z', limits_deg: [-12, 12] }] } } })), lib), 'Variation');
   failing(await run(build(lib, manifest({ joint2: { motion: { also: [{ turn: 'q', limits_deg: [12, -12] }] } } })), lib), 'Variation', 'motion.also[0]');
   failing(await run(build(lib, manifest({ joint2: { motion: { teleport: true } } })), lib), 'Variation', 'teleport');
-  // a scaled atom may not join through a connector that has mating dimensions
+  // an even scale is allowed through a connector with mating dimensions (asset spec v0.6); an uneven one needs mating_axes
   const lib2 = newLib();
   validAtom(lib2, 'veh_axle_01', { glb: { connectors: [conn('conn_wheel_hub_a_01', [0.5, 0, 0], 90)] } });
   validAtom(lib2, 'veh_wheel_01', { glb: { connectors: [conn('conn_wheel_hub_b_01', [-0.5, 0, 0], -90)] }, meta: { variation: { scale: [0.8, 1.3] } } });
   const w = (scale) => ({ origin: { ref: 'axle' }, atoms: [{ ref: 'axle', asset: 'veh_axle_01@1.0.0' }, { ref: 'wheel', asset: 'veh_wheel_01@1.0.0', scale }], joints: [{ a: 'axle:conn_wheel_hub_a_01', b: 'wheel:conn_wheel_hub_b_01' }] });
-  failing(await run(build(lib2, w(1.2)), lib2), 'Variation', 'mating dimensions', 'diameter');
+  passing(await run(build(lib2, w(1.2)), lib2), 'Variation');
+  failing(await run(build(lib2, w([1.2, 1, 1])), lib2), 'Variation', 'allows an even scale only');
   passing(await run(build(lib2, w(1)), lib2), 'Variation');
 });
 

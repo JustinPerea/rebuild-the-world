@@ -4,7 +4,7 @@ import { glbConnectors } from '../lib/context.mjs';
 import { collectGeometry } from '../lib/glb.mjs';
 import { bboxOfFaces, visiblePrims } from '../lib/geom.mjs';
 import { angleDeg } from '../lib/math.mjs';
-import { resolvePin } from '../lib/library.mjs';
+import { resolvePin, entryScale, isEvenScale, axisOf } from '../lib/library.mjs';
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const pair = (v) => Array.isArray(v) && v.length === 2 && v.every(isNum) && v[0] <= v[1];
@@ -78,16 +78,41 @@ export function assembly(ctx) {
   if (an.errors.length) return fail(an.errors);
   const notes = [`${an.entries.size} atom(s), ${an.joints.length} joint(s); ${an.joints.length - an.loopChecks} placed by mating, ${an.loopChecks} measured as loop closures`];
   if (an.loopChecks > 0) notes.push(`measured joints: largest gap ${(an.worstGapM * 1000).toFixed(3)} mm (allowed ${ctx.profile.connector_position_tolerance_m * 1000} mm), largest angle ${an.worstAngleDeg.toFixed(3)} degrees (allowed ${ctx.profile.connector_direction_tolerance_deg})`);
+  if (an.unstatedMating > 0) notes.push(`note: ${an.unstatedMating} mating dimension(s) across the joints are stated by only one side or neither (asset.json "connectors[].mating"), so they were not compared`);
   if (an.joints.length > an.loopChecks && an.loopChecks === 0 && an.entries.size > 1) notes.push('note: with no loop closure, joints mate by construction; position errors in a connector cannot show until a second joint ties the same atoms together');
   if (ctx.asset.manifest.states) notes.push('note: "states" are not checked');
   return pass(notes);
 }
 
 // ---------------------------------------------------------------------------
-function checkDeclared(v, where, msgs, glb) {
+// variation.scale is [min, max] (even scale only) or { x, y, z } of [min, max] each, an axis left out being fixed at 1.
+export function scaleRanges(r) {
+  if (pair(r)) return { form: 'even', ok: r[0] > 0 };
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return { ok: false };
+  const keys = Object.keys(r);
+  if (keys.length === 0 || keys.some((k) => !['x', 'y', 'z'].includes(k))) return { ok: false };
+  if (!keys.every((k) => pair(r[k]) && r[k][0] > 0)) return { ok: false };
+  const lo = ['x', 'y', 'z'].map((k) => (r[k] ? r[k][0] : 1));
+  const hi = ['x', 'y', 'z'].map((k) => (r[k] ? r[k][1] : 1));
+  // Uneven scales are possible unless every axis is held to one and the same value.
+  const canDiffer = lo.some((v, k) => v !== hi[k]) || lo.some((v) => v !== lo[0]);
+  return { form: 'axes', ok: true, lo, hi, canDiffer };
+}
+
+function checkDeclared(v, where, msgs, glb, ctx) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) { msgs.push(`${where}: "variation" must be an object`); return; }
   if (v.scale !== undefined) {
-    if (!pair(v.scale) || v.scale[0] <= 0) msgs.push(`${where}: variation.scale must be [min, max] with 0 < min <= max, found ${JSON.stringify(v.scale)}`);
+    const r = scaleRanges(v.scale);
+    if (!r.ok) msgs.push(`${where}: variation.scale must be [min, max] with 0 < min <= max, or { "x": [min, max], "y": [min, max], "z": [min, max] } with any axis left out (fixed at 1), found ${JSON.stringify(v.scale)}`);
+    else if (r.canDiffer && glb) {
+      // Under an uneven scale a connector's directions are kept, so each must lie along one of the atom's own axes.
+      const tolD = ctx.profile.connector_direction_tolerance_deg;
+      for (const c of glbConnectors(glb).found.values()) {
+        for (const [n, d] of [['+Z', c.frame.z], ['+Y', c.frame.y]]) {
+          if (!axisOf(d, tolD).parallel) msgs.push(`${where}: variation.scale lets the axes scale differently, but connector "${c.name}" has its ${n} at [${d.map((x) => Number(x.toFixed(3))).join(', ')}], not parallel to one of the atom's axes within ${tolD} degrees; declare an even [min, max] range or turn the connector`);
+        }
+      }
+    }
   }
   if (v.open_slots !== undefined) {
     if (!Array.isArray(v.open_slots)) msgs.push(`${where}: variation.open_slots must be an array`);
@@ -142,7 +167,7 @@ export function variation(ctx) {
   const v = a.meta?.variation;
   if (v !== undefined) {
     touched = true;
-    checkDeclared(v, 'asset.json', msgs, a.glb);
+    checkDeclared(v, 'asset.json', msgs, a.glb, ctx);
     if (v.spans?.length) notes.push('note: spans are proposed, not built; only their shape is checked, not both ends of each range');
   }
   if (a.kind === 'assembly') {
@@ -154,17 +179,36 @@ export function variation(ctx) {
       const rec = ent?.rec;
       if (entry.scale !== undefined) {
         touched = true;
-        if (!isNum(entry.scale) || entry.scale <= 0) msgs.push(`${where}: "scale" must be a positive number, found ${JSON.stringify(entry.scale)}`);
-        else if (rec) {
-          const r = rec.meta.variation?.scale;
-          if (!r) msgs.push(`${where}: scaled to ${entry.scale} but ${entry.asset} declares no variation.scale`);
-          else if (pair(r) && (entry.scale < r[0] || entry.scale > r[1])) msgs.push(`${where}: scale ${entry.scale} is outside the declared range [${r[0]}, ${r[1]}] of ${entry.asset}`);
-        }
-        if (isNum(entry.scale) && entry.scale !== 1) {
-          for (const J of an.joints) for (const E of [J.A, J.B]) {
-            if (E.ref !== entry.ref) continue;
-            const dims = ctx.registry.types.get(E.type)?.mating_dimensions;
-            if (dims && dims.length) msgs.push(`${where}: scaled to ${entry.scale} but joint ${J.i} uses ${E.name}, a connector with mating dimensions (${dims.join(', ')}); a scaled thing joins nothing through such a connector`);
+        const s = entry.scale;
+        const wellFormed = isNum(s) ? s > 0 : Array.isArray(s) && s.length === 3 && s.every((x) => isNum(x) && x > 0);
+        if (!wellFormed) msgs.push(`${where}: "scale" must be a positive number or three positive numbers [x, y, z], found ${JSON.stringify(s)}`);
+        else {
+          const sv = entryScale(entry);
+          const even = isEvenScale(sv);
+          const shown = JSON.stringify(s);
+          if (rec) {
+            const r = rec.meta.variation?.scale;
+            const rr = r === undefined ? null : scaleRanges(r);
+            if (!r) msgs.push(`${where}: scaled to ${shown} but ${entry.asset} declares no variation.scale`);
+            else if (rec.kind === 'assembly' && !even) msgs.push(`${where}: scaled to ${shown}, but a placed assembly scales evenly only (one number, or three equal numbers)`);
+            else if (rr?.ok && rr.form === 'even') {
+              if (!even) msgs.push(`${where}: scaled to ${shown} but ${entry.asset} declares variation.scale ${JSON.stringify(r)}, which allows an even scale only`);
+              else if (sv[0] < r[0] || sv[0] > r[1]) msgs.push(`${where}: scale ${sv[0]} is outside the declared range [${r[0]}, ${r[1]}] of ${entry.asset}`);
+            } else if (rr?.ok && rr.form === 'axes') {
+              ['x', 'y', 'z'].forEach((k, i) => {
+                const lo = rr.lo[i];
+                const hi = rr.hi[i];
+                if (sv[i] < lo || sv[i] > hi) msgs.push(`${where}: scale ${k} = ${sv[i]} is outside the declared range [${lo}, ${hi}] of ${entry.asset} on the ${k} axis${r[k] ? '' : ' (an axis left out is fixed at 1)'}`);
+              });
+            }
+          }
+          if (!even) {
+            for (const J of an.joints) for (const [E, O] of [[J.A, J.B], [J.B, J.A]]) {
+              if (E.ref !== entry.ref) continue;
+              const joint = `joint ${J.i} (${E.ref}:${E.name} -> ${O.ref}:${O.name}, ${E.ent.entry.asset} and ${O.ent.entry.asset})`;
+              if (E.mating.skewed) msgs.push(`${where}: scaled unevenly to ${shown} but ${joint} uses ${E.name}, whose +Z or +Y is not parallel to one of the atom's axes; an unevenly scaled atom joins only through connectors along its own axes`);
+              if (E.mating.axisLess.length) msgs.push(`${where}: scaled unevenly to ${shown} but ${joint} uses ${E.name}, whose type "${E.type}" gives no "mating_axes" entry for ${E.mating.axisLess.join(', ')}; an unevenly scaled atom joins nothing through a mating dimension with no axis`);
+            }
           }
         }
       }
