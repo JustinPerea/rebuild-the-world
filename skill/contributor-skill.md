@@ -158,7 +158,7 @@ node validator/cli.mjs assets/bld/<asset_id> --task tasks/<task_id>.json
 - Run `npm install` once inside `validator/` first. Without it the file-validity check is skipped.
 - FAIL messages name the node or field, what was measured and what is allowed. Fix the build script and run it again. Never edit `asset.glb` by other means.
 - SKIP is not a pass. It means the check does not apply or cannot run.
-- The validator cannot judge appearance. Look at the result yourself: open the file or render a picture, and compare it with the task's description.
+- The validator cannot judge appearance. Look at the result yourself: run `node tools/render/render.mjs <asset folder>`, which writes pictures of it in the standard scene to its `preview/` folder, open them, and compare them with the task's description. The 1.8 m figure and the 1 m ruler in each picture show the scale. A reviewer renders the asset again with the same command.
 
 ## Assembling an object
 

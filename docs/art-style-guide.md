@@ -76,6 +76,8 @@ Every preview is rendered in one fixed scene, so any two assets can be compared 
 
 Renderer version and settings are pinned in the repository. The review pipeline re-renders every submission itself, so a contributor's previews are for self-checking only.
 
+The scene is `tools/render/` and the command is `node tools/render/render.mjs <asset folder>`. It is built by a script on each run and pinned to Blender 5.0. `tools/render/README.md` lists what is in the picture and what the tool does not do yet.
+
 ## Self-check
 
 Before submitting, the contributor's model renders the asset and compares it with the golden set. These steps go into the contributor skill file as written.
