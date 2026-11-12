@@ -11,7 +11,7 @@ docs/open-an-area.md is the guide. `cell` and `open` need only Python and Node. 
 also need numpy (pinned in tools/refs/requirements.txt) and a Mapillary token in MAPILLARY_TOKEN.
 Everything fetched is data, never code.
 """
-import argparse, datetime, json, os, subprocess, sys, time
+import argparse, datetime, html, json, os, re, subprocess, sys, time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -192,7 +192,7 @@ def map_data(w, reg, region, thumbs):
     rows = []
     for si, s in enumerate(order):
         for q in sorted(seqs[s], key=lambda q: q["captured_at"] or 0):
-            has = (thumbs / f"{q['id']}.jpg").exists()
+            has = bool(PHOTO_ID.fullmatch(str(q["id"]))) and (thumbs / f"{q['id']}.jpg").exists()
             rows.append([q["id"], round(q["x"], 1), round(q["z"], 1), round(q["compass"]), si, int(bool(q["pano"])), int(has), round(q["width"] / q["height"], 3) if has else 0])
     meta = [{"creator": seqs[s][0]["creator"], "date": day(min(q["captured_at"] or 0 for q in seqs[s])), "n": len(seqs[s])} for s in order]
     p = w.plan(reg, False, True, None)[2] if photos else {}
@@ -236,6 +236,26 @@ def wanted_thumbs(data, limit):
     return [data["photos"][i][0] for i in out]
 
 
+def script_json(data):
+    """JSON that is safe inside a <script> element. Photographers' names, the place's name and building IDs are
+    written by other people, so nothing in them may end the element or start a tag."""
+    text = json.dumps(data, separators=(",", ":"))
+    for ch, esc in (("<", "\\u003c"), (">", "\\u003e"), ("&", "\\u0026"), ("\u2028", "\\u2028"), ("\u2029", "\\u2029")):
+        text = text.replace(ch, esc)
+    return text
+
+
+def render(region, data):
+    """The map page without a document around it: the template with the place's name, then the data, then the script."""
+    name = str(region.get("name") or region["id"])
+    title = html.escape(name.split(",")[0].strip() + " Photo Map")
+    page = (HERE / "map" / "page.html").read_text(encoding="utf-8").replace("{{TITLE}}", title).replace("{{PLACE}}", html.escape(name))
+    return page + "<script>window.PHOTOMAP = " + script_json(data) + ";</script>\n<script>\n" + (HERE / "map" / "page.js").read_text(encoding="utf-8") + "</script>\n"
+
+
+PHOTO_ID = re.compile(r"[0-9]{1,24}")      # a Mapillary photo ID. It names a file and ends a link, so nothing else is stored
+
+
 def cmd_map(args):
     d = region_dir(args.region)
     region = json.loads((d / "region.json").read_text(encoding="utf-8"))
@@ -246,10 +266,10 @@ def cmd_map(args):
     data = map_data(w, reg, region, thumbs)
     if args.photos and data["photos"]:
         tok = w.token()
-        todo = [pid for pid in wanted_thumbs(data, args.photos) if not (thumbs / f"{pid}.jpg").exists()]
+        todo = [pid for pid in wanted_thumbs(data, args.photos) if PHOTO_ID.fullmatch(str(pid)) and not (thumbs / f"{pid}.jpg").exists()]
         for n, pid in enumerate(todo):
             url = w.get(f"{w.GRAPH}/{pid}", {"fields": "thumb_1024_url", "access_token": tok}).get("thumb_1024_url")
-            if url:
+            if isinstance(url, str) and url.startswith("https://"):
                 (thumbs / f"{pid}.jpg").write_bytes(w.get(url, raw=True))
             if n % 50 == 49:
                 print(f"  {n + 1} of {len(todo)} photos fetched")
@@ -262,9 +282,7 @@ def cmd_map(args):
             dst = out / "img" / f"{r[0]}.jpg"
             if not dst.exists():
                 dst.write_bytes((thumbs / f"{r[0]}.jpg").read_bytes())
-    title = region["name"].split(",")[0].strip() + " Photo Map"
-    page = (HERE / "map" / "page.html").read_text(encoding="utf-8").replace("{{TITLE}}", title).replace("{{PLACE}}", region["name"])
-    body = page + "<script>window.PHOTOMAP = " + json.dumps(data, separators=(",", ":")) + ";</script>\n<script>\n" + (HERE / "map" / "page.js").read_text(encoding="utf-8") + "</script>\n"
+    body = render(region, data)
     (out / "fragment.html").write_text(body, encoding="utf-8")       # the page without a document around it, for hosts that add their own
     (out / "index.html").write_text('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
                                     "<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n</head>\n<body>\n" + body + "</body>\n</html>\n", encoding="utf-8")

@@ -91,6 +91,25 @@ class Kit(unittest.TestCase):
         self.assertEqual(kit.wanted_thumbs(data, 3), ["0", "3", "1"])                    # one each before any second; the panorama waits
         self.assertEqual(kit.wanted_thumbs(data, 99), ["0", "3", "1", "2"])              # ordinary photos only where a building has one
 
+    def test_other_peoples_text_cannot_break_out_of_the_page(self):
+        nasty = '</script><script>alert(1)</script><img src=x onerror=alert(2)>&\u2028'
+        data = {"photos": [], "seqs": [{"creator": nasty, "date": "2026-01-01", "n": 1}], "buildings": [], "sees": [], "info": [[nasty, 6, 0, 0, ""]],
+                "outlines": "x", "refsRun": False}
+        text = kit.script_json(data)
+        for ch in "<>&\u2028":
+            self.assertNotIn(ch, text)
+        self.assertEqual(json.loads(text), data)                                         # the page still reads the same values
+        page = kit.render({"id": "c17-1-2", "name": nasty + ", Nowhere"}, data)
+        self.assertNotIn("</script><script>alert(1)", page)
+        self.assertEqual(page.count("<script>"), 2)                                      # the data and the page's own code, nothing else
+        self.assertNotIn("<img src=x", page)
+
+    def test_only_a_plain_number_is_a_photo_id(self):
+        for ok in ("1234567890", "9"):
+            self.assertTrue(kit.PHOTO_ID.fullmatch(ok))
+        for bad in ("../x", "12/34", "12.jpg", "", "1" * 30, "12\n"):
+            self.assertFalse(kit.PHOTO_ID.fullmatch(bad), bad)
+
 
 if __name__ == "__main__":
     unittest.main()
