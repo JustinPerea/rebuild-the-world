@@ -16,7 +16,7 @@ export const THICKNESS = 150;          // mm, wall thickness T
 export const STEP = 50;                // mm, size step
 export const MIN_BAND = 50;            // mm, a base or top band under this is dropped
 export const MIN_MODULE = 50;          // mm, no module is narrower
-export const MIN_END_BAY = 300;        // mm, the wall bay next to an outside corner
+export const MIN_END_BAY = 200;        // mm, the wall bay next to an outside corner
 export const PANEL = 1000;             // mm, the width of the base wall atom; a plain stretch is cut into n = max(1, round(W / PANEL)) equal pieces
 export const BASE_H = 2800;            // mm, the height of the three base atoms
 // What the three base atoms must declare in `variation.scale`, and so the largest and smallest piece the kit will draft.

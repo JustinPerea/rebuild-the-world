@@ -90,7 +90,7 @@ The plan goes in the file that `show` names under `file`. List a wall in `facade
 
 **Every wall.**
 
-- Where a wall ends at an outside corner, the row's first or last bay is a plain `wall` bay at least 0.3 m wide. A corner post stands in the first 0.15 m.
+- Where a wall ends at an outside corner, the row's first or last bay is a plain `wall` bay at least 0.2 m wide. A corner post stands in the first 0.15 m.
 - A wall you list needs a row for every storey. A storey of that wall with no opening is a row with one `wall` bay as long as the wall.
 - Reuse a bay from `used_so_far` when it matches what you want within 5 cm in every size. Each new size is a new piece that somebody must build.
 - The format has no place for an awning, a sign, a pipe, an air-conditioning unit, a projecting balcony slab or a wall that is not flat. Leave them out and list what you left out in `notes`.

@@ -87,7 +87,7 @@ The example shows the shape of the file. Its sizes are placeholders: do not copy
 | `facades[].basis`, `reference` | Optional. `"typical"` (the default) for a facade you chose. `"reference"` for one drawn from a wall reference, with `"reference"` naming the image: `edge00_fused.jpg` or `edge00_best.jpg` for edge 0 |
 | `facades[].reference_offset_m` | Optional, with `"basis": "reference"`. Where the wall's own left end sits in the image, in metres from the image's left edge (negative when it lies off the image). Bays are always measured from the wall's left end; `tools/refs/sheet.py` uses this number to draw them in the right place |
 | `rows` | Each row covers one or more storeys with the same bays. Every storey is covered by exactly one row. On a listed wall, a storey with no opening is a row with one `wall` bay as long as the wall |
-| `bays` | Left to right, seen from outside. Their widths, times `count`, add up to the wall's length within 1 cm. Where the wall ends at an outside corner (an inside angle under 180 degrees), the row's end bay is a plain `wall` bay at least 0.3 m wide: a corner post stands there |
+| `bays` | Left to right, seen from outside. Their widths, times `count`, add up to the wall's length within 1 cm. Where the wall ends at an outside corner (an inside angle under 180 degrees), the row's end bay is a plain `wall` bay at least 0.2 m wide: a corner post stands there |
 | `notes` | Up to 600 characters |
 | `provenance` | `author`, `tools` (the agent and the model it ran on) and `created` |
 

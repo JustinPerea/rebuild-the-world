@@ -24,7 +24,7 @@ const STEP = 0.05;            // sizes are multiples of this, except one wall ba
 const LENGTH_TOL = 0.01;      // a row's bays against its facade's length
 const HEIGHT_TOL = 0.03;      // base + storeys + top against the wall height
 const STOREY_MIN = 2.0, STOREY_MAX = 6.0;
-const CORNER_BAY_MIN = 0.3;    // a plain wall bay this wide stands next to every outside corner
+const CORNER_BAY_MIN = 0.2;    // a plain wall bay this wide stands next to every outside corner
 const REFERENCE_RE = /^edge(\d{2})_(?:best|fused)\.jpg$/;   // a wall reference, as tools/refs/wallrefs.py names it
 export const BASES = ['typical', 'reference'];
 const REFERENCE_OFFSET_MAX = 3;  // metres a wall reference may sit off along the wall

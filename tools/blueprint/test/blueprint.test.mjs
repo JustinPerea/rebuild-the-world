@@ -190,7 +190,7 @@ test('a window as the first bay at an outside corner is a problem, and the text 
   fx.plan.facades[0].rows[0].bays = [WIN(1.0), WALL(1.0), DOOR, WIN(1.0), WALL(2.0)];
   const r = draft(fx.reg, fx.p, fx.plan);
   // The survey's checker holds the same rule, so the plan is turned back before anything is drafted.
-  assert.ok(r.problems.some((m) => /the first bay stands at an outside corner, so it must be a plain wall bay at least 0\.3 m wide/.test(m)), JSON.stringify(r.problems));
+  assert.ok(r.problems.some((m) => /the first bay stands at an outside corner, so it must be a plain wall bay at least 0\.2 m wide/.test(m)), JSON.stringify(r.problems));
   assert.equal(r.blueprint, null);
   fx.plan.facades[0].rows[0].bays = [WALL(0.15), WIN(1.0), DOOR, WIN(1.0), WALL(2.85)];
   assert.ok(draft(fx.reg, fx.p, fx.plan).problems.some((m) => /the first bay stands at an outside corner/.test(m)));
@@ -545,8 +545,8 @@ test('a single wall bay between two outside corners: 0.4 m leaves a 0.1 m module
   assert.deepEqual(runWidths(edge0(0.35), 0), [50]);
   // an end bay that really is too narrow is still a problem
   const { reg, p } = bareBox(1.0, 3);
-  const bad = draft(reg, p, plan(p, { heights: [2.8], facades: [facade(0, 1.0, [{ storeys: [1], bays: [WALL(0.25), WALL(0.75)] }])] }));
-  assert.ok(bad.problems.some((x) => /at least 0\.3 m wide/.test(x)));
+  const bad = draft(reg, p, plan(p, { heights: [2.8], facades: [facade(0, 1.0, [{ storeys: [1], bays: [WALL(0.15), WALL(0.85)] }])] }));
+  assert.ok(bad.problems.some((x) => /at least 0\.2 m wide/.test(x)));
 });
 
 test('object ids: two ways that share their first digits do not collide, and PLATEAU ids keep 12 hex digits', () => {
