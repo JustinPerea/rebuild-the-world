@@ -43,6 +43,30 @@ def metres_per_degree(lat_deg):
     return math.radians(1) * a * (1 - e2) / w ** 3, math.radians(1) * a / w * math.cos(math.radians(lat_deg))
 
 
+def tangent(o_lat, o_lon):
+    """A function from (lat, lon) to metres east and south of an origin, on the plane that touches WGS 84 there.
+    This is the exact flat frame an engine anchors on the globe; metres_per_degree alone is off by millimetres
+    across a cell, and by centimetres near the poles."""
+    a, f = 6378137.0, 1 / 298.257223563
+    e2 = f * (2 - f)
+
+    def ecef(lat, lon):
+        la, lo = math.radians(lat), math.radians(lon)
+        n = a / math.sqrt(1 - e2 * math.sin(la) ** 2)
+        return n * math.cos(la) * math.cos(lo), n * math.cos(la) * math.sin(lo), n * (1 - e2) * math.sin(la)
+
+    ox, oy, oz = ecef(o_lat, o_lon)
+    sla, cla, slo, clo = math.sin(math.radians(o_lat)), math.cos(math.radians(o_lat)), math.sin(math.radians(o_lon)), math.cos(math.radians(o_lon))
+
+    def local(lat, lon):
+        x, y, z = ecef(lat, lon)
+        dx, dy, dz = x - ox, y - oy, z - oz
+        east = -slo * dx + clo * dy
+        north = -sla * clo * dx - sla * slo * dy + cla * dz
+        return east, -north          # x east, z south
+    return local
+
+
 def metres(text):
     """A tagged height in metres, or None. Reads "12", "12.5 m" and "40 ft"; anything else is None."""
     m = re.fullmatch(r"\s*(\d+(?:[.,]\d+)?)\s*(m|metres?|meters?|ft|feet|')?\s*", text or "", re.I)
@@ -115,7 +139,10 @@ def build(region, answer):
     """The pack's buildings and a summary, from a region record and an Overpass answer."""
     o_lat, o_lon = region["origin"]["lat"], region["origin"]["lon"]
     m_lat, m_lon = metres_per_degree(o_lat)
-    local = lambda lat, lon: ((lon - o_lon) * m_lon, -(lat - o_lat) * m_lat)     # x east, z south
+    if region.get("frame") == "tangent-plane":       # a cell of the world grid
+        local = tangent(o_lat, o_lon)
+    else:                                            # a pack cut before the grid existed keeps its coordinates
+        local = lambda lat, lon: ((lon - o_lon) * m_lon, -(lat - o_lat) * m_lat)     # x east, z south
     start = region.get("start_block")
     out, skipped = [], 0
     for el in answer.get("elements", []):

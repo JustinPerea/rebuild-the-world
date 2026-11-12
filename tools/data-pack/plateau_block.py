@@ -45,6 +45,30 @@ def metres_per_degree(lat_deg):
     return math.radians(1) * m, math.radians(1) * n * math.cos(math.radians(lat_deg))
 
 
+def tangent(o_lat, o_lon):
+    """A function from (lat, lon) to metres east and south of an origin, on the plane that touches WGS 84 there.
+    This is the exact flat frame an engine anchors on the globe; metres_per_degree alone is off by millimetres
+    across a cell, and by centimetres near the poles."""
+    a, f = 6378137.0, 1 / 298.257223563
+    e2 = f * (2 - f)
+
+    def ecef(lat, lon):
+        la, lo = math.radians(lat), math.radians(lon)
+        n = a / math.sqrt(1 - e2 * math.sin(la) ** 2)
+        return n * math.cos(la) * math.cos(lo), n * math.cos(la) * math.sin(lo), n * (1 - e2) * math.sin(la)
+
+    ox, oy, oz = ecef(o_lat, o_lon)
+    sla, cla, slo, clo = math.sin(math.radians(o_lat)), math.cos(math.radians(o_lat)), math.sin(math.radians(o_lon)), math.cos(math.radians(o_lon))
+
+    def local(lat, lon):
+        x, y, z = ecef(lat, lon)
+        dx, dy, dz = x - ox, y - oy, z - oz
+        east = -slo * dx + clo * dy
+        north = -sla * clo * dx - sla * slo * dy + cla * dz
+        return east, -north          # x east, z south
+    return local
+
+
 def mesh3(lat, lon):
     """Japan's third-level grid square code (about 1 km), which names PLATEAU building tiles."""
     p = int(lat * 1.5); u = int(lon - 100)
@@ -74,11 +98,17 @@ def main():
     half = region["square_m"] / 2
     m_lat, m_lon = metres_per_degree(o_lat)
 
-    def local(lat, lon):
-        return ((lon - o_lon) * m_lon, -(lat - o_lat) * m_lat)  # x east, z south
+    if region.get("frame") == "tangent-plane":       # a cell of the world grid
+        local = tangent(o_lat, o_lon)
+    else:                                            # a pack cut before the grid existed keeps its coordinates
+        def local(lat, lon):
+            return ((lon - o_lon) * m_lon, -(lat - o_lat) * m_lat)  # x east, z south
 
     bounds = region.get("bounds")       # a cell of the world grid is kept by its edges in degrees
-    corners = [(o_lat + sy * half / m_lat, o_lon + sx * half / m_lon) for sx in (-1, 1) for sy in (-1, 1)]
+    if bounds:
+        corners = [(la, lo) for la in (bounds["south"], bounds["north"]) for lo in (bounds["west"], bounds["east"])]
+    else:
+        corners = [(o_lat + sy * half / m_lat, o_lon + sx * half / m_lon) for sx in (-1, 1) for sy in (-1, 1)]
     tiles = sorted({mesh3(la, lo) for la, lo in corners})
     z = zipfile.ZipFile(args.zip)
     names = {n.split("/")[-1][:8]: n for n in z.namelist() if n.startswith("udx/bldg/") and n.endswith(".gml")}

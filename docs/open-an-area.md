@@ -6,7 +6,7 @@ This is the guide for someone who wants to start building a part of the world th
 
 ## Words used here
 
-- **Cell**: one square of the world grid, about 150 to 300 m across depending on latitude. An area is one cell. `docs/world-model.md`, "The world grid", says why the cells are fixed.
+- **Cell**: one square of the world grid, between 177 and 354 m across depending on latitude. An area is one cell. `docs/world-model.md`, "The world grid", says why the cells are fixed.
 - **Data pack**: the folder `data/<cell id>/`, holding the area's building outlines and heights.
 - **Blockout**: a plain box for every building, made from its outline and height.
 - **A0 to A3**: how accurate a building is. A0 is the blockout, A1 (Dressed) has typical windows and doors on the right shape, A2 is the true exterior, A3 is true inside and out. `docs/world-model.md`, "Accuracy levels".
@@ -44,7 +44,7 @@ This is the guide for someone who wants to start building a part of the world th
 python3 tools/region-kit/kit.py cell --lat 38.7118 --lon -9.13
 ```
 
-This prints the cell's ID (`c17-62211-50227`), its edges, its size in metres and its four neighbours. Take the latitude and longitude from OpenStreetMap: right-click the map at openstreetmap.org and choose "Show address", or read them from the end of the page's address (`#map=<zoom>/<latitude>/<longitude>`).
+This prints the cell's ID (`c17-62211-50227`), its edges, its size in metres and its neighbours. The number after `c` is the cell's tile level, which follows latitude: 17 up to about 55 degrees north or south, 16 from there to about 73. A cell on the line between two levels has two neighbours on that side. Take the latitude and longitude from OpenStreetMap: right-click the map at openstreetmap.org and choose "Show address", or read them from the end of the page's address (`#map=<zoom>/<latitude>/<longitude>`).
 
 Check that nobody has opened the cell: `data/<cell id>/` must not exist on `main`, and no open pull request may add it. Search the repository's pull requests for the cell ID, or run `gh pr list --search "<cell id>"`.
 

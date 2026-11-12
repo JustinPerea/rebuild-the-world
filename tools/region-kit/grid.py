@@ -1,54 +1,99 @@
 """The world grid: one fixed set of cells over the Earth, so neighbouring areas meet without gaps or overlaps.
 
-A cell is a Web Mercator map tile at zoom ZOOM, the scheme every web map uses. A cell is square
-on the ground and its side shrinks with latitude: about 306 m at the equator, 248 m in Tokyo,
-190 m in London. Standard library only.
+A cell is a Web Mercator map tile, the numbering web maps use. Tiles form a tree: each splits into
+four at the next level. A tile's side on the ground shrinks with latitude, so the level of a cell
+follows its latitude: the level, from COARSEST to FINEST, whose tiles are nearest TARGET_M wide there.
+Cells are then 180 to 350 m across everywhere. Standard library only.
 """
 import math
 
-ZOOM = 17
-N = 2 ** ZOOM
+FINEST = 17                # the level used from the equator to about 55 degrees
+COARSEST = 14              # the level used nearest the poles; a cell's level is decided per row of this level
+TARGET_M = 250.0           # the side a cell should have on the ground
 MAX_LAT = 85.0511          # the scheme stops here; nothing is built nearer the poles
+EQUATOR_M = 2 * math.pi * 6378137.0    # a level-0 tile's side on the ground at the equator
+
+
+def _row(lat, z):
+    n = 2 ** z
+    y = int(math.floor((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * n))
+    return min(max(y, 0), n - 1)
+
+
+def _row_lat(row, z):
+    """Latitude of the top edge of a row at level z. Half rows are allowed."""
+    return math.degrees(math.atan(math.sinh(math.pi * (1.0 - 2.0 * row / 2 ** z))))
+
+
+def side_m(z, lat):
+    """A level-z tile's side on the ground at a latitude."""
+    return EQUATOR_M / 2 ** z * math.cos(math.radians(lat))
+
+
+def level_of_row(coarse_row):
+    """The level of every cell inside one row of level COARSEST: the one whose tiles are nearest TARGET_M wide
+    at the row's middle. Deciding per coarse row makes every change of level fall on an edge all levels share."""
+    lat = _row_lat(coarse_row + 0.5, COARSEST)
+    return min(range(COARSEST, FINEST + 1), key=lambda z: abs(math.log(side_m(z, lat) / TARGET_M)))
+
+
+def level_at(lat):
+    if not -MAX_LAT < lat < MAX_LAT:
+        raise ValueError(f"latitude {lat} is outside the grid (it covers {-MAX_LAT} to {MAX_LAT})")
+    return level_of_row(_row(lat, COARSEST))
 
 
 def cell_of(lat, lon):
-    """The (x, y) of the cell that holds a point. x counts east from longitude -180, y south from the top."""
-    if not -MAX_LAT < lat < MAX_LAT:
-        raise ValueError(f"latitude {lat} is outside the grid (it covers {-MAX_LAT} to {MAX_LAT})")
-    x = int(math.floor((lon + 180.0) / 360.0 * N)) % N
-    y = int(math.floor((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * N))
-    return x, min(max(y, 0), N - 1)
+    """The (level, x, y) of the cell that holds a point. x counts east from longitude -180, y south from the top."""
+    z = level_at(lat)
+    n = 2 ** z
+    return z, int(math.floor((lon + 180.0) / 360.0 * n)) % n, _row(lat, z)
 
 
-def bounds(x, y):
+def bounds(z, x, y):
     """A cell's edges in degrees: south, west, north, east."""
-    lat = lambda row: math.degrees(math.atan(math.sinh(math.pi * (1.0 - 2.0 * row / N))))
-    lon = lambda col: col / N * 360.0 - 180.0
-    return lat(y + 1), lon(x), lat(y), lon(x + 1)
+    lon = lambda col: col / 2 ** z * 360.0 - 180.0
+    return _row_lat(y + 1, z), lon(x), _row_lat(y, z), lon(x + 1)
 
 
-def cell_id(x, y):
-    return f"c{ZOOM}-{x}-{y}"
+def cell_id(z, x, y):
+    return f"c{z}-{x}-{y}"
 
 
 def parse_id(text):
-    """(x, y) from a cell ID such as c17-116437-51607."""
+    """(level, x, y) from a cell ID such as c17-116439-51599. Refuses a tile that is not a cell at its latitude."""
     parts = text.split("-")
-    if len(parts) != 3 or parts[0] != f"c{ZOOM}" or not (parts[1].isdigit() and parts[2].isdigit()):
-        raise ValueError(f"{text!r} is not a cell ID of this grid (c{ZOOM}-<x>-<y>)")
-    x, y = int(parts[1]), int(parts[2])
-    if not (0 <= x < N and 0 <= y < N):
+    if len(parts) != 3 or parts[0][:1] != "c" or not all(p.isdigit() and p.isascii() for p in (parts[0][1:], parts[1], parts[2])):
+        raise ValueError(f"{text!r} is not a cell ID (c<level>-<x>-<y>)")
+    z, x, y = int(parts[0][1:]), int(parts[1]), int(parts[2])
+    if not COARSEST <= z <= FINEST:
+        raise ValueError(f"{text!r} is not a cell ID: levels run from {COARSEST} to {FINEST}")
+    if not (0 <= x < 2 ** z and 0 <= y < 2 ** z):
         raise ValueError(f"{text!r} is outside the grid")
-    return x, y
+    want = level_of_row(y >> (z - COARSEST))
+    if want != z:
+        raise ValueError(f"{text!r} is not a cell: cells at its latitude are level {want}")
+    return z, x, y
 
 
-def neighbours(x, y):
-    """The four cells that share an edge with this one, as {"north": (x, y), ...}. East and west wrap round."""
-    out = {"east": ((x + 1) % N, y), "west": ((x - 1) % N, y)}
-    if y > 0:
-        out["north"] = (x, y - 1)
-    if y < N - 1:
-        out["south"] = (x, y + 1)
+def neighbours(z, x, y):
+    """The cells that share an edge with this one, as {"north": [(level, x, y), ...], ...}. East and west wrap
+    round. Where the level changes, a cell has two neighbours on that side, or shares its neighbour with another."""
+    n = 2 ** z
+    out = {"east": [(z, (x + 1) % n, y)], "west": [(z, (x - 1) % n, y)]}
+    for side, yy in (("north", y - 1), ("south", y + 1)):
+        if not 0 <= yy < n:
+            continue
+        zn = level_of_row(yy >> (z - COARSEST))
+        if zn == z:
+            out[side] = [(z, x, yy)]
+        elif zn < z:
+            k = z - zn
+            out[side] = [(zn, x >> k, yy >> k)]
+        else:
+            k = zn - z
+            row = (yy << k) + (2 ** k - 1 if side == "north" else 0)      # the finer row that touches this cell
+            out[side] = [(zn, (x << k) + i, row) for i in range(2 ** k)]
     return out
 
 
@@ -61,15 +106,15 @@ def metres_per_degree(lat_deg):
     return math.radians(1) * a * (1 - e2) / w ** 3, math.radians(1) * a / w * math.cos(math.radians(lat_deg))
 
 
-def describe(x, y):
+def describe(z, x, y):
     """A cell's record: ID, edges, centre, and its size in metres."""
-    s, w, n, e = bounds(x, y)
+    s, w, n, e = bounds(z, x, y)
     lat0, lon0 = (s + n) / 2, (w + e) / 2
     m_lat, m_lon = metres_per_degree(lat0)
     return {
-        "id": cell_id(x, y), "zoom": ZOOM, "x": x, "y": y,
+        "id": cell_id(z, x, y), "zoom": z, "x": x, "y": y,
         "bounds": {"south": round(s, 7), "west": round(w, 7), "north": round(n, 7), "east": round(e, 7)},
         "centre": {"lat": round(lat0, 7), "lon": round(lon0, 7)},
         "size_m": {"east_west": round((e - w) * m_lon, 1), "north_south": round((n - s) * m_lat, 1)},
-        "neighbours": {k: cell_id(*v) for k, v in neighbours(x, y).items()},
+        "neighbours": {k: [cell_id(*c) for c in v] for k, v in neighbours(z, x, y).items()},
     }
