@@ -23,7 +23,7 @@ export function resolvePin(pin, libDir) {
   const dir = libraryDir(libDir, id);
   if (!fs.existsSync(dir)) return { error: `"${pin}" is not in the library: ${dir} does not exist` };
   const a = loadAssetDir(dir);
-  if (a.kind !== 'atom' && a.kind !== 'assembly') return { error: `"${pin}": folder ${dir} holds neither asset.glb nor assembly.json` };
+  if (a.kind !== 'atom' && a.kind !== 'molecule') return { error: `"${pin}": folder ${dir} holds neither asset.glb nor molecule.json` };
   if (!a.meta) return { error: `"${pin}": ${a.metaError}` };
   if (a.meta.version !== version) return { error: `"${pin}" is not a merged version: ${dir} holds version ${a.meta.version ?? '(no version field)'}` };
   return { id, version, dir, asset: a, meta: a.meta, kind: a.kind };
@@ -92,13 +92,13 @@ export function entryConnector(rec, entry, connName, ctx) {
     c = rec.nested.exposed.get(connName);
     if (!c) {
       const names = [...rec.nested.exposed.keys()];
-      return { error: `connector "${connName}" is not exposed by assembly "${rec.id}" (it exposes: ${names.length ? names.join(', ') : 'nothing'}); join it through an exposed name` };
+      return { error: `connector "${connName}" is not exposed by molecule "${rec.id}" (it exposes: ${names.length ? names.join(', ') : 'nothing'}); join it through an exposed name` };
     }
     base = c.mating;
   }
   let frame = entry.mirror ? mirrorFrame(c.frame) : c.frame;
   // A placed thing scales about its own origin (asset spec, "Scale"), axis by axis, so its connectors move with it.
-  // assemblyBounds scales the vertices the same way. Directions do not change.
+  // moleculeBounds scales the vertices the same way. Directions do not change.
   const sv = entryScale(entry);
   if (!(sv[0] === 1 && sv[1] === 1 && sv[2] === 1)) frame = { ...frame, p: vscale3(frame.p, sv) };
   const reg = ctx.registry.types.get(c.type);
@@ -106,23 +106,23 @@ export function entryConnector(rec, entry, connName, ctx) {
   return { type: c.type, side: c.side, frame, name: connName, mating };
 }
 
-export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
+export function analyzeMolecule(dir, manifest, meta, ctx, stack = []) {
   const { libDir, registry, profile } = ctx;
   const res = {
     errors: [], entries: new Map(), poses: new Map(), exposed: new Map(), joints: [], triangles: 0, rootRef: null, loopChecks: 0, worstGapM: 0, worstAngleDeg: 0, unstatedMating: 0,
   };
   const err = (m) => res.errors.push(m);
   if (stack.length > MAX_DEPTH) {
-    err(`assemblies nest more than ${MAX_DEPTH} levels deep`);
+    err(`molecules nest more than ${MAX_DEPTH} levels deep`);
     return res;
   }
   if (!manifest || typeof manifest !== 'object') {
-    err('assembly.json is not an object');
+    err('molecule.json is not an object');
     return res;
   }
   const atoms = Array.isArray(manifest.atoms) ? manifest.atoms : null;
   if (!atoms || atoms.length === 0) {
-    err('assembly.json: "atoms" must be a non-empty array');
+    err('molecule.json: "atoms" must be a non-empty array');
     return res;
   }
   for (const [i, entry] of atoms.entries()) {
@@ -132,7 +132,7 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
     const rec = resolvePin(entry.asset, libDir);
     if (rec.error) { err(`atom "${entry.ref}": ${rec.error}`); res.entries.set(entry.ref, { entry, rec: null }); continue; }
     if (meta?.library && rec.meta.library && rec.meta.library !== meta.library) {
-      err(`atom "${entry.ref}" (${entry.asset}) belongs to library "${rec.meta.library}", this assembly is in "${meta.library}"; an assembly uses atoms from its own library only`);
+      err(`atom "${entry.ref}" (${entry.asset}) belongs to library "${rec.meta.library}", this molecule is in "${meta.library}"; a molecule uses atoms from its own library only`);
     }
     if (rec.kind === 'atom') {
       if (rec.asset.glbError) err(`atom "${entry.ref}" (${entry.asset}): ${rec.asset.glbError}`);
@@ -141,10 +141,10 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
         res.triangles += countTriangles(rec.asset.glb);
       }
     } else {
-      if (stack.includes(rec.dir)) { err(`atom "${entry.ref}": assembly ${entry.asset} contains itself`); res.entries.set(entry.ref, { entry, rec: null }); continue; }
-      if (!rec.asset.manifest) { err(`atom "${entry.ref}": ${rec.asset.manifestError || 'assembly.json is missing'}`); res.entries.set(entry.ref, { entry, rec: null }); continue; }
-      rec.nested = analyzeAssembly(rec.dir, rec.asset.manifest, rec.meta, ctx, [...stack, dir]);
-      for (const e of rec.nested.errors) err(`nested assembly "${entry.ref}" (${entry.asset}): ${e}`);
+      if (stack.includes(rec.dir)) { err(`atom "${entry.ref}": molecule ${entry.asset} contains itself`); res.entries.set(entry.ref, { entry, rec: null }); continue; }
+      if (!rec.asset.manifest) { err(`atom "${entry.ref}": ${rec.asset.manifestError || 'molecule.json is missing'}`); res.entries.set(entry.ref, { entry, rec: null }); continue; }
+      rec.nested = analyzeMolecule(rec.dir, rec.asset.manifest, rec.meta, ctx, [...stack, dir]);
+      for (const e of rec.nested.errors) err(`nested molecule "${entry.ref}" (${entry.asset}): ${e}`);
       res.triangles += rec.nested.triangles;
     }
     if (entry.mirror === true && rec.meta.mirror_safe !== true) {
@@ -172,7 +172,7 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
   // profile-1.json states 1 mm; a profile that leaves the key out gets the same value, so the comparison is never off.
   const tolM = Number.isFinite(profile.mating_tolerance_m) ? profile.mating_tolerance_m : DEFAULT_MATING_TOLERANCE_M;
   const joints = Array.isArray(manifest.joints) ? manifest.joints : [];
-  if (!Array.isArray(manifest.joints)) err('"joints" must be an array (it may be empty only for a one-atom assembly)');
+  if (!Array.isArray(manifest.joints)) err('"joints" must be an array (it may be empty only for a one-atom molecule)');
   const parsed = [];
   for (const [i, j] of joints.entries()) {
     const label = `joint ${i} (${j?.a} -> ${j?.b})`;
@@ -207,7 +207,7 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
       }
     }
     // Both sides must agree on every mating dimension once scaled (asset spec, "Connectors"). A side that
-    // states no value for a dimension cannot be compared; that is counted, and the Assembly check says so.
+    // states no value for a dimension cannot be compared; that is counted, and the Molecule check says so.
     for (const d of Array.isArray(reg.mating_dimensions) ? reg.mating_dimensions : []) {
       const va = A.mating.values[d];
       const vb = B.mating.values[d];
@@ -289,10 +289,10 @@ export function analyzeAssembly(dir, manifest, meta, ctx, stack = []) {
   return res;
 }
 
-// The bounding box of an analysed assembly: every vertex of every placed atom, in the assembly's
-// own coordinates (its origin at 0). Nested assemblies are measured through their own poses.
+// The bounding box of an analysed molecule: every vertex of every placed atom, in the molecule's
+// own coordinates (its origin at 0). Nested molecules are measured through their own poses.
 // Returns null when nothing could be placed.
-export function assemblyBounds(res) {
+export function moleculeBounds(res) {
   const min = [Infinity, Infinity, Infinity];
   const max = [-Infinity, -Infinity, -Infinity];
   const points = new Map();

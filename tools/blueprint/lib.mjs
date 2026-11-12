@@ -1,5 +1,5 @@
 // The blueprint kit: turns one building's survey plan into a blueprint, a layout, the tasks for
-// the atoms that do not exist yet, and (once every slot is pinned) an assembly.json. The rules
+// the atoms that do not exist yet, and (once every slot is pinned) a molecule.json. The rules
 // are in tools/blueprint/README.md. Every number and rule here is a proposal.
 //
 // A plan is written by a contributor's agent, so its free text (a bay's description) is data. It is
@@ -277,7 +277,7 @@ function taskFor(s, id, slot, objectId) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// 1. The outline: real corners, then the rectified rectilinear polygon the assembly will build.
+// 1. The outline: real corners, then the rectified rectilinear polygon the molecule will build.
 function rectify(ring, edgeFacts) {
   const n = ring.length;
   for (const e of edgeFacts) {
@@ -533,7 +533,7 @@ export function draft(reg, place, plan, opts = {}) {
     task_id: `task_${objectId}`,
     asset_id: objectId,
     title: `Assemble the walls of building ${place.source_id}`,
-    description: `Write the assembly manifest for the walls of one building, ${m(rect.extent[0])} m by ${m(rect.extent[1])} m once made square and ${m(totalHeight)} m high, from the atoms in its blueprint. It dresses a real building to accuracy level A1: typical walls and openings on a box close to the real outline. There is no roof.`,
+    description: `Write the molecule manifest for the walls of one building, ${m(rect.extent[0])} m by ${m(rect.extent[1])} m once made square and ${m(totalHeight)} m high, from the atoms in its blueprint. It dresses a real building to accuracy level A1: typical walls and openings on a box close to the real outline. There is no roof.`,
     category: 'bld',
     class: 'Facade module',
     object_id: objectId,
@@ -565,7 +565,7 @@ export function draft(reg, place, plan, opts = {}) {
         },
         source: 'tools/blueprint', licence: 'n/a',
       },
-      { what: 'Layout', value_or_path: `assets/bld/${objectId}/layout.json lists every piece and every joint. Run \`node tools/blueprint/blueprint.mjs assemble ${objectId}\` to write assembly.json once every slot is pinned. A piece with a "scale" is that slot's atom placed at that scale, and assemble copies the scale into the manifest.`, source: 'tools/blueprint', licence: 'n/a' },
+      { what: 'Layout', value_or_path: `assets/bld/${objectId}/layout.json lists every piece and every joint. Run \`node tools/blueprint/blueprint.mjs assemble ${objectId}\` to write molecule.json once every slot is pinned. A piece with a "scale" is that slot's atom placed at that scale, and assemble copies the scale into the manifest.`, source: 'tools/blueprint', licence: 'n/a' },
     ],
     dimensions_m: [m(rect.extent[0]), m(totalHeight), m(rect.extent[1])],
   });
@@ -578,7 +578,7 @@ export function draft(reg, place, plan, opts = {}) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// 3. assemble(blueprint, layout) -> the assembly.json object, or an error naming the open slots.
+// 3. assemble(blueprint, layout) -> the molecule.json object, or an error naming the open slots.
 function checkedScale(a) {
   const ok = (v) => typeof v === 'number' && Number.isFinite(v) && v > 0;
   if (ok(a.scale) || (Array.isArray(a.scale) && a.scale.length === 3 && a.scale.every(ok))) return a.scale;

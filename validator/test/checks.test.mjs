@@ -45,7 +45,7 @@ test('valid atom passes every applicable check and every check is reported', asy
   for (const c of r.checks) assert.notEqual(c.status, 'FAIL', `${c.name}: ${c.messages.join(' | ')}`);
   const st = Object.fromEntries(r.checks.map((c) => [c.name, c.status]));
   for (const k of ['File validity', 'Folder and naming', 'Metadata', 'Scale', 'Transforms', 'Triangle budget', 'Mesh health', 'Connectors', 'Reuse', 'Collision', 'Textures', 'Materials', 'File size', 'Licence']) assert.equal(st[k], 'PASS', k);
-  for (const k of ['Assembly', 'Blueprint', 'Clip']) assert.equal(st[k], 'SKIP', k);
+  for (const k of ['Molecule', 'Blueprint', 'Clip']) assert.equal(st[k], 'SKIP', k);
   assert.equal(r.kind, 'atom');
   assert.equal(r.summary.ok, true);
   assert.equal(status(r, 'File validity').status, 'PASS', 'gltf-validator must be installed for this test');

@@ -4,4 +4,4 @@ Task records the coordinator hands out (claim system spec, "Task model"): ID, ti
 
 One task is one file, `tasks/<task_id>.json`. Its fields are listed in the asset spec under "File shapes", and `task.example.json` is a small example. Claims are written to `tasks/claims/` by the MCP server in `mcp/`.
 
-The six `task_bld_*` files are the first test: five atoms and one assembly for the walls of a two-storey house in Oshiage 2, Sumida, Tokyo.
+The six `task_bld_*` files are the first test: five atoms and one molecule for the walls of a two-storey house in Oshiage 2, Sumida, Tokyo.

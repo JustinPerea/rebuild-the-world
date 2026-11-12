@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { loadRegion, facts, outline } from '../../survey/lib.mjs';
 import { validate } from '../../../validator/validate.mjs';
-import { buildGlb, boxMesh, metaFor, writeAtom, writeAssembly } from '../../../validator/test/helpers.mjs';
+import { buildGlb, boxMesh, metaFor, writeAtom, writeMolecule } from '../../../validator/test/helpers.mjs';
 import { draft, assemble, assetIdFor, sizedIdFor, slotNameFor, idProblem, objectIdFor, cutEven, scaleFor, variationFor, variationText, rangeProblems, ID_RE, ID_MAX } from '../lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -125,7 +125,7 @@ async function build(fx, { library = null, extra = [0, 0, 0], undeclared = null 
   const blueprint = { ...result.blueprint, slots: result.blueprint.slots.map((s) => ({ ...s, atom: s.atom === 'new' ? pins.get(s.slot) : s.atom })) };
   const manifest = assemble(blueprint, result.layout, result.object_id);
   const objectTask = result.tasks.find((t) => t.task_id === `task_${result.object_id}`);
-  const dir = writeAssembly(lib, result.object_id, { ...manifest }, {
+  const dir = writeMolecule(lib, result.object_id, { ...manifest }, {
     library: 'test', class: 'Facade module', triangles: manifest.atoms.length * 12, dimensions_m: objectTask.dimensions_m.map((v, i) => Math.round((v + extra[i]) * 1000) / 1000),
     connectors: [], mirror_safe: false, materials: { library: [], custom: [] },
   });
@@ -139,11 +139,11 @@ const check = (r, name) => r.checks.find((c) => c.name === name);
 
 async function acceptance(fx, label, extra) {
   const { result, report } = await build(fx, { extra });
-  for (const name of ['Assembly', 'Scale', 'Blueprint', 'Variation']) {
+  for (const name of ['Molecule', 'Scale', 'Blueprint', 'Variation']) {
     const c = check(report, name);
     assert.equal(c.status, 'PASS', `${label} ${name}: ${c.messages.join(' | ')}`);
   }
-  const text = check(report, 'Assembly').messages.join('\n');
+  const text = check(report, 'Molecule').messages.join('\n');
   const loops = Number(/(\d+) measured as loop closures/.exec(text)[1]);
   const gap = Number(/largest gap ([\d.]+) mm/.exec(text)[1]);
   assert.ok(gap < 0.01, `${label}: largest gap ${gap} mm`);
@@ -153,7 +153,7 @@ async function acceptance(fx, label, extra) {
 }
 
 // ---- the acceptance tests ----------------------------------------------------------------------
-test('acceptance: 6.0 x 8.0 m house, base band, two storeys, windows and a door; the validator passes the assembly', async () => {
+test('acceptance: 6.0 x 8.0 m house, base band, two storeys, windows and a door; the validator passes the molecule', async () => {
   const fx = fixtureRect();
   // The door's handles stand 3 cm proud of the outer face (leaf at z = -0.05, handle 0.06 out), so the measured depth is 8.03 m.
   const r = await acceptance(fx, 'rectangle', [0, 0, 0.03]);
@@ -460,14 +460,14 @@ test('cli: --write writes the blueprint, the layout and new tasks, and never ove
   const refused = run(['assemble', out.object_id], repo);
   assert.equal(refused.status, 1);
   assert.match(refused.stderr, /still "new"/);
-  assert.ok(!fs.existsSync(path.join(objectDir, 'assembly.json')));
+  assert.ok(!fs.existsSync(path.join(objectDir, 'molecule.json')));
   // pin every slot by hand, then assemble
   const bp = JSON.parse(fs.readFileSync(path.join(objectDir, 'blueprint.json'), 'utf8'));
   bp.slots.forEach((s) => { s.atom = `bld_${s.slot}_01@0.1.0`; });
   fs.writeFileSync(path.join(objectDir, 'blueprint.json'), JSON.stringify(bp));
   const ok = run(['assemble', out.object_id], repo);
   assert.equal(ok.status, 0, ok.stderr);
-  const manifest = JSON.parse(fs.readFileSync(path.join(objectDir, 'assembly.json'), 'utf8'));
+  const manifest = JSON.parse(fs.readFileSync(path.join(objectDir, 'molecule.json'), 'utf8'));
   assert.equal(manifest.asset_id, out.object_id);
   const lay = JSON.parse(fs.readFileSync(path.join(objectDir, 'layout.json'), 'utf8'));
   assert.ok(lay.atoms.some((a) => a.scale), 'the layout carries scales');
@@ -646,7 +646,7 @@ test('cli: assemble refuses a blueprint or layout whose object_id is not the fol
   const res = run(['assemble', w.out.object_id], w.repo);
   assert.equal(res.status, 1);
   assert.match(res.stderr, /object_id/);
-  assert.ok(!fs.existsSync(path.join(w.objectDir, 'assembly.json')));
+  assert.ok(!fs.existsSync(path.join(w.objectDir, 'molecule.json')));
 });
 
 const symlinkOk = (() => { try { const d = tmp(); fs.symlinkSync(d, path.join(tmp(), 'l'), 'dir'); return true; } catch { return false; } })();
@@ -674,7 +674,7 @@ test('cli: a symlink in the output path cannot send --write or assemble outside 
   assert.equal(res2.status, 2);
   assert.deepEqual(fs.readdirSync(outside2), []);
   assert.ok(!fs.existsSync(path.join(fy.repo, 'assets', 'bld', dry.object_id, 'blueprint.json')));
-  // 3. assemble into a linked folder: the files are read from there, assembly.json is not written there
+  // 3. assemble into a linked folder: the files are read from there, molecule.json is not written there
   const w = writtenRepo();
   const bp = JSON.parse(fs.readFileSync(w.bpFile, 'utf8'));
   bp.slots.forEach((s) => { s.atom = `bld_${s.slot}_01@0.1.0`; });
@@ -685,7 +685,7 @@ test('cli: a symlink in the output path cannot send --write or assemble outside 
   fs.symlinkSync(moved, w.objectDir, 'dir');
   const res3 = run(['assemble', w.out.object_id], w.repo);
   assert.equal(res3.status, 2);
-  assert.ok(!fs.existsSync(path.join(moved, 'assembly.json')));
+  assert.ok(!fs.existsSync(path.join(moved, 'molecule.json')));
   // a clone that is itself reached through a link still works
   const real = writtenRepo();
   const alias = path.join(tmp(), 'clone');

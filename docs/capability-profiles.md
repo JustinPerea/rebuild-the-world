@@ -29,11 +29,11 @@ Contributors submit one mesh at full detail (LOD0), and the pipeline generates t
 | Small prop | Street light, bench, hydrant | 10,000 |
 | Large prop | Tree, bus shelter | 40,000 |
 | Vehicle atom | Door, wheel, bonnet | 25,000 |
-| Vehicle assembly | Complete car | 200,000 |
+| Vehicle molecule | Complete car | 200,000 |
 | Facade module | Window bay, door bay | 15,000 |
 | Blockout | One building as a plain shape | 500 |
 | Character atom | Head, torso, limb | 15,000 |
-| Character assembly | Complete character or robot | 60,000 |
+| Character molecule | Complete character or robot | 60,000 |
 
 Classes for terrain features, interior fittings, everyday objects and whole structures are not yet set. The two character classes come from one robot: 44,156 triangles whole, 12,072 in its largest atom.
 
@@ -53,7 +53,7 @@ A contributor may replace any generated level with a hand-made one.
 | Triangles only, no loose vertices, zero-area faces or duplicate faces | Enforced |
 | Normals point outward | Enforced |
 | Solid objects are watertight | Enforced, with thin objects exempt if metadata says so |
-| No faces hidden inside the mesh | Reported as a warning, enforced from a later profile. Faces hidden between two atoms of an assembly never count |
+| No faces hidden inside the mesh | Reported as a warning, enforced from a later profile. Faces hidden between two atoms of a molecule never count |
 | Smallest modelled feature | 2 cm, or 2% of the atom's longest side where that is smaller. Smaller detail goes in the normal map |
 | Skinning | Rigid only: each atom follows one joint. Skin that bends waits for a later profile |
 | UV sets | One, with no overlapping islands unless the surface uses a tiling library material |

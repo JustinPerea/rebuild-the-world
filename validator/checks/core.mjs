@@ -4,7 +4,7 @@ import { sceneRoots, isIdentityNode, collectGeometry, COL_RE, pngSize, readAcces
 import { glbConnectors, countTriangles } from '../lib/context.mjs';
 import { normClass } from '../lib/profile.mjs';
 import { bboxOfFaces, visiblePrims, usedVertices, vtx, triArea, triNormal, dot } from '../lib/geom.mjs';
-import { libraryDir, assemblyBounds } from '../lib/library.mjs';
+import { libraryDir, moleculeBounds } from '../lib/library.mjs';
 import { analyze } from './analysis.mjs';
 import { norm, vsub, len } from '../lib/math.mjs';
 
@@ -15,7 +15,7 @@ const fmt = (v, d = 4) => Number(v.toFixed(d));
 
 const ID_RE = /^(veh|bld|prop|veg|gnd|mat|ter|int|obj|chr)(_[a-z0-9]+){2,}$/;
 const SEMVER = /^\d+\.\d+\.\d+$/;
-const needAtom = (ctx, what) => (ctx.asset.kind === 'atom' ? null : skip(`applies to atoms (asset.glb); this is ${ctx.asset.kind ? `an ${ctx.asset.kind}` : 'an unrecognised folder'}${what ? `; ${what}` : ''}`));
+const needAtom = (ctx, what) => (ctx.asset.kind === 'atom' ? null : skip(`applies to atoms (asset.glb); this is ${ctx.asset.kind ? `${ctx.asset.kind === 'molecule' ? 'a' : 'an'} ${ctx.asset.kind}` : 'an unrecognised folder'}${what ? `; ${what}` : ''}`));
 const needGlb = (ctx) => (ctx.asset.glb ? null : fail(`asset.glb cannot be read: ${ctx.asset.glbError}`));
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ export async function fileValidity(ctx) {
 }
 
 // ---------------------------------------------------------------------------
-const FILES = { atom: ['asset.glb', 'asset.json'], assembly: ['assembly.json', 'asset.json'], object: ['blueprint.json', 'asset.json'] };
+const FILES = { atom: ['asset.glb', 'asset.json'], molecule: ['molecule.json', 'asset.json'], object: ['blueprint.json', 'asset.json'] };
 
 export function folderAndNaming(ctx) {
   const a = ctx.asset;
@@ -60,18 +60,18 @@ export function folderAndNaming(ctx) {
   const folder = path.basename(path.resolve(ctx.dir));
   if (!ID_RE.test(folder)) msgs.push(`folder name "${folder}" does not match <category>_<name>_<variant> (lowercase ASCII, digits and underscores; category one of veh, bld, prop, veg, gnd, mat, ter, int, obj, chr; at least a name and a variant, e.g. veh_wheel_17in_01)`);
   if (!a.kind) {
-    msgs.push('folder holds none of asset.glb (atom), assembly.json (assembly) or blueprint.json (object)');
+    msgs.push('folder holds none of asset.glb (atom), molecule.json (molecule) or blueprint.json (object)');
     return fail(msgs);
   }
-  if (a.kind === 'atom' && a.files.includes('assembly.json')) msgs.push('folder has both asset.glb and assembly.json; an assembly has assembly.json in place of asset.glb');
+  if (a.kind === 'atom' && a.files.includes('molecule.json')) msgs.push('folder has both asset.glb and molecule.json; a molecule has molecule.json in place of asset.glb');
   if (a.kind === 'atom' && a.files.includes('blueprint.json')) msgs.push('folder has both asset.glb and blueprint.json; use one kind per folder');
   for (const f of FILES[a.kind]) if (!a.files.includes(f)) msgs.push(`required file ${f} is missing`);
   if (a.metaError && a.files.includes('asset.json')) msgs.push(a.metaError);
   if (a.manifestError) msgs.push(a.manifestError);
   if (a.blueprintError) msgs.push(a.blueprintError);
-  const idField = a.kind === 'object' ? a.blueprint?.object_id : a.kind === 'assembly' ? a.manifest?.asset_id : null;
+  const idField = a.kind === 'object' ? a.blueprint?.object_id : a.kind === 'molecule' ? a.manifest?.asset_id : null;
   if (a.kind !== 'atom') {
-    const label = a.kind === 'object' ? 'blueprint.json "object_id"' : 'assembly.json "asset_id"';
+    const label = a.kind === 'object' ? 'blueprint.json "object_id"' : 'molecule.json "asset_id"';
     if (idField === undefined || idField === null) msgs.push(`${label} is missing`);
     else if (idField !== folder) msgs.push(`${label} is "${idField}" but the folder is "${folder}"`);
   }
@@ -86,7 +86,7 @@ export function folderAndNaming(ctx) {
 const COMMON = ['asset_id', 'version', 'task_id', 'spec_version', 'profile', 'style_version', 'library', 'kind', 'description', 'licence', 'sources', 'provenance'];
 const REQUIRED = {
   atom: [...COMMON, 'class', 'tier', 'dimensions_m', 'triangles', 'connectors', 'mirror_safe', 'materials'],
-  assembly: [...COMMON, 'class', 'tier', 'triangles'],
+  molecule: [...COMMON, 'class', 'tier', 'triangles'],
   object: COMMON,
 };
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
@@ -166,7 +166,7 @@ export function metadata(ctx) {
       }
     }
   }
-  if (a.kind === 'assembly') {
+  if (a.kind === 'molecule') {
     const an = analyze(ctx);
     if (an && Number.isInteger(m.triangles) && an.triangles !== m.triangles) msgs.push(`asset.json triangles is ${m.triangles} but the atoms sum to ${an.triangles}`);
   }
@@ -174,11 +174,11 @@ export function metadata(ctx) {
 }
 
 // ---------------------------------------------------------------------------
-// An assembly has no mesh of its own: its size is measured from its atoms, placed through the joints.
-function assemblyScale(ctx) {
+// A molecule has no mesh of its own: its size is measured from its atoms, placed through the joints.
+function moleculeScale(ctx) {
   const an = analyze(ctx);
-  if (!an || an.errors.length) return skip('the assembly could not be placed, so it cannot be measured; see Assembly');
-  const box = assemblyBounds(an);
+  if (!an || an.errors.length) return skip('the molecule could not be placed, so it cannot be measured; see Molecule');
+  const box = moleculeBounds(an);
   if (!box) return fail('no placed atom has triangles to measure');
   const tol = ctx.profile.scale_tolerance;
   const names = ['width (x)', 'height (y)', 'depth (z)'];
@@ -203,7 +203,7 @@ function assemblyScale(ctx) {
 }
 
 export function scale(ctx) {
-  if (ctx.asset.kind === 'assembly') return assemblyScale(ctx);
+  if (ctx.asset.kind === 'molecule') return moleculeScale(ctx);
   const s = needAtom(ctx);
   if (s) return s;
   const dims = ctx.task?.dimensions_m;
@@ -247,7 +247,7 @@ export function transforms(ctx) {
 // ---------------------------------------------------------------------------
 export function triangleBudget(ctx) {
   const a = ctx.asset;
-  if (a.kind === 'object') return skip('a blueprint has no mesh; its atoms and assemblies are budgeted on their own');
+  if (a.kind === 'object') return skip('a blueprint has no mesh; its atoms and molecules are budgeted on their own');
   if (!a.kind) return skip('asset kind unknown');
   if (!a.meta?.class) return fail('asset.json "class" is missing, so the budget class is unknown');
   const key = normClass(a.meta.class);
@@ -455,7 +455,7 @@ export function textures(ctx) {
 
 // ---------------------------------------------------------------------------
 export function materials(ctx) {
-  const s = needAtom(ctx, 'materials of assemblies come from their atoms');
+  const s = needAtom(ctx, 'materials of molecules come from their atoms');
   if (s) return s;
   const g = needGlb(ctx);
   if (g) return g;

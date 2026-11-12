@@ -67,18 +67,18 @@ export function loadAssetDir(dir) {
   }
   a.files = entries;
   if (entries.includes('asset.glb')) a.kind = 'atom';
-  else if (entries.includes('assembly.json')) a.kind = 'assembly';
+  else if (entries.includes('molecule.json')) a.kind = 'molecule';
   else if (entries.includes('blueprint.json')) a.kind = 'object';
   const m = tryJson(path.join(dir, 'asset.json'));
   a.meta = m.value ?? null;
   a.metaError = m.error ?? (m.missing ? 'asset.json is missing' : null);
-  if (a.kind === 'assembly') {
-    const j = tryJson(path.join(dir, 'assembly.json'));
+  if (a.kind === 'molecule') {
+    const j = tryJson(path.join(dir, 'molecule.json'));
     a.manifest = j.value ?? null;
     a.manifestError = j.error ?? null;
   }
-  // An object's folder keeps its blueprint when the assembly is written, so an assembly may have one beside it.
-  if (a.kind === 'object' || (a.kind === 'assembly' && entries.includes('blueprint.json'))) {
+  // An object's folder keeps its blueprint when the molecule is written, so a molecule may have one beside it.
+  if (a.kind === 'object' || (a.kind === 'molecule' && entries.includes('blueprint.json'))) {
     const j = tryJson(path.join(dir, 'blueprint.json'));
     a.blueprint = j.value ?? null;
     a.blueprintError = j.error ?? null;

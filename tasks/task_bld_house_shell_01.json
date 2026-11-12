@@ -2,7 +2,7 @@
   "task_id": "task_bld_house_shell_01",
   "asset_id": "bld_house_shell_01",
   "title": "Assemble the walls of a two-storey house",
-  "description": "Write the assembly manifest for the walls of a two-storey house, 5.3 m wide and 7.3 m deep, from the five atoms in its blueprint. It dresses one real building in Oshiage 2 to accuracy level A1: typical walls, windows and a door on a box close to the real outline. There is no roof in this test.",
+  "description": "Write the molecule manifest for the walls of a two-storey house, 5.3 m wide and 7.3 m deep, from the five atoms in its blueprint. It dresses one real building in Oshiage 2 to accuracy level A1: typical walls, windows and a door on a box close to the real outline. There is no roof in this test.",
   "category": "bld",
   "class": "Facade module",
   "object_id": "bld_house_shell_01",

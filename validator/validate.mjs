@@ -15,7 +15,7 @@ export const CHECKS = [
   ['Triangle budget', 'Profile', core.triangleBudget],
   ['Mesh health', 'Profile', core.meshHealth],
   ['Connectors', 'Contract', st.connectors],
-  ['Assembly', 'Contract', st.assembly],
+  ['Molecule', 'Contract', st.molecule],
   ['Variation', 'Contract', st.variation],
   ['Blueprint', 'Contract', st.blueprint],
   ['Reuse', 'Contract', st.reuse],

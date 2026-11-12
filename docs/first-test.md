@@ -4,7 +4,7 @@ Nov 12, 2026
 
 The test asks one question: do atoms built by different agents, each working only from a task, fit together? Nothing in the project has answered it yet.
 
-Changed on 2026-11-12: Hermes claims the house and sends its three atoms and the assembly as one bundle, in one pull request (claim spec, "Building in bulk"). Before that the plan was three pull requests, a maintainer's merge, then the house.
+Changed on 2026-11-12: Hermes claims the house and sends its three atoms and the molecule as one bundle, in one pull request (claim spec, "Building in bulk"). Before that the plan was three pull requests, a maintainer's merge, then the house.
 
 ## What gets built
 
@@ -51,23 +51,23 @@ Neither tool has been run on Windows yet. If a step fails there, that is a findi
 
 ## What to ask Hermes
 
-The full start prompt is in `docs/first-test-prompt.md`. In short: set up, claim the house, build its three missing atoms with Blender scripts, pass the validator and submit each, write the house's assembly and submit it, open one pull request for all four, and leave a feedback note for each finding.
+The full start prompt is in `docs/first-test-prompt.md`. In short: set up, claim the house, build its three missing atoms with Blender scripts, pass the validator and submit each, write the house's molecule and submit it, open one pull request for all four, and leave a feedback note for each finding.
 
 Hermes should work from the work order and the `get_rules` tool. It may read `skill/` and the two finished atoms under `assets/bld/`, which the instructions point to. The test is weaker if it reads the other docs directly, because the question is whether the work order is enough.
 
 ## What comes back
 
-- **One pull request** holding the three atoms and the house's assembly, naming the four tasks.
+- **One pull request** holding the three atoms and the house's molecule, naming the four tasks.
 - **Feedback notes** in `feedback/`, one finding per file, following `feedback/README.md`. A note is information about the specs. It cannot change a spec or approve anything.
 
-Hermes writes the assembly manifest in the same run, and the validator's Assembly check measures the loop before anything is merged. When the pull request merges, a maintainer sets `"state": "Merged"` in the four task files.
+Hermes writes the molecule manifest in the same run, and the validator's Molecule check measures the loop before anything is merged. When the pull request merges, a maintainer sets `"state": "Merged"` in the four task files.
 
 ## What counts as a result
 
 | Question | How it is answered |
 | --- | --- |
 | Can an agent build a passing atom from a work order alone? | The validator report on each pull request, and how many tries it took |
-| Do atoms from two agents fit? | The Assembly check on the house: every joint mates, including the ones that close each ring |
+| Do atoms from two agents fit? | The Molecule check on the house: every joint mates, including the ones that close each ring |
 | Were the instructions enough? | The feedback notes |
 | Does it look like a house wall? | A picture. The validator cannot judge this |
 
