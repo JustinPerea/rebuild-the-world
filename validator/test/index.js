@@ -3,5 +3,6 @@
 if (Number(process.versions.node.split('.')[0]) >= 21) {
   await import('./checks.test.mjs');
   await import('./assembly.test.mjs');
+  await import('./scaled.test.mjs');
   await import('./cli.test.mjs');
 }

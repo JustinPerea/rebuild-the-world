@@ -11,6 +11,7 @@ Each entry fixes:
 | `mating_dimensions` | The sizes both sides must share, such as hub diameter or opening width and height |
 | `symmetry` | `none`, a count, or `free` |
 | `motion` | `fixed`, `hinge`, `spin`, `ball` or `slide`. This is the default, and a joint in a manifest may state its own (asset spec, "Variation") |
+| `mating_axes` | For each mating dimension, the axis of the connector's own frame (`x`, `y` or `z`, with X = Y cross Z) that the dimension lies along. A scaled atom multiplies the dimension by the scale factor of the atom axis that frame axis is parallel to. A dimension with no entry follows an even scale only |
 | `axis` | For a moving type, the connector axis the motion uses: `x`, `y` or `z` |
 | `frame` | For each side, where the connector sits on its atom and which way its +Z and +Y point |
 

@@ -1,5 +1,5 @@
 {
-  "registry_version": "0.2.0",
+  "registry_version": "0.3.0",
   "note": "Three trial types for the first building test. Fields are defined in docs/asset-spec.md, \"Connectors\". A trial type may change without a migration.",
   "types": [
     {
@@ -17,6 +17,10 @@
         "storey_height",
         "wall_thickness"
       ],
+      "mating_axes": {
+        "storey_height": "y",
+        "wall_thickness": "x"
+      },
       "symmetry": "none",
       "motion": "fixed"
     },
@@ -35,6 +39,10 @@
         "module_width",
         "wall_thickness"
       ],
+      "mating_axes": {
+        "module_width": "x",
+        "wall_thickness": "y"
+      },
       "symmetry": "none",
       "motion": "fixed"
     },
@@ -53,6 +61,10 @@
         "leaf_width",
         "leaf_height"
       ],
+      "mating_axes": {
+        "leaf_width": "z",
+        "leaf_height": "y"
+      },
       "symmetry": "none",
       "motion": "hinge",
       "axis": "y"

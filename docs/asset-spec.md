@@ -1,4 +1,4 @@
-# Rebuild the World: Asset Spec (Draft v0.5)
+# Rebuild the World: Asset Spec (Draft v0.6)
 
 Nov 11, 2026
 
@@ -27,6 +27,8 @@ Changed in v0.3, after the first object was rebuilt as atoms under this contract
 Changed in v0.4 (owner, 2026-11-11): an atom may vary where it does not meet another atom. A placed atom or assembly may be scaled, an atom may stretch or repeat along a marked span, a joint may state its own motion, a material slot may be left open, and an assembly may expose named connectors so that it is placed as one piece. See "Variation".
 
 Changed in v0.5, from building the validator and the first two atoms: the registry states where each side of a connector sits, a task may fix each connector's frame, the shapes of `asset.json` and the task file are written down, and the spec says what an assembly check can and cannot measure. See "File shapes".
+
+Changed in v0.6 (owner, 2026-11-12): a placed atom may be scaled on each axis separately, and its connectors and mating dimensions scale with it. The owner asked for scaling to be allowed for most parts. The per-axis form, the registry field `mating_axes` and the rest of the rules in "Scale" are Claude's and unconfirmed. Before this, a scaled thing could not join anything through a connector that had mating dimensions, and scale was one number. See "Connectors" and "Scale".
 
 Added on 2026-11-12 after the first rehearsal of a bundle, with no change of version: the Scale check measures an assembly, and the Blueprint check compares an assembly with the blueprint beside it. Before this, an assembly's recorded size and the number of each atom it placed were not checked.
 
@@ -112,12 +114,14 @@ Each type is defined once in the connector registry:
 | `type` | The name used in connector node names |
 | `sides` | What `a` and `b` each attach to |
 | `mating_dimensions` | The sizes both sides must share, such as hub diameter or opening width and height |
+| `mating_axes` | For each mating dimension, the axis of the connector's own frame that the dimension lies along: `x`, `y` or `z`, where the frame's X is Y cross Z. For example `{ "storey_height": "y", "wall_thickness": "x" }`. A scaled atom uses it to scale the dimension (see "Scale"). A dimension with no entry follows an even scale only |
 | `symmetry` | `none` (one valid rotation), a count such as `4` (four valid rotations), or `free` (any rotation, as on a wheel hub) |
 | `motion` | `fixed`, `hinge`, `spin`, `ball` or `slide`: how the mated atom may move about the connector |
 | `axis` | For a moving type, the connector axis the motion uses: `x`, `y` or `z`. A hinge or a spin turns about it, and a slide moves along it |
 | `frame` | For each side, where the connector sits on its atom and which way its +Z and +Y point, in words |
 
 - A `ball` connector turns about its position on all three axes and names no axis.
+- A connector's name, type and side never vary. Its position and the type's mating dimensions are stored at scale 1 and follow the scale when the atom is placed (see "Scale").
 - A moving connector records its limits (the smallest and largest angle or travel) and its rest position in the atom's metadata. Without limits an engine cannot tell an elbow from a door.
 - The type's motion and the atom's limits are defaults. A joint in a manifest may state its own (see "Variation").
 
@@ -163,17 +167,17 @@ An assembly is a manifest, not a mesh: a list of merged atoms and the connector 
 
 ## Variation
 
-An atom is fixed where it meets another atom and may vary anywhere else, within a range it declares (owner, 2026-11-11). Asset IDs, connectors and mating dimensions never vary. Size, motion, look and behaviour settings may.
+An atom is fixed where it meets another atom and may vary anywhere else, within a range it declares (owner, 2026-11-11). Asset IDs and connector names, types and sides never vary. Connector positions and mating dimensions are stored at scale 1 and follow the scale when the atom is placed. Size, motion, look and behaviour settings may vary.
 
 | What varies | Declared by | Chosen by | Example |
 | --- | --- | --- | --- |
-| Scale | The atom or assembly, as a range | A manifest entry or a placement rule | One tree placed at 0.8 to 1.3 times its size |
-| Span | The atom, as a marked span that stretches or repeats | A manifest entry or a placement rule | A beam from 2 m to 7 m, a stair of 3 to 20 steps |
+| Scale | The atom or assembly, as a range for all axes together or for each axis | A manifest entry or a placement rule | One tree placed at 0.8 to 1.3 times its size, a wall module stretched to 1.5 times its width |
+| Span | The atom, as a marked span that stretches or repeats one part and keeps the ends rigid | A manifest entry or a placement rule | A beam from 2 m to 7 m, a stair of 3 to 20 steps |
 | Motion | The connector type and the atom's limits, as defaults | The joint in a manifest | A hinged ankle that also rolls 12 degrees |
 | Look | The atom, as an open material slot | A manifest entry or a placement rule | One sedan in twelve paint colours |
 | Behaviour settings | The behaviour registry | The object's metadata | A door that closes itself |
 
-An atom lists the kinds it allows under `variation` in its metadata. A tree that may be scaled and may change its leaves:
+An atom lists the kinds it allows under `variation` in its metadata. A tree that may be scaled evenly and may change its leaves:
 
 ```json
 "variation": {
@@ -195,10 +199,28 @@ Every choice is written into the manifest or the placement record, so the same i
 
 ### Scale
 
-- Scale is one number, applied equally on all three axes. A change along one axis is a span.
-- Scale applies to a whole placed thing: an atom with no mating dimensions, or an assembly at its origin. Every atom in a scaled assembly scales together, so the fits inside it hold.
-- A scaled thing joins nothing through a connector that has mating dimensions.
-- Connectors and mating dimensions are always measured at scale 1.
+- A manifest entry's `scale` is one positive number, applied equally on all three axes, or `[x, y, z]`, three positive numbers along the placed thing's own axes. It is applied about the thing's origin, after mirroring and before placement.
+- An atom declares what it allows in `variation.scale`. `[min, max]` allows an even scale only, and the entry's scale must then be one number, or three equal numbers, inside the range. `{ "x": [min, max], "y": [min, max], "z": [min, max] }` gives each axis its own range, and an axis left out is fixed at 1. Each component of the entry's scale must then lie inside its own axis's range. An atom that declares no `variation.scale` cannot be scaled.
+- A placed assembly scales evenly only, with one number or three equal numbers. Everything inside it scales with it, so the fits inside it hold, and the mating dimensions of a connector it exposes multiply by that number.
+- A connector's position is multiplied by the scale, axis by axis. Its directions do not change. For that to hold under an uneven scale, an atom that declares a per-axis range in which the axes can differ must have the +Z and +Y of every connector parallel to one of its own axes, within the profile's connector direction tolerance. Its +X is then parallel to an axis too.
+- Mating dimensions scale as well. On a scaled atom, a mating dimension's value is its value at scale 1 times the scale factor of the atom axis that the connector's frame axis, named by the type's `mating_axes`, is parallel to. A dimension with no entry in `mating_axes` scales only under an even scale, by that number. An unevenly scaled atom joins nothing through a connector that has such a dimension. The same holds for a connector an assembly exposes: the Variation check fails an assembly that exposes such a connector of an unevenly scaled atom, or one whose frame axes are not parallel to the atom's axes.
+- A joint holds when the two sides match after scaling: for every mating dimension of the connector type, the two sides' scaled values agree within the profile's mating tolerance. A wall module scaled to `[1.5, 1, 1]` still mates with an unscaled one through `facade_edge`, because its storey height and wall thickness lie along axes that did not change, while a module scaled to `[1, 1.1, 1]` does not, because its storey height is now 3.08 m and its neighbour's is 2.8 m.
+- A file is still authored and measured at scale 1. The atom's own checks do not change.
+- A per-axis scale stretches the whole atom, including any frame or trim on it. A span (proposed, below) stretches one part of an atom and keeps its ends rigid.
+
+A wall module that may be widened to twice its width, and a manifest entry that widens one:
+
+```json
+"variation": { "scale": { "x": [1, 2] } }
+```
+
+```json
+{ "ref": "wall_n", "asset": "bld_wall_panel_01@1.0.0", "scale": [1.5, 1, 1] }
+```
+
+#### Texture under scale
+
+A stretched atom's texture stretches with it. The proposal is that a material on an atom with a scale range repeats in metres, and that the import pipeline rescales the atom's texture coordinates by the placement's scale. That step is not built. Until it is, the range an atom declares is its author's statement that it looks right across the whole range, and review judges that from renders at both ends of it.
 
 ### Spans
 
@@ -253,7 +275,7 @@ The first two show how the first robot's ankle roll of 12 degrees and its tire s
 
 ### What does not vary
 
-- Asset IDs, units and axes, connector names and sides, and mating dimensions at scale 1.
+- Asset IDs, units and axes, and connector names, types and sides. Connector positions and mating dimensions are stored at scale 1.
 - A merged file. An atom reshaped beyond its declared variation is a new asset that records `derived_from`.
 
 ## Moving assemblies
@@ -261,7 +283,7 @@ The first two show how the first robot's ankle roll of 12 degrees and its tire s
 An assembly whose joints move needs no separate skeleton file. The pipeline derives the skeleton from the manifest: one bone for each moving joint, named by the atom's `ref`.
 
 - Every atom is rigid: all of it follows one joint. Skin that bends, such as a creature's body, cloth or a hose, waits for a later capability profile.
-- A joint may state a `scale_range`, the range a clip may scale it within. Connectors and mating dimensions are always measured at scale 1.
+- A joint may state a `scale_range`, the range a clip may scale it within. Connector positions and mating dimensions are stored at scale 1 and follow the scale (see "Scale").
 - The first object rebuilt this way had 40 atom instances and 39 joints. Reassembled from its files alone, it matched the original mesh triangle for triangle, within 0.04 mm.
 
 ## Animation clips
@@ -526,5 +548,8 @@ A merged asset is never edited in place. A fix or upgrade is published as a new 
 - [ ] May a joint widen an atom's limits with no check that the atoms do not pass through each other?
 - [ ] Is a tint any colour, or one of a listed set?
 - [ ] Does the capability profile cap how wide a scale range or a span may be?
+- [ ] Texture density under scale: should a material on an atom with a scale range repeat in metres, with the import pipeline rescaling texture coordinates by the placement's scale? Until it does, a declared range is the author's statement that the atom looks right across it.
+- [ ] The validator reads the mating dimensions of a connector an assembly exposes from the atom inside, scaled by the entries that place it. It does not compare them with the `mating` an assembly's own `asset.json` may list for that connector, and an assembly that is placed scaled is held to an even scale only. Should an assembly record its exposed connectors' mating dimensions, and be checked against the derived values?
+- [ ] A joint compares a mating dimension only when both atoms state it in `asset.json`. Should a missing value fail?
 - [ ] Where do a behaviour's settings live until the behaviour registry exists?
 - [ ] Frontier Colony's library changed connector types to follow its clips, before joints could state their own motion. Does it move to joint overrides?

@@ -1,7 +1,7 @@
 {
   "_comment": "Profile 1 (2026) numbers the validator enforces. Triangle budgets are not repeated here: they are read from spec/spec.json (profile.budgets) unless a profile file supplies its own `budgets` object keyed by class, for example { \"small_prop\": 10000 }. The _source fields name the line each number came from.",
   "name": "Profile 1 (2026)",
-  "spec_version": "0.5",
+  "spec_version": "0.6",
   "scale_tolerance": 0.02,
   "_source_scale_tolerance": "docs/capability-profiles.md, Mesh rules: 'Scale tolerance: Within 2% of the task's dimensions'",
   "mating_tolerance_m": 0.001,
