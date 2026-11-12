@@ -1,8 +1,8 @@
-# Rebuild the World: World Model (Draft v0.4)
+# Rebuild the World: World Model (Draft v0.5)
 
 Nov 12, 2026
 
-Earth is broken down into nine levels of scale, from the whole planet to a shared material, and every level is built from the ones below it. Nothing on this page has been tested. Changed in v0.2: a category for characters, three more behaviours, and where invented things go. Changed in v0.3: atoms may vary, and behaviours take settings. Changed in v0.4: a proposed world grid, and how areas built apart from each other join on one globe.
+Earth is broken down into nine levels of scale, from the whole planet to a shared material, and every level is built from the ones below it. Nothing on this page has been tested. Changed in v0.2: a category for characters, three more behaviours, and where invented things go. Changed in v0.3: atoms may vary, and behaviours take settings. Changed in v0.4: a proposed world grid, and how areas built apart from each other join on one globe. Changed in v0.5: a cell's tile level follows its latitude, so cells are 177 to 354 m across everywhere, and data packs are placed on the exact plane that touches the Earth at the cell's centre.
 
 ## Levels of scale
 
@@ -104,7 +104,8 @@ This section and the next two are Claude's proposal from 2026-11-12. The owner a
 
 - An area is built flat. Its buildings, blockout and placement are in metres from the area's origin: +X east, +Y up, +Z south.
 - The globe places each flat area. The engine's globe layer (Cesium for Unreal is the likely one) anchors an area's origin at its latitude and longitude and turns it to face up there. Nobody models on a curved surface.
-- A flat area the size of one grid cell departs from the curved Earth by less than 4 mm. Worked out for cells at six latitudes: the cell's corner sits at most 3.7 mm below the flat plane (at the equator), and its horizontal position is off by at most 2 mm. That is more than the 1 mm connector tolerance, so atoms never snap together across a cell edge: a building belongs whole to one cell.
+- The flat frame is the plane that touches the Earth at the cell's centre, and the data-pack tools convert latitude and longitude onto that plane exactly. Across one cell the curved surface falls away from the plane by at most 4.9 mm, at the corner of the largest cell. That is more than the 1 mm connector tolerance, so atoms never snap together across a cell edge: a building belongs whole to one cell.
+- An earlier shortcut, a fixed number of metres per degree, is off sideways by up to 2 mm in a level-17 cell, 8 mm at level 16 and 38 mm at level 14. Cells no longer use it. The Oshiage 2 pack was cut with it and is left as it is, and the wall-reference tool still places photos with it, which is far inside a photo's position error.
 - Two areas need no knowledge of each other to line up. Each is placed by its own coordinates, so a block in Lisbon and a block in Tokyo are already in the right place relative to each other.
 - Google's Photorealistic 3D Tiles are not the globe's surface and are not used to fill gaps. The project bars deriving anything from them.
 
@@ -112,17 +113,31 @@ This section and the next two are Claude's proposal from 2026-11-12. The owner a
 
 Areas opened by different people must meet without gaps and without two people holding the same building. That needs one fixed set of cells that is decided before anyone opens an area.
 
+The owner agreed on 2026-11-12 ("lets do it") to keep map-tile numbering as the address system and to stop tying a block to one fixed tile level. The target size, the range of levels and the rule below are Claude's.
+
 | Item | Proposed value |
 | --- | --- |
-| Scheme | Web Mercator map tiles, the numbering web maps use |
-| Zoom | 17 |
-| Cell ID | `c17-<x>-<y>`, x counting east from longitude -180, y counting south from the top |
-| Cell size | Square on the ground. The side shrinks with latitude: 306 m at the equator, 248 m in Tokyo, 191 m in London, 153 m in Helsinki |
+| Scheme | Web Mercator map tiles, the numbering web maps use. Tiles form a tree: each splits into four at the next level |
+| Cell ID | `c<level>-<x>-<y>`, x counting east from longitude -180, y counting south from the top |
+| Target side | 250 m |
+| Levels | 17 down to 14. A cell's level is the one whose tiles are nearest the target side at its latitude |
 | Coverage | Latitude -85.05 to 85.05. Nothing is built nearer the poles |
 | Local origin | The centre of the cell |
 
+A tile's side on the ground shrinks away from the equator, so one level cannot give cells of one size. The level follows latitude instead:
+
+| Latitude, north or south | Level | Cell side | Examples |
+| --- | --- | --- | --- |
+| 0 to 54.67 | 17 | 306 m at the equator, down to 177 m | Quito 306 m, Tokyo 248 m, London 191 m |
+| 54.67 to 73.19 | 16 | 354 m down to 177 m | Edinburgh 343 m, Helsinki 305 m, Tromsø 213 m |
+| 73.19 to 81.69 | 15 | 354 m down to 177 m | Longyearbyen 250 m |
+| 81.69 to 85.05 | 14 | 354 m down to 211 m | |
+
+- The level is decided for each row of level-14 tiles, from the latitude of the row's middle. A change of level therefore falls on an edge that every level shares, and cells of two levels meet without a gap.
 - A building belongs to the cell that holds the centre of its outline, whole. A building that crosses a cell edge is never cut.
-- A cell's four neighbours follow from its ID, so "the block next door" needs no lookup.
+- A cell's neighbours follow from its ID, so "the block next door" needs no lookup. Where the level changes, a larger cell has two smaller neighbours on that side.
+- The ID carries the level, so an ID stays valid if cells are later split or merged.
+- Latitude is the smaller cause of uneven work. Two level-17 cells of nearly the same size held 150 buildings (Lisbon) and 335 (Tokyo). The tree allows a dense cell to be split into its four quarters and near-empty cells to be merged into their parent, by building count. That is not designed or built: it needs the claim service to record which cells were split.
 - A cell is the "block" of the claim spec's home blocks. A region is a set of cells.
 - `tools/region-kit/grid.py` is the grid as code, and `tools/region-kit/kit.py open` makes a cell's data pack. `docs/open-an-area.md` is the guide.
 - The Oshiage 2 pack was cut before the grid existed, as a 300 m square around a hand-picked origin. It is not re-cut yet. The grid cell at its origin is `c17-116439-51599`.
@@ -147,7 +162,8 @@ Areas opened by different people must meet without gaps and without two people h
 - [ ] How are placement rules written and reviewed? They need their own spec.
 - [ ] Which behaviours does the first demo need?
 - [ ] How do tiles of terrain meet without gaps when different people refine neighbouring tiles?
-- [ ] Is zoom 17 the right cell size? A cell is 306 m wide at the equator and 107 m in Tromsø, so a "block" is not the same amount of work everywhere.
+- [ ] Is 250 m the right target side for a cell, and are four levels enough?
+- [ ] By what count is a dense cell split into four or sparse cells merged, and who records it?
 - [ ] Is Oshiage 2 re-cut to grid cells, and do its place IDs and survey plans carry over?
 - [ ] How does a building's base meet sloping terrain: is the ground cut, or does the building get a plinth?
 - [ ] Is unopened land shown as a generated blockout, or left empty until someone opens it?

@@ -53,20 +53,21 @@ def wallrefs():
 # ---------------------------------------------------------------- cell
 
 def cmd_cell(args):
-    x, y = grid.parse_id(args.id) if args.id else grid.cell_of(args.lat, args.lon)
-    print(json.dumps(grid.describe(x, y), indent=1))
+    cell = grid.parse_id(args.id) if args.id else grid.cell_of(args.lat, args.lon)
+    print(json.dumps(grid.describe(*cell), indent=1))
 
 
 # ---------------------------------------------------------------- open
 
-def region_record(x, y, name, source):
-    c = grid.describe(x, y)
+def region_record(z, x, y, name, source):
+    c = grid.describe(z, x, y)
     w, h = c["size_m"]["east_west"], c["size_m"]["north_south"]
     return {
         "id": c["id"], "name": name, "body": "earth",
         "cell": {"grid": "web-mercator", "zoom": c["zoom"], "x": x, "y": y},
         "bounds": c["bounds"],
         "origin": {"lat": c["centre"]["lat"], "lon": c["centre"]["lon"], "note": "Centre of the cell. Local metres are measured from here: +X east, +Z south."},
+        "frame": "tangent-plane",
         "size_m": c["size_m"],
         "square_m": int(max(w, h)) + 1,
         "start_block": {"x_m": [round(-w / 2 - 1, 1), round(w / 2 + 1, 1)], "z_m": [round(-h / 2 - 1, 1), round(h / 2 + 1, 1)], "note": "The whole cell."},
@@ -120,8 +121,8 @@ python3 tools/region-kit/kit.py open --cell {id} --again --plateau-zip path/to/{
 
 
 def cmd_open(args):
-    x, y = grid.parse_id(args.cell) if args.cell else grid.cell_of(args.lat, args.lon)
-    rid = grid.cell_id(x, y)
+    z, x, y = grid.parse_id(args.cell) if args.cell else grid.cell_of(args.lat, args.lon)
+    rid = grid.cell_id(z, x, y)
     d = REPO / "data" / rid
     had = (d / "region.json").exists()
     if had and not args.again:
@@ -133,7 +134,7 @@ def cmd_open(args):
     source = "plateau" if args.plateau_zip else "openstreetmap"
     d.mkdir(parents=True, exist_ok=True)
     before = (d / "region.json").read_bytes() if had else None
-    rec = region_record(x, y, args.name, source)
+    rec = region_record(z, x, y, args.name, source)
     (d / "region.json").write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
     def undo():     # a failed run leaves the folder as it found it, so the same command can be run again
@@ -156,13 +157,13 @@ def cmd_open(args):
     text = SOURCES[source].format(date=datetime.date.today().isoformat(), id=rid, name=args.name, zip=Path(args.plateau_zip).name if args.plateau_zip else "",
                                   buildings=summary.get("buildings"), tagged=summary.get("height_tagged"), storeys=summary.get("height_from_storeys"), assumed=summary.get("height_assumed"))
     (d / "SOURCES.md").write_text(text, encoding="utf-8")
-    c = grid.describe(x, y)
+    c = grid.describe(z, x, y)
     print(f"opened data/{rid}: {args.name}, {c['size_m']['east_west']} m by {c['size_m']['north_south']} m, {summary['buildings']} buildings")
     if source == "openstreetmap":
         print(f"heights: {summary['height_tagged']} tagged, {summary['height_from_storeys']} from storeys, {summary['height_assumed']} assumed at 6 m")
     else:
         print(f"heights: {summary['with_height']} measured; {summary['with_roof_shape']} buildings have a roof shape")
-    print("neighbours: " + ", ".join(f"{k} {v}" for k, v in c["neighbours"].items()))
+    print("neighbours: " + ", ".join(f"{k} {' and '.join(v)}" for k, v in c["neighbours"].items()))
 
 
 # ---------------------------------------------------------------- photos

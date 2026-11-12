@@ -7,8 +7,11 @@
   "grid": {
     "status": "proposed",
     "scheme": "Web Mercator map tiles",
-    "zoom": 17,
-    "id_form": "c17-<x>-<y>",
+    "finest_level": 17,
+    "coarsest_level": 14,
+    "target_side_m": 250,
+    "level_rule": "The level whose tiles are nearest the target side at the cell's latitude, decided per row of coarsest-level tiles.",
+    "id_form": "c<level>-<x>-<y>",
     "max_latitude": 85.05
   },
   "layers": [
@@ -26,9 +29,9 @@
       "name": "World model",
       "question": "How does Earth break down into things people can build?",
       "doc": "docs/world-model.md",
-      "version": "v0.4",
+      "version": "v0.5",
       "status": "revised",
-      "summary": "Nine levels of scale, library and unique assets, accuracy levels A0 to A3, categories, behaviours with settings, and a proposed world grid that joins separately built areas on one globe."
+      "summary": "Nine levels of scale, library and unique assets, accuracy levels A0 to A3, categories, behaviours with settings, and a proposed world grid, with cells of about 250 m at every latitude, that joins separately built areas on one globe."
     },
     {
       "id": "contract",

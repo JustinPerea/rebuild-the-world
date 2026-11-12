@@ -248,7 +248,7 @@ Proposed on 2026-11-12. The owner asked whether claims should stay in one area o
 A contributor may open one block anywhere on Earth as their home block. The project keeps one featured region, which it works to finish first.
 
 - **Why open the world.** People want to build their own street. A person who lives on a block can also photograph it, and photos are what a true exterior needs: in the first block, 114 of 150 buildings are shown by no open photo.
-- **One home block each.** It is one cell of the world grid that the world model proposes, about 150 to 300 m across. `docs/open-an-area.md` is the guide to opening one. It opens when open map data has building outlines there and the blockout tool accepts them. It needs no contributor count, so the three conditions above apply to featured regions only.
+- **One home block each.** It is one cell of the world grid that the world model proposes, between 177 and 354 m across. `docs/open-an-area.md` is the guide to opening one. It opens when open map data has building outlines there and the blockout tool accepts them. It needs no contributor count, so the three conditions above apply to featured regions only.
 - **The same rules inside it.** Places are claimed as in "Claiming a place", by the person who opened the block or by anyone else. Its neighbours open as in "Blocks inside a region".
 - **One library.** Atoms are built once and used everywhere. A home block's facade plans name library atoms, and an atom built for one block is there for every other.
 - **The featured region stays the goal.** A hundred home blocks do not make a place to walk through. The demo slice, the wanted list and the maintainers' review time go to the featured region first.
