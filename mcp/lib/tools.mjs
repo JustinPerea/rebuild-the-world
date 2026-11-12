@@ -440,7 +440,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
             `The server does not run git. Create one branch named ${branch} from the current main branch. Every folder of this bundle goes on it.`,
             `Build each reserved atom as its own asset folder under the workspace (reserved task ids: ${reservedIds.length ? reservedIds.join(', ') : 'none'}), laid out as <category>/<asset_id>/ with asset.glb, asset.json, preview/ and source/ (asset spec, "Files, naming and metadata"). Set "task_id" in each asset.json to that atom's own task id, and call submit for each with its task_id and folder. A failing report leaves that atom open: fix and submit again. Do not open a pull request per atom.`,
             'data.bundle.members holds each atom task whole. Its connector_frames give each connector\'s exact position and the directions of its +Z and +Y, and its mating_m gives the sizes that must match the neighbouring atoms. Before building, read the fitting_atoms and near_matches of each member and reuse an atom where it is the same kind of part. fitting_atoms passed only the rules a script can check; fit rule 4, whether it is the same kind of part, is your judgement, and an atom with extra_connectors (connectors the slot does not ask for) is usually a different kind of part. List each atom you looked at in asset.json "considered".',
-            `When every member task is Merged or has passed submit, write the assembly folder for the object (assembly.json, asset.json, preview/ and source/) and call submit with the object task_id ${task.task_id} and that folder. The assembly is checked against the atoms in the repo assets/ folder, so build the bundle there. Two things are checked that are easy to miss. If the object's folder already holds blueprint.json, set "atom" in each slot you built to that atom's pin, "<asset_id>@<version>", in place of "new": the manifest must place each slot's atom exactly "count" times and nothing else. And asset.json "dimensions_m" must be the measured size of the whole object, which the validator measures from the placed atoms and compares with the task.`,
+            `When every member task is Merged or has passed submit, write the assembly folder for the object (assembly.json, asset.json, preview/ and source/) and call submit with the object task_id ${task.task_id} and that folder. The assembly is checked against the atoms in the repo assets/ folder, so build the bundle there. Two things are checked that are easy to miss. If the object's folder already holds blueprint.json, write the assembly in that same folder and fill the blueprint in: no slot may be left as "new". Set "atom" in each slot to the pin, "<asset_id>@<version>", of the atom that fills it (the atom you built for it, or the merged atom its task names), and change nothing else in the file. The manifest must place each slot's atom exactly "count" times and nothing else. And asset.json "dimensions_m" must be the measured size of the whole object, which the validator measures from the placed atoms and compares with the task.`,
             `After that submit passes, commit all the folders to ${branch}, push the branch and open ONE pull request that names ${task.task_id} and lists each atom task. The server does not do that for you.`,
             `The deadline covers the whole bundle. An atom that passes submit does not stop the clock; it stops when ${task.task_id} passes submit. If the deadline passes first, every task of the bundle is Open again, the atoms that had passed included.`,
             `If an atom is held by another builder (data.bundle.waiting_on_others), build the rest and wait for it. To give the work back, call release with ${task.task_id}: that releases the whole bundle, and one atom of it cannot be released alone. If a rule is unclear or missing, call leave_feedback.`,
@@ -607,9 +607,8 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
           const dt = store.getTask(d);
           if (dt.error || !dt.task.slot || !dt.task.asset_id || dt.task.object_id !== t.task.object_id) continue;
           const s = bp.blueprint.slots.find((x) => isObj(x) && x.slot === dt.task.slot);
-          if (!s) continue;
-          const ok = typeof s.atom === 'string' && s.atom.startsWith(`${dt.task.asset_id}@`);
-          if (!ok) wrong.push({ slot: dt.task.slot, task_id: d, asset_the_task_asks_for: dt.task.asset_id, blueprint_atom: typeof s.atom === 'string' ? s.atom.slice(0, 100) : null });
+          const ok = s && typeof s.atom === 'string' && s.atom.startsWith(`${dt.task.asset_id}@`);
+          if (!ok) wrong.push({ slot: dt.task.slot, task_id: d, asset_the_task_asks_for: dt.task.asset_id, blueprint_atom: s && typeof s.atom === 'string' ? s.atom.slice(0, 100) : null, ...(s ? {} : { problem: 'the blueprint has no slot of this name' }) });
         }
         if (wrong.length) {
           return fail(`blueprint.json of ${t.task.object_id} does not name the atoms built for ${wrong.length} slot(s), listed in data.slots. In each of those slots set "atom" to "<asset_id>@<version>" of the asset its task asks for, then submit again.`, { slots: wrong });
@@ -619,6 +618,9 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const r = resolveAssetFolder(a.asset_path);
     if (r.error) return fail(r.error);
     const folderName = path.basename(r.dir);
+    // The blueprint the server just read and the one the validator will read must be the same file.
+    const objectDir = isObject && t.task.object_id ? store.findObjectDir(t.task.object_id) : null;
+    if (objectDir && realish(objectDir) !== r.dir) return fail(`the assembly for ${a.task_id} must be written in the object's own folder under assets/, beside its blueprint.json; the folder given is a different one`);
     const problems = [];
     if (t.task.asset_id && folderName !== t.task.asset_id) problems.push(`the task asks for asset "${t.task.asset_id}" but the folder is named "${folderName}"`);
     const meta = readJson(path.join(r.dir, 'asset.json'));

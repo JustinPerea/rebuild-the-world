@@ -211,6 +211,10 @@ test('an object with a blueprint: submit waits until each built slot is pinned, 
   assert.match(early.body.instructions.error, /does not name the atoms built for 1 slot/);
   assert.ok(!JSON.stringify(early.body.instructions).includes(MARK));
   assert.deepEqual(early.body.data.slots.map((x) => [x.slot, x.task_id, x.asset_the_task_asks_for]), [['door', DOOR, 'veh_door_01']]);
+  // a member task whose slot the blueprint does not have is named as well
+  writeJson(path.join(assets, 'veh', 'veh_sedan_01', 'blueprint.json'), { object_id: 'veh_sedan_01', description: 'A body', slots: [slot('body', 'a', 'veh_body_01@1.0.0')] });
+  const gone = await c.call('submit', { task_id: SEDAN, asset_path: 'veh/veh_sedan_01' });
+  assert.deepEqual(gone.body.data.slots.map((x) => [x.slot, x.problem]), [['door', 'the blueprint has no slot of this name']]);
   // a slot pinned to a different atom than its task asked for is refused too
   blueprint('veh_body_01@1.0.0', 'veh_body_01@1.0.0');
   assert.equal((await c.call('submit', { task_id: SEDAN, asset_path: 'veh/veh_sedan_01' })).isError, true);
@@ -237,6 +241,11 @@ test('the fit search checks a task\'s mating_m and lists connectors the slot doe
   assert.ok(hit, 'the atom fits rules 1 to 3');
   assert.equal(hit.rules.find((r) => r.rule === 2).result, 'pass');
   assert.deepEqual(hit.extra_connectors.map((x) => x.name), ['conn_door_hinge_b_01']);
+  // more of a connector than the count asked for is extra too
+  const three = [conn('conn_door_hinge_a_01', [0.5, 0, 0], 90), conn('conn_door_hinge_a_02', [0.5, 0.3, 0], 90)];
+  validAtom(assets, 'prop_twice_01', { glb: { connectors: three }, meta: { connectors: three.map((x) => ({ name: x.name, type: 'door_hinge', side: 'a', limits: [-100, 0], rest: 0, mating: { leaf: 1 } })) } });
+  const twice = (await c.call('find_atoms', { task_id: 'task_fit_01' })).body.data.fits.find((x) => x.asset_id === 'prop_twice_01');
+  assert.deepEqual(twice.extra_connectors.map((x) => x.name), ['conn_door_hinge_a_02']);
   const miss = (await c.call('find_atoms', { task_id: 'task_fit_02' })).body.data;
   assert.ok(!miss.fits.some((x) => x.asset_id === 'prop_both_01'));
   assert.deepEqual(miss.near_matches.find((x) => x.asset_id === 'prop_both_01').failed_rules, [2]);

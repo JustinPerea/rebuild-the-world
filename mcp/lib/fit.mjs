@@ -90,6 +90,23 @@ export function evaluate(atom, req, tol, ruleText) {
   return { failed, passed: rules.filter((r) => r.result === 'pass').length, rules };
 }
 
+// Connectors an atom carries beyond what the slot asks for: a type and side the slot does not
+// name, or more of one than the count it states.
+function extraConnectors(have, want) {
+  if (!Array.isArray(want) || !want.length) return [];
+  const left = new Map();
+  for (const r of want) if (r && typeof r === 'object') left.set(`${r.type}/${r.side}`, typeof r.count === 'number' ? (left.get(`${r.type}/${r.side}`) || 0) + r.count : Infinity);
+  const out = [];
+  for (const c of Array.isArray(have) ? have : []) {
+    if (!c || typeof c !== 'object') continue;
+    const k = `${c.type}/${c.side}`;
+    const n = left.get(k) || 0;
+    if (n > 0) left.set(k, n - 1);
+    else out.push({ name: c.name, type: c.type, side: c.side });
+  }
+  return out;
+}
+
 export function search(atoms, req, tol, ruleText, limit = 5) {
   const rows = atoms.map((a) => {
     const e = evaluate(a, req, tol, ruleText);
@@ -101,9 +118,7 @@ export function search(atoms, req, tol, ruleText, limit = 5) {
       dimensions_m: a.meta.dimensions_m ?? null,
       connectors: (a.meta.connectors || []).map((c) => ({ name: c.name, type: c.type, side: c.side })),
       // Connectors the slot does not ask for. An atom that carries some is usually a different kind of part.
-      extra_connectors: req.connectors?.length
-        ? (a.meta.connectors || []).filter((c) => !req.connectors.some((r) => r.type === c?.type && r.side === c?.side)).map((c) => ({ name: c.name, type: c.type, side: c.side }))
-        : [],
+      extra_connectors: extraConnectors(a.meta.connectors, req.connectors),
       failed_rules: e.failed,
       rules: e.rules,
       _passed: e.passed,

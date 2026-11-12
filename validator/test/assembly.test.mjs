@@ -167,6 +167,8 @@ test('Scale (assembly): the size is measured from the placed atoms and held to a
   passing(await run(build(lib, manifest(), { dimensions_m: [2, 1, 1] }), lib, { task: { dimensions_m: [2.02, 1, 1] } }), 'Scale');
   failing(await run(build(lib, manifest(), { dimensions_m: [2, 1, 1] }), lib, { task: { dimensions_m: [2.5, 1, 1] } }), 'Scale', 'width (x) is 2 m', 'the task asks for 2.5 m');
   failing(await run(build(lib, manifest(), { dimensions_m: [3, 1, 1] }), lib), 'Scale', 'asset.json dimensions_m gives width (x) as 3 m', 'measure 2 m');
+  // a task size that is not positive is refused, not passed
+  failing(await run(build(lib), lib, { task: { dimensions_m: [-2, 1, 1] } }), 'Scale', 'three positive numbers');
   // an assembly that cannot be placed is not measured
   const off = newLib();
   bodyDoor(off, { doorB2y: 0.305 });
@@ -215,4 +217,17 @@ test('Blueprint (assembly): a blueprint beside the manifest must be filled, and 
   const lib = newLib();
   bodyDoor(lib);
   assert.equal(status(await run(build(lib), lib), 'Blueprint').status, 'SKIP');
+});
+
+test('Scale (assembly): a scaled entry grows about its own origin, and its connectors move with it', async () => {
+  const lib = newLib();
+  bodyDoor(lib, { doorMeta: { variation: { scale: [0.5, 2] } } });
+  // the door at scale 2 is a 2 m box whose hinge sits 1 m from its centre, so it runs from x = 0.5 to 2.5
+  const one = { origin: { ref: 'body' }, atoms: [{ ref: 'body', asset: 'veh_body_01@1.0.0' }, { ref: 'door', asset: 'veh_door_01@1.0.0', scale: 2 }], joints: [{ a: 'body:conn_door_hinge_a_01', b: 'door:conn_door_hinge_b_01' }] };
+  const r = await run(build(lib, one, { dimensions_m: [3, 2, 2] }), lib);
+  passing(r, 'Assembly');
+  passing(r, 'Scale');
+  // with both hinges joined, the scaled door's second hinge no longer meets the body's, and the loop says so
+  failing(await run(build(lib, manifest({ door: { scale: 2 } })), lib), 'Assembly', 'positions differ by 300.00 mm');
+  assert.match(status(r, 'Scale').messages.join(' | '), /measured from the placed atoms: 3 by 2 by 2 m \(x from -0\.5 to 2\.5,/);
 });

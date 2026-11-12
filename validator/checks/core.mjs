@@ -194,7 +194,7 @@ function assemblyScale(ctx) {
   const dims = ctx.task?.dimensions_m;
   if (!ctx.task) notes.push('no --task given, so the size was not compared with a task');
   else if (dims === undefined) notes.push('the task gives no dimensions_m, so the size was not compared with it');
-  else if (!Array.isArray(dims) || dims.length !== 3 || !dims.every(isNum)) msgs.push('task file "dimensions_m" must be three numbers [width, height, depth] in metres');
+  else if (!Array.isArray(dims) || dims.length !== 3 || !dims.every((v) => isNum(v) && v > 0)) msgs.push('task file "dimensions_m" must be three positive numbers [width, height, depth] in metres');
   else names.forEach((n, k) => {
     const rel = Math.abs(box.size[k] - dims[k]) / dims[k];
     if (rel > tol) msgs.push(`${n} is ${fmt(box.size[k])} m, the task asks for ${dims[k]} m: off by ${fmt(rel * 100, 2)}% (allowed ${tol * 100}%)`);
@@ -208,7 +208,7 @@ export function scale(ctx) {
   if (s) return s;
   const dims = ctx.task?.dimensions_m;
   if (!ctx.task) return skip('no --task given; the task supplies the dimensions to compare with');
-  if (!Array.isArray(dims) || dims.length !== 3 || !dims.every(isNum)) return fail('task file "dimensions_m" must be three numbers [width, height, depth] in metres');
+  if (!Array.isArray(dims) || dims.length !== 3 || !dims.every((v) => isNum(v) && v > 0)) return fail('task file "dimensions_m" must be three positive numbers [width, height, depth] in metres');
   const g = needGlb(ctx);
   if (g) return g;
   const box = bboxOfFaces(visiblePrims(collectGeometry(ctx.asset.glb).prims));

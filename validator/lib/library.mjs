@@ -33,7 +33,9 @@ const joinPart = (s) => {
   return i < 0 ? null : { ref: s.slice(0, i), conn: s.slice(i + 1) };
 };
 
-// Connector of a placed entry, in the entry's own coordinates (mirrored when the entry is).
+const entryScale = (entry) => (typeof entry.scale === 'number' && Number.isFinite(entry.scale) && entry.scale > 0 ? entry.scale : 1);
+
+// Connector of a placed entry, in the entry's own coordinates (mirrored and scaled when the entry is).
 function entryConnector(rec, entry, connName) {
   let c;
   if (rec.kind === 'atom') {
@@ -47,7 +49,11 @@ function entryConnector(rec, entry, connName) {
       return { error: `connector "${connName}" is not exposed by assembly "${rec.id}" (it exposes: ${names.length ? names.join(', ') : 'nothing'}); join it through an exposed name` };
     }
   }
-  const frame = entry.mirror ? mirrorFrame(c.frame) : c.frame;
+  let frame = entry.mirror ? mirrorFrame(c.frame) : c.frame;
+  // A placed thing scales about its own origin (asset spec, "Scale"), so its connectors move with it.
+  // assemblyBounds scales the vertices the same way.
+  const s = entryScale(entry);
+  if (s !== 1) frame = { ...frame, p: vscale(frame.p, s) };
   return { type: c.type, side: c.side, frame, name: connName };
 }
 
@@ -241,7 +247,7 @@ export function assemblyBounds(res) {
     for (const [ref, ent] of r.entries) {
       const pose = r.poses.get(ref);
       if (!ent.rec || !pose) continue;
-      const s = typeof ent.entry.scale === 'number' && ent.entry.scale > 0 ? ent.entry.scale : 1;
+      const s = entryScale(ent.entry);
       const mirrored = ent.entry.mirror === true;
       // Same order as a connector's frame: mirrored in the entry's own coordinates, scaled, then placed.
       const place = (p) => up(point(pose, vscale(mirrored ? [-p[0], p[1], p[2]] : p, s)));
