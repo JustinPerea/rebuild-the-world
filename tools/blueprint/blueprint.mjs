@@ -33,7 +33,9 @@ const insideRepo = (file) => {
   try { if (lstatSync(file).isSymbolicLink()) return false; } catch { /* does not exist yet */ }
   return true;
 };
-const guardOutputs = (files) => { const bad = files.find((f) => !insideRepo(f)); if (bad) fail(`refusing to write ${path.relative(repo, bad)}: it resolves outside the clone (a symlink?)`); };
+// Paths in the output use forward slashes on every system, so they can be compared and passed to git as printed.
+const rel = (f) => path.relative(repo, f).split(path.sep).join('/');
+const guardOutputs = (files) => { const bad = files.find((f) => !insideRepo(f)); if (bad) fail(`refusing to write ${rel(bad)}: it resolves outside the clone (a symlink?)`); };
 const writeJson = (file, value) => { guardOutputs([file]); mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2) + '\n'); };
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 const library = path.join(repo, 'assets');
@@ -78,9 +80,9 @@ if (command === 'draft') {
   const place = reg.places.find((p) => p.source_id === target || p.place_id === target);
   if (!place) fail(`no building ${target} in region ${region}`);
   const file = planFile(reg, place);
-  if (!existsSync(file)) fail(`no plan file at ${path.relative(repo, file)}`);
+  if (!existsSync(file)) fail(`no plan file at ${rel(file)}`);
   let plan;
-  try { plan = readJson(file); } catch { fail(`${path.relative(repo, file)} is not valid JSON`); }
+  try { plan = readJson(file); } catch { fail(`${rel(file)} is not valid JSON`); }
   const pre = draft(reg, place, plan, { library, tasks: tasksDir });
   const prior = pre.object_id ? existingPins(pre.object_id) : { pins: new Map(), rejected: [], version: undefined };
   const r = prior.pins.size || prior.version ? draft(reg, place, plan, { library, tasks: tasksDir, pinned: prior.pins, version: prior.version }) : pre;
@@ -90,14 +92,14 @@ if (command === 'draft') {
     const dir = objectDir(r.object_id);
     guardOutputs([path.join(dir, 'blueprint.json'), path.join(dir, 'layout.json'), ...r.tasks.map((t) => path.join(tasksDir, `${t.task_id}.json`))]);
     const written = [], kept = [];
-    writeJson(path.join(dir, 'blueprint.json'), r.blueprint); written.push(path.relative(repo, path.join(dir, 'blueprint.json')));
-    writeJson(path.join(dir, 'layout.json'), r.layout); written.push(path.relative(repo, path.join(dir, 'layout.json')));
+    writeJson(path.join(dir, 'blueprint.json'), r.blueprint); written.push(rel(path.join(dir, 'blueprint.json')));
+    writeJson(path.join(dir, 'layout.json'), r.layout); written.push(rel(path.join(dir, 'layout.json')));
     for (const t of r.tasks) {
       const f = path.join(tasksDir, `${t.task_id}.json`);
       // The object's own task is this tool's output for this building, so a new draft replaces it.
       // A slot's task may belong to another building's bundle or be hand-written: it is left alone.
-      if (existsSync(f) && t.task_id !== `task_${r.object_id}`) { kept.push(path.relative(repo, f)); continue; }
-      writeJson(f, t); written.push(path.relative(repo, f));
+      if (existsSync(f) && t.task_id !== `task_${r.object_id}`) { kept.push(rel(f)); continue; }
+      writeJson(f, t); written.push(rel(f));
     }
     report.written = written;
     if (kept.length) report.task_files_left_alone = kept;
@@ -112,12 +114,12 @@ if (command === 'draft') {
   if (!validObjectId(target)) fail('usage: assemble <object_id>');
   const dir = objectDir(target);
   let blueprint, layout;
-  try { blueprint = readJson(path.join(dir, 'blueprint.json')); layout = readJson(path.join(dir, 'layout.json')); } catch (e) { fail(`cannot read blueprint.json and layout.json in ${path.relative(repo, dir)}: ${e.message}`); }
+  try { blueprint = readJson(path.join(dir, 'blueprint.json')); layout = readJson(path.join(dir, 'layout.json')); } catch (e) { fail(`cannot read blueprint.json and layout.json in ${rel(dir)}: ${e.message}`); }
   try {
     const manifest = assemble(blueprint, layout, target);
     guardOutputs([path.join(dir, 'molecule.json')]);
     writeJson(path.join(dir, 'molecule.json'), manifest);
-    out({ wrote: path.relative(repo, path.join(dir, 'molecule.json')), atoms: manifest.atoms.length, joints: manifest.joints.length });
+    out({ wrote: rel(path.join(dir, 'molecule.json')), atoms: manifest.atoms.length, joints: manifest.joints.length });
   } catch (e) { fail(e.message, 1); }
 } else if (command === 'check') {
   let reg;
