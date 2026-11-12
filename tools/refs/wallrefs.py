@@ -39,6 +39,11 @@ CROP_PX, CROP_FOV = 2048, 90.0   # the pinhole view cut from a panorama towards 
 CAMERA_HEIGHT_M = 1.5  # assumed height of the cameras above the street
 PLANE_SEARCH_M = 4.0   # how far from the outline the real wall may sit
 PLANE_TOL_M = 0.12
+FUSE_VIEWS = 16        # photos resampled onto one wall, chosen after the cameras are located
+FUSE_TOP = 5           # at each spot, the best this many unblocked views are combined
+OCCLUDER_MIN_M = 1.5   # a model point this far in front of the wall is something standing in the street, not part of the facade
+OCCLUDER_RADIUS_M = 0.3   # how much of the view one such point is taken to block
+MAX_GRID_PX = 8e6      # the wall image is kept under this many pixels
 MAX_VIEW_SPREAD = 19       # of 255; above this the views disagree about what is on the plane. Set from 11 walls: a weak figure
 MAX_PLANE_OFFSET_M = 1.0   # a plane further than this from the outline is something else: a fence, a tree, the neighbour
 
@@ -508,30 +513,146 @@ def rec_image_path(im):
     return _IMG_ROOT["dir"] / im.name
 
 
-def fuse(views):
-    """Views best first, each (image, mask). Returns (best single view, fused image, views-per-pixel)."""
+def shadow_mask(cam, pts, length, height, ppm):
+    """Where on the wall one camera's view is blocked by something standing in front of it.
+
+    cam is the camera and pts are the model's points, both in the wall's frame: metres along the
+    wall, metres out from it, metres up. A point further out than OCCLUDER_MIN_M and nearer than
+    the camera throws a shadow onto the wall, as a lamp at the camera would. Returns a mask the
+    size of the wall image, true where the view is blocked.
+    """
+    import cv2
+    import numpy as np
+    W, H = int(round(length * ppm)), int(round(height * ppm))
+    g = min(float(ppm), 10.0)                        # ten cells to the metre is enough for a shadow
+    w, h = max(1, int(round(length * g))), max(1, int(round(height * g)))
+    m = np.zeros((h, w), np.uint16)
+    cs, cd, ch = cam
+    pts = np.asarray(pts, dtype=float).reshape(-1, 3)
+    sel = (pts[:, 1] > OCCLUDER_MIN_M) & (pts[:, 1] < cd - 0.5) & (pts[:, 2] > 0.3)      # not the road surface
+    if sel.any():
+        q = pts[sel]
+        k = cd / (cd - q[:, 1])                      # how much further the wall is than the point
+        xs, xh = cs + k * (q[:, 0] - cs), ch + k * (q[:, 2] - ch)
+        r = np.minimum(OCCLUDER_RADIUS_M * k, 2.0)
+        keep = (xs > -r) & (xs < length + r) & (xh > -r) & (xh < height + r)
+        one = np.zeros_like(m)
+        for x, y, rad in zip(xs[keep], xh[keep], r[keep]):         # two points must agree: one stray point blocks nothing
+            one[:] = 0
+            cv2.circle(one, (int(round(x * g)), int(round((height - y) * g))), max(1, int(round(rad * g))), 1, -1)
+            m += one
+        m = (m >= 2).astype(np.uint8)
+        size = int(0.6 * g) | 1
+        m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (size, size)))
+    return cv2.resize(m.astype(np.float32), (W, H), interpolation=cv2.INTER_LINEAR) > 0.5
+
+
+def exposure_gain(target, img, both):
+    """A smooth gain in brightness that brings img to target's exposure where both are known.
+
+    Photos of one wall differ in exposure, and a tiled wall reflects the sky differently from
+    each place, so one number per photo leaves seams. The gain varies slowly across the wall
+    and falls back to one number where the two share nothing nearby. It is one gain for all
+    three colours: a gain per colour picked up a green cast wherever leaves went unmarked.
+    """
+    import cv2
+    import numpy as np
+    H, W = both.shape
+    if both.sum() < 500:
+        return np.ones((H, W, 1), np.float32)
+    f = max(1, int(round(max(H, W) / 256)))
+    size = (max(1, W // f), max(1, H // f))
+    small = lambda a: cv2.resize(a, size, interpolation=cv2.INTER_AREA)
+    blur = lambda a: cv2.GaussianBlur(a, (0, 0), 12)
+    w = both.astype(np.float32)
+    support = np.clip(blur(small(w)) / 0.3, 0, 1)
+    a, b = target.astype(np.float32).mean(2), img.astype(np.float32).mean(2)
+    overall = float(np.median(a[both])) / max(1.0, float(np.median(b[both])))
+    local = blur(small(a * w)) / np.maximum(blur(small(b * w)), 1e-3)
+    gain = np.clip(support * local + (1 - support) * overall, 0.5, 2.0)
+    return cv2.resize(gain, (W, H), interpolation=cv2.INTER_LINEAR)[..., None]
+
+
+def choose_views(cands, limit=FUSE_VIEWS, want=FUSE_TOP):
+    """Which photos to resample: indexes into cands, the reference view first.
+
+    cands: per photo, (source pixels per metre, mask of the wall it sees, mask of where it sees
+    the wall unblocked). The first pick is the photo that shows most of the wall sharply. Each
+    later pick is the one that adds most to the parts of the wall still short of `want` unblocked
+    views, so a photo that sees little of the wall is taken when it is the one that sees behind
+    a parked truck. The picks after the first are returned sharpest first.
+    """
+    import numpy as np
+    if not cands:
+        return []
+    first = max(range(len(cands)), key=lambda i: cands[i][0] * cands[i][1].mean())
+    picked = [first]
+    have = cands[first][2].astype(np.int32)
+    left = [i for i in range(len(cands)) if i != first]
+    while left and len(picked) < limit:
+        short = have < want
+        gains = [cands[i][0] * float((cands[i][2] & short).sum()) for i in left]
+        k = int(np.argmax(gains))
+        if gains[k] <= 0:
+            break
+        i = left.pop(k)
+        picked.append(i)
+        have += cands[i][2]
+    return [first] + sorted(picked[1:], key=lambda i: -cands[i][0])
+
+
+def match_exposure(views, clear):
+    """The views' images with their exposure evened out, in the same order.
+
+    Each view is matched to what is already shown of the wall, starting from the first view.
+    The next one matched is the one that shares most unblocked wall with what is shown, so a
+    close-up that overlaps the first view only where a truck stood is matched through the
+    views in between, not guessed.
+    """
+    import numpy as np
+    shown, have, matched = views[0][0].astype(np.float32), clear[0].copy(), {0: views[0][0]}
+    todo = list(range(1, len(views)))
+    while todo:
+        k = max(todo, key=lambda i: int((have & clear[i])[::4, ::4].sum()))
+        todo.remove(k)
+        adj = np.clip(views[k][0].astype(np.float32) * exposure_gain(shown, views[k][0], have & clear[k]), 0, 255)
+        new = clear[k] & ~have
+        shown[new] = adj[new]
+        have |= new
+        matched[k] = np.rint(adj).astype(np.uint8)
+    return [matched[k] for k in range(len(views))]
+
+
+def fuse(views, blocked=None):
+    """Views best first, each (image, mask). blocked: per view, a mask of where something stands in the way.
+
+    At each spot the unblocked views are used, the best FUSE_TOP of them: the median of three or
+    more (which drops what moves between photos), else the best one. A spot blocked in every
+    view falls back to all the views that see it.
+    Returns (best single view, fused image, views that see each pixel, unblocked views that see it).
+    """
+    import warnings
     import numpy as np
     ref, ref_mask = views[0]
-    stack, masks = [], []
-    for img, mask in views:
-        both = mask & ref_mask
-        f = img.astype(np.float32)
-        if both.sum() > 500:                         # match each view's exposure to the best view
-            for c in range(3):
-                g = np.median(ref[..., c][both]) / max(1.0, float(np.median(img[..., c][both])))
-                f[..., c] *= min(1.4, max(0.7, g))
-        stack.append(np.where(mask[..., None], f, np.nan))
-        masks.append(mask)
-    count = np.sum(masks, axis=0)
-    fused = np.zeros_like(ref, dtype=np.float32)
-    many = count >= 3
-    if many.any():                                   # three or more views: the median drops what moves
-        med = np.nanmedian(np.stack([s[many] for s in stack]), axis=0)
-        fused[many] = med
-    for s, m in zip(reversed(stack), reversed(masks)):   # fewer: the best view that sees the pixel
-        take = m & ~many
-        fused[take] = s[take]
-    return ref, np.clip(fused, 0, 255).astype(np.uint8), count
+    masks = np.stack([m for _, m in views])
+    clear = masks & ~np.stack(blocked) if blocked is not None else masks.copy()
+    count, n_clear = masks.sum(0), clear.sum(0)
+    matched = match_exposure(views, clear)
+    fused = np.zeros(ref.shape, np.float32)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)      # a spot no view sees is all NaN, and stays black
+        for y in range(0, ref.shape[0], 256):
+            rows = slice(y, y + 256)
+            use = np.where(n_clear[rows] > 0, clear[:, rows], masks[:, rows])
+            use &= np.cumsum(use, axis=0) <= FUSE_TOP
+            stack = np.stack([np.where(use[k][..., None], matched[k][rows].astype(np.float32), np.nan) for k in range(len(views))])
+            n = use.sum(0)
+            first = np.take_along_axis(stack, np.argmax(use, axis=0)[None, ..., None], axis=0)[0]
+            out = np.where((n >= 3)[..., None], np.nanmedian(stack, axis=0), first)
+            out[n == 0] = 0
+            fused[rows] = out
+    return ref, np.clip(np.nan_to_num(fused), 0, 255).astype(np.uint8), count, n_clear
+
 
 
 def view_spread(views):
@@ -636,25 +757,40 @@ def build_place(reg, tok, walls, photos, p, sid, reuse=False):
                 old.unlink(missing_ok=True)
             continue
         length = edge["length_m"]
-        names = [n for n in registered if source[n] in {c["id"] for c in cs} and (n.startswith("photo/") or n.endswith(f"_e{e}.jpg"))]
+        # every placed photo is tried, not only the ones the plan picked from GPS: the cameras are located now
+        names = [n for n in registered if n.startswith("photo/") or n.endswith(f"_e{e}.jpg")]
         probe = [(n, rectify(rec, registered[n], geo, origin, along, length, height, 20)) for n in names]
-        probe = [(n, r) for n, r in probe if r is not None and r[1].mean() > 0.15]
+        # a photo that sees a twentieth of the wall is kept: it may be the only one that sees that part unblocked
+        probe = [(n, r) for n, r in probe if r is not None and r[2] >= MIN_SCORE]
         if not probe:
             report["walls"].append({"edge": int(e), "problem": "no placed photo covers this wall"})
             continue
-        probe.sort(key=lambda nr: -nr[1][2] * nr[1][1].mean())
-        ppm = int(max(40, min(200, round(probe[0][1][2] / 10) * 10)))
-        views, used = [], []
-        for n, _ in probe[:6]:
+        rel = world[:, [0, 2]] - np.asarray(origin)
+        in_wall_frame = np.stack([rel @ np.asarray(along), rel @ np.asarray(outward), world[:, 1]], 1)
+
+        def camera(n):                               # the camera in the wall's frame: along, out, up
+            c = scale * R @ registered[n].projection_center() + t
+            return ((c[[0, 2]] - np.asarray(origin)) @ np.asarray(along), (c[[0, 2]] - np.asarray(origin)) @ np.asarray(outward), c[1])
+
+        cands = [(r[2], r[1], r[1] & ~shadow_mask(camera(n), in_wall_frame, length, height, 20)) for n, r in probe]
+        order = choose_views(cands)
+        ppm = int(max(40, min(200, round(cands[order[0]][0] / 10) * 10)))
+        while ppm > 40 and length * height * ppm * ppm > MAX_GRID_PX:
+            ppm -= 10
+        views, used, blocked = [], [], []
+        for n in (probe[i][0] for i in order):
             r = rectify(rec, registered[n], geo, origin, along, length, height, ppm)
             if r is None:
                 continue
             views.append((r[0], r[1]))
+            blocked.append(shadow_mask(camera(n), in_wall_frame, length, height, ppm))
             q = by_id[source[n]]
             used.append({"image_id": q["id"], "creator": q["creator"], "captured_at": q["captured_at"], "panorama": q["pano"], "source_px_per_m": round(r[2])})
             credits[q["id"]] = q["creator"]
-        best, fused, count = fuse(views)
-        spread = view_spread(views)
+        best, fused, count, n_clear = fuse(views, blocked)
+        hidden = (count > 0) & (n_clear == 0)        # something stands in front in every view: shown greyed
+        fused[hidden] = (0.55 * fused[hidden] + 0.45 * 128).astype(np.uint8)
+        spread = view_spread([(img, mask & ~blk) for (img, mask), blk in zip(views, blocked)])
         stem = out_dir / f"edge{int(e):02d}"
         cv2.imwrite(f"{stem}_best.jpg", best, [cv2.IMWRITE_JPEG_QUALITY, 90])
         cv2.imwrite(f"{stem}_fused.jpg", fused, [cv2.IMWRITE_JPEG_QUALITY, 90])
@@ -662,7 +798,8 @@ def build_place(reg, tok, walls, photos, p, sid, reuse=False):
             "edge": int(e), "length_m": length, "height_m": round(height, 2), "px_per_m": ppm, "faces": edge["faces"],
             "files": [f"{stem.name}_best.jpg", f"{stem.name}_fused.jpg"],
             "plane": {"offset_from_outline_m": round(offset, 2), "rms_m": round(rms, 3), "points": inliers},
-            "seen": {"any_view": round(float((count > 0).mean()), 2), "three_or_more_views": round(float((count >= 3).mean()), 2)},
+            "seen": {"any_view": round(float((count > 0).mean()), 2), "three_or_more_views": round(float((count >= 3).mean()), 2),
+                     "unblocked": round(float((n_clear > 0).mean()), 2), "blocked_in_every_view": round(float(hidden.mean()), 2)},
             "views": used,
             "views_disagree": spread,
             **({"doubt": f"the views disagree ({spread} of 255, over {MAX_VIEW_SPREAD}): the plane may not be this wall. Check the image by eye"} if spread is not None and spread > MAX_VIEW_SPREAD else {}),
@@ -689,7 +826,7 @@ def cmd_build(reg, args):
         done = [w for w in r["walls"] if "files" in w]
         print(f"{sid}: {r['photos_placed']} of {r['photos_given']} photos placed, {len(done)} of {len(r['walls'])} walls written, {time.time() - t0:.0f} s")
         for w in r["walls"]:
-            print(f"   edge {w['edge']}: " + (w["problem"] if "problem" in w else f"{w['px_per_m']} px/m, {len(w['views'])} views, plane {w['plane']['offset_from_outline_m']:+.2f} m from the outline (rms {w['plane']['rms_m']} m), {int(w['seen']['any_view'] * 100)}% of the wall seen" + (", DOUBTFUL: the views disagree" if "doubt" in w else "")))
+            print(f"   edge {w['edge']}: " + (w["problem"] if "problem" in w else f"{w['px_per_m']} px/m, {len(w['views'])} views, plane {w['plane']['offset_from_outline_m']:+.2f} m from the outline (rms {w['plane']['rms_m']} m), {int(w['seen']['any_view'] * 100)}% of the wall seen, {int(w['seen']['unblocked'] * 100)}% unblocked" + (", DOUBTFUL: the views disagree" if "doubt" in w else "")))
 
 
 def main():

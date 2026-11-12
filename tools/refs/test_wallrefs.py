@@ -79,6 +79,47 @@ class Geometry(unittest.TestCase):
         self.assertGreater(w.view_spread(shifted), w.MAX_VIEW_SPREAD)
         self.assertIsNone(w.view_spread(same[:2]))
 
+    def test_a_point_in_the_street_shadows_the_wall_behind_it(self):
+        # camera 12 m out, 1.5 m up, opposite s = 5; a point 6 m out is halfway, so its shadow is doubled
+        cam = (5.0, 12.0, 1.5)
+        m = w.shadow_mask(cam, [[6.0, 6.0, 2.5], [6.05, 6.0, 2.5]], 10.0, 8.0, 20)
+        self.assertEqual(m.shape, (160, 200))
+        self.assertTrue(m[int((8.0 - 3.5) * 20), int(7.0 * 20)])           # lands at s = 7, h = 3.5
+        self.assertFalse(m[int((8.0 - 3.5) * 20), int(5.0 * 20)])          # 2 m away is outside the 0.7 m shadow
+        self.assertFalse(w.shadow_mask(cam, [[6.0, 6.0, 2.5]], 10.0, 8.0, 20).any())   # one stray point blocks nothing
+        # a point on the facade, or behind the camera, blocks nothing
+        self.assertFalse(w.shadow_mask(cam, [[6.0, 0.8, 2.5], [6.0, 0.8, 2.6], [6.0, 14.0, 2.5], [6.0, 14.0, 2.6], [6.0, 6.0, 0.1], [6.1, 6.0, 0.1]], 10.0, 8.0, 20).any())
+
+    def test_a_blocked_view_is_left_out_even_when_most_views_are_blocked(self):
+        rng = np.random.default_rng(6)
+        wall = rng.integers(60, 200, (40, 60, 3)).astype(np.uint8)
+        seen = np.ones((40, 60), bool)
+        truck = wall.copy(); truck[20:, :30] = 250                          # three of four views have a truck here
+        patch = np.zeros((40, 60), bool); patch[20:, :30] = True
+        views = [(truck, seen), (truck, seen), (truck, seen), (wall, seen)]
+        plain = w.fuse(views)[1]
+        self.assertTrue((plain[30, 10] == 250).all())                       # the plain median keeps the truck
+        best, fused, count, clear = w.fuse(views, [patch, patch, patch, ~seen])
+        np.testing.assert_array_equal(fused, wall)                          # the one clear view shows the wall
+        self.assertEqual(int(clear[30, 10]), 1)
+        self.assertEqual(int(count[30, 10]), 4)
+        hidden = w.fuse(views[:3], [patch] * 3)                             # blocked in every view: falls back, and says so
+        self.assertEqual(int(hidden[3][30, 10]), 0)
+        self.assertTrue((hidden[1][30, 10] == 250).all())
+
+    def test_a_photo_that_sees_little_is_chosen_when_it_sees_behind_what_blocks_the_rest(self):
+        full = np.ones((40, 60), bool)
+        behind = np.zeros((40, 60), bool); behind[20:, :30] = True         # the part a truck hides from the far photos
+        far = (100.0, full, full & ~behind)
+        near = (60.0, behind, behind)                                       # sees only that part, and sees it clear
+        spare = (90.0, full, full & ~behind)
+        order = w.choose_views([far, far, far, far, far, spare, near], limit=6)
+        self.assertEqual(order[0], 0)                                       # the reference: most of the wall, sharpest
+        self.assertIn(6, order)                                             # the near photo, although it ranks last on its own
+        self.assertNotIn(5, order)                                          # a sixth far photo adds nothing the first five lack
+        self.assertEqual(w.choose_views([far, far], limit=6), [0, 1])
+        self.assertEqual(w.choose_views([]), [])
+
     def test_projection_matches_a_plain_pinhole_without_distortion(self):
         pts = np.array([[0.5, -0.25, 2.0], [0.0, 0.0, 1.0]])
         for model, params in (("SIMPLE_PINHOLE", [1000, 960, 540]), ("SIMPLE_RADIAL", [1000, 960, 540, 0.0]),
