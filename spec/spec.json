@@ -718,7 +718,7 @@
     {
       "from": "Locked",
       "to": "Open",
-      "trigger": "Dependencies merged and region unlocked"
+      "trigger": "Dependencies merged or in the same bundle, and region unlocked"
     },
     {
       "from": "Open",
@@ -810,11 +810,11 @@
     },
     {
       "name": "Model review",
-      "what": "A reviewer model scores the checklist: pass, changes requested, or reject."
+      "what": "A reviewer model scores the checklist for each asset: pass, changes requested, or reject."
     },
     {
       "name": "Human check",
-      "what": "First 3 submissions, every L task, every landmark, and a 10% random sample."
+      "what": "Each contributor's first 3 bundles, every landmark, and a 10% random sample of the remaining assets."
     },
     {
       "name": "Merge",
