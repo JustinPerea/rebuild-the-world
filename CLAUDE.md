@@ -15,13 +15,14 @@ Two owner directions from 2026-11-10 shape everything: the goal is an **accurate
 ## Read these first
 
 - `docs/vision.md` : the goal, what must stay fixed, how the specs fit together. Start here.
-- `docs/world-model.md` : nine levels of scale, library and unique assets, accuracy levels A0 to A3, categories (including `chr` for characters), behaviours.
+- `docs/world-model.md` : nine levels of scale, library and unique assets, accuracy levels A0 to A3, categories (including `chr` for characters), behaviours, and the proposed world grid and globe.
 - `docs/asset-spec.md` : the durable contract, shared by every library: glTF conventions, connectors and their motion, blueprints, assembly manifests, variation (scale, spans, joint motion, open material slots), moving assemblies, animation clips, effect and light markers, materials, folder layout, metadata, validator checks.
 - `docs/capability-profiles.md` : Profile 1 (2026): triangle budgets, mesh rules, tolerances and texture limits enforced today.
 - `docs/accuracy-and-data.md` : what may match the real world, what is held for legal review, allowed data sources.
 - `docs/contributor-service.md` : how a contributor's agent gets work and current rules: work orders with pinned versions, the MCP server and its tools, the instructions-versus-data split.
 - `docs/claim-system-spec.md` : task states, claim timeouts, trust levels, review pipeline, strikes, region unlocks.
 - `docs/art-style-guide.md` : grounded realism, fidelity tiers, golden set, standard render scene, self-check.
+- `docs/open-an-area.md` : the guide for a contributor who opens a new area with `tools/region-kit/kit.py`.
 - `spec/spec.json` : the specs' tables as data. The visualizer in `tools/spec-visualizer/` reads it, and `scripts/check-spec-sync.mjs` fails if it drifts from the docs.
 - `film/` : source of a 30-second pitch film (see `film/README.md`). Reference only.
 
@@ -65,6 +66,7 @@ Two owner directions from 2026-11-10 shape everything: the goal is an **accurate
 - Whether libraries share one connector registry, how clips are named and filed, whether an effect may be a mesh atom, and whether fit goes by a size code as in Frontier Colony.
 - **Claiming from the map and unlocking in stages (owner idea, 2026-11-12).** The owner wants the photo map to be how a building is claimed, and suggested stages: claim a block and block it out, then more blocks open, then trees, cars and trains after buildings are accurate. Claim spec v0.3 holds Claude's proposal ("Claiming a place", "Blocks inside a region", "When other kinds of things open"): a building is claimed at an accuracy level, a true exterior needs a wall reference, a neighbouring block opens when a block is fully Dressed, and trees and street furniture open earlier than the owner suggested. The owner said yes to writing it up, not to its details.
 - **Home blocks (owner idea, 2026-11-12).** The owner asked whether to open claims across the world so people can build where they live. Claim spec v0.3, "Home blocks", holds Claude's proposal: one home block per contributor anywhere open map data has outlines, one featured region (Tokyo) that the project finishes first, one shared library. `tools/data-pack/osm_block.py` cuts a pack from OpenStreetMap; it blocked out five test squares outside Japan, with heights missing for most buildings in three of them. The owner said yes to the write-up and the test, not to the details. No OpenStreetMap pack is committed: ODbL and the project's licence are unsettled.
+- **Contributors open their own areas, on one globe (owner idea, 2026-11-12).** The owner proposed that whoever starts an area does its research (map data, photos, the map page), with the project supplying a guide and the starts for major cities, and asked how areas connect and whether to build on a sphere. World model v0.4 holds Claude's proposal: a fixed world grid (Web Mercator tiles at zoom 17, cell IDs like `c17-62211-50227`), each cell built flat and placed on the globe by the engine, terrain as one shared layer from open elevation data (no dataset chosen). `tools/region-kit/kit.py` opens a cell, indexes its photos and builds its map; `docs/open-an-area.md` is the guide. Run on one Lisbon cell and one Tokyo cell, on this Mac only. The owner said yes to the write-up and the kit, not to the details: the zoom, the rule that a pull request opening an area carries only `region.json` and `SOURCES.md` until the licence is chosen, and whether Oshiage 2 is re-cut to the grid are all open.
 - The full list of open questions is at the end of each spec.
 
 ## The first test (owner, 2026-11-11)

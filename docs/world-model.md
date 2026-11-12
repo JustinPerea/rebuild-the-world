@@ -1,8 +1,8 @@
-# Rebuild the World: World Model (Draft v0.3)
+# Rebuild the World: World Model (Draft v0.4)
 
-Nov 11, 2026
+Nov 12, 2026
 
-Earth is broken down into nine levels of scale, from the whole planet to a shared material, and every level is built from the ones below it. Nothing on this page has been tested. Changed in v0.2: a category for characters, three more behaviours, and where invented things go. Changed in v0.3: atoms may vary, and behaviours take settings.
+Earth is broken down into nine levels of scale, from the whole planet to a shared material, and every level is built from the ones below it. Nothing on this page has been tested. Changed in v0.2: a category for characters, three more behaviours, and where invented things go. Changed in v0.3: atoms may vary, and behaviours take settings. Changed in v0.4: a proposed world grid, and how areas built apart from each other join on one globe.
 
 ## Levels of scale
 
@@ -98,6 +98,43 @@ First behaviours to define, once the demo slice is chosen: `openable` (doors, li
 - Each region has a local origin and works in metres from it, so assets and placement stay in the asset spec's units.
 - Another body gets its own reference shape. Nothing else in the model changes.
 
+## How flat areas sit on the globe
+
+This section and the next two are Claude's proposal from 2026-11-12. The owner asked how areas that people build apart from each other connect, and whether to build on a sphere whose terrain updates as people work. He agreed to have the answer written up. He has not confirmed its details.
+
+- An area is built flat. Its buildings, blockout and placement are in metres from the area's origin: +X east, +Y up, +Z south.
+- The globe places each flat area. The engine's globe layer (Cesium for Unreal is the likely one) anchors an area's origin at its latitude and longitude and turns it to face up there. Nobody models on a curved surface.
+- A flat area the size of one grid cell departs from the curved Earth by less than 4 mm. Worked out for cells at six latitudes: the cell's corner sits at most 3.7 mm below the flat plane (at the equator), and its horizontal position is off by at most 2 mm. That is more than the 1 mm connector tolerance, so atoms never snap together across a cell edge: a building belongs whole to one cell.
+- Two areas need no knowledge of each other to line up. Each is placed by its own coordinates, so a block in Lisbon and a block in Tokyo are already in the right place relative to each other.
+- Google's Photorealistic 3D Tiles are not the globe's surface and are not used to fill gaps. The project bars deriving anything from them.
+
+## The world grid
+
+Areas opened by different people must meet without gaps and without two people holding the same building. That needs one fixed set of cells that is decided before anyone opens an area.
+
+| Item | Proposed value |
+| --- | --- |
+| Scheme | Web Mercator map tiles, the numbering web maps use |
+| Zoom | 17 |
+| Cell ID | `c17-<x>-<y>`, x counting east from longitude -180, y counting south from the top |
+| Cell size | Square on the ground. The side shrinks with latitude: 306 m at the equator, 248 m in Tokyo, 191 m in London, 153 m in Helsinki |
+| Coverage | Latitude -85.05 to 85.05. Nothing is built nearer the poles |
+| Local origin | The centre of the cell |
+
+- A building belongs to the cell that holds the centre of its outline, whole. A building that crosses a cell edge is never cut.
+- A cell's four neighbours follow from its ID, so "the block next door" needs no lookup.
+- A cell is the "block" of the claim spec's home blocks. A region is a set of cells.
+- `tools/region-kit/grid.py` is the grid as code, and `tools/region-kit/kit.py open` makes a cell's data pack. `docs/open-an-area.md` is the guide.
+- The Oshiage 2 pack was cut before the grid existed, as a 300 m square around a hand-picked origin. It is not re-cut yet. The grid cell at its origin is `c17-116439-51599`.
+
+## Terrain and the land between
+
+- Terrain is one shared layer for the whole globe, made from open elevation data. It is not part of any area and nobody claims it cell by cell. No dataset is chosen.
+- Until terrain exists, every building stands at height 0 in a pack from OpenStreetMap, and at its surveyed ground level in a pack from PLATEAU.
+- An area's buildings are set on the terrain when the area is placed. How a building's base meets sloping ground is not designed.
+- Land that nobody has opened is filled by the same generated blockout, cell by cell, from the same open map data. An opened cell replaces the generated one.
+- Terrain gets better the way buildings do: a better elevation source or a contributor's correction replaces a tile of it under the same ID. Corrections need their own task type, which does not exist.
+
 ## Open questions
 
 - [ ] Are nine levels right, or should Space and Object be one level?
@@ -110,4 +147,8 @@ First behaviours to define, once the demo slice is chosen: `openable` (doors, li
 - [ ] How are placement rules written and reviewed? They need their own spec.
 - [ ] Which behaviours does the first demo need?
 - [ ] How do tiles of terrain meet without gaps when different people refine neighbouring tiles?
+- [ ] Is zoom 17 the right cell size? A cell is 306 m wide at the equator and 107 m in Tromsø, so a "block" is not the same amount of work everywhere.
+- [ ] Is Oshiage 2 re-cut to grid cells, and do its place IDs and survey plans carry over?
+- [ ] How does a building's base meet sloping terrain: is the ground cut, or does the building get a plinth?
+- [ ] Is unopened land shown as a generated blockout, or left empty until someone opens it?
 - [ ] Which characters does the first demo need: player avatars, passers-by, animals?

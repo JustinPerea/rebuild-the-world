@@ -73,6 +73,10 @@ for (const t of spec.trust_levels) {
 }
 spec.review_gates.forEach((g, i) => row("claim-system-spec.md", "the review gate", `${i + 1}. **${g.name}.**`));
 for (const c of spec.checks) row("asset-spec.md", "the check", `| ${c.name} |`, `| ${c.source} |`);
+row("world-model.md", "the grid zoom", "| Zoom |", `| ${spec.grid.zoom} |`);
+row("world-model.md", "the cell ID form", "| Cell ID |", `\`${spec.grid.id_form}\``);
+const gridPy = readFileSync(join(root, "tools/region-kit/grid.py"), "utf8");
+if (!new RegExp(`^ZOOM = ${spec.grid.zoom}$`, "m").test(gridPy)) failures.push(`tools/region-kit/grid.py: ZOOM is not ${spec.grid.zoom}`);
 const checkRows = lines("asset-spec.md").filter((l) => /\| (Contract|Profile) \|\s*$/.test(l)).length;
 if (checkRows !== spec.checks.length) failures.push(`asset-spec.md lists ${checkRows} checks, spec.json has ${spec.checks.length}`);
 

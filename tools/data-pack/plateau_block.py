@@ -77,6 +77,7 @@ def main():
     def local(lat, lon):
         return ((lon - o_lon) * m_lon, -(lat - o_lat) * m_lat)  # x east, z south
 
+    bounds = region.get("bounds")       # a cell of the world grid is kept by its edges in degrees
     corners = [(o_lat + sy * half / m_lat, o_lon + sx * half / m_lon) for sx in (-1, 1) for sy in (-1, 1)]
     tiles = sorted({mesh3(la, lo) for la, lo in corners})
     z = zipfile.ZipFile(args.zip)
@@ -103,7 +104,7 @@ def main():
                 pts = ring(p.text)
                 c_lat = sum(q[0] for q in pts) / len(pts); c_lon = sum(q[1] for q in pts) / len(pts)
                 cx, cz = local(c_lat, c_lon)
-                if abs(cx) > half or abs(cz) > half:
+                if (not (bounds["south"] <= c_lat < bounds["north"] and bounds["west"] <= c_lon < bounds["east"])) if bounds else (abs(cx) > half or abs(cz) > half):
                     el.clear(); continue
 
                 def txt(tag):

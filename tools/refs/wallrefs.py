@@ -171,8 +171,8 @@ def wall_frame(e):
     return along, (-along[1], along[0]), ((lx + rx) / 2, (lz + rz) / 2), length   # along, outward, midpoint
 
 
-def plan(reg, start_block_only=True, panoramas=False):
-    """For each wall, the photos that see it, best first."""
+def plan(reg, start_block_only=True, panoramas=False, per_wall=VIEWS_PER_WALL):
+    """For each wall, the photos that see it, best first, at most per_wall of them (None for all)."""
     import numpy as np
     walls, photos = reg.walls(), reg.index()
     segs = np.array([[*e["left"], *e["right"]] for b in walls.values() for e in b["edges"]])
@@ -218,7 +218,7 @@ def plan(reg, start_block_only=True, panoramas=False):
                 cands.append({"id": p["id"], "pano": p["pano"], "dist_m": round(dist, 1), "incidence_deg": round(inc), "px_per_m": round(score)})
             if cands:
                 cands.sort(key=lambda c: -c["px_per_m"])
-                out.setdefault(sid, {})[e["edge"]] = cands[:VIEWS_PER_WALL]
+                out.setdefault(sid, {})[e["edge"]] = cands[:per_wall]
     return walls, photos, out
 
 

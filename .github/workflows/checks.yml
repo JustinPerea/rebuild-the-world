@@ -82,3 +82,5 @@ jobs:
           python tools/refs/test_wallrefs.py
       - name: OpenStreetMap data pack tool, offline tests
         run: python tools/data-pack/test_osm_block.py
+      - name: World grid and region kit, offline tests
+        run: python tools/region-kit/test_kit.py

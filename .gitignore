@@ -38,3 +38,6 @@ tasks/claims/
 # Wall reference images are cut from Mapillary photos (CC BY-SA 4.0). They stay local until the
 # project's own licence is chosen (tools/refs/README.md).
 data/*/refs/
+
+# Area maps hold copies of Mapillary photos (CC BY-SA 4.0). They stay local, like the wall references.
+data/*/map/

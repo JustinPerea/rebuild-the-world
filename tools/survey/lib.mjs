@@ -17,7 +17,8 @@ export const USAGES = [
   'transport and warehouse', 'factory', 'farm or fishery', 'utility', 'defence', 'other', 'outbuilding',
 ];
 export const SKIP_REASONS = ['too_small', 'not_a_building', 'shape_too_complex', 'data_inconsistent', 'other'];
-const SOURCE_ID_RE = /^bldg_[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
+// A PLATEAU building ID, or an OpenStreetMap way or relation number. It names files, so nothing else passes.
+const SOURCE_ID_RE = /^(?:bldg_[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|(?:way|relation)_[0-9]{1,15})$/;
 const REGION_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const STEP = 0.05;            // sizes are multiples of this, except one wall bay per row
 const LENGTH_TOL = 0.01;      // a row's bays against its facade's length

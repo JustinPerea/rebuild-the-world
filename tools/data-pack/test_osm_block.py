@@ -37,6 +37,7 @@ class Pack(unittest.TestCase):
         ]}
         out, summary = o.build(REGION, answer)
         self.assertEqual([b["place_id"] for b in out], ["osm:way/1", "osm:way/3"])
+        self.assertEqual([b["source_id"] for b in out], ["way_1", "way_3"])    # names files, so no slash
         self.assertEqual(summary["buildings"], 2)
         self.assertEqual(summary["outlines_skipped"], 1)
         self.assertEqual((summary["height_tagged"], summary["height_assumed"], summary["in_start_block"]), (1, 1, 1))
@@ -48,6 +49,16 @@ class Pack(unittest.TestCase):
         self.assertEqual(third["usage"], "house")
         self.assertTrue(third["in_start_block"])
         self.assertFalse(first["in_start_block"])
+
+    def test_a_grid_cell_keeps_buildings_by_its_edges_in_degrees(self):
+        cell = dict(REGION, bounds={"south": 38.7115, "north": 38.7125, "west": -9.1305, "east": -9.1295})
+        answer = {"elements": [
+            way(1, 38.7118, -9.13, {"building": "yes"}),
+            way(2, 38.7118, -9.1293, {"building": "yes"}),                    # 60 m east: inside the square, outside the cell
+        ]}
+        out, _ = o.build(cell, answer)
+        self.assertEqual([b["source_id"] for b in out], ["way_1"])
+        self.assertEqual(len(o.build(REGION, answer)[0]), 2)
 
     def test_metres_per_degree_matches_the_plateau_tool(self):
         import plateau_block as p

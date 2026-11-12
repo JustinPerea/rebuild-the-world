@@ -1,0 +1,98 @@
+<title>{{TITLE}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+<style>
+  /* Layout: a survey sheet. The map is the page; the photo for the chosen dot sits beside it (below it on a phone). */
+  :root {
+    --ground: #eceff1; --panel: #f7f8f9; --bld: #d7dbe0; --bld-edge: #b3bac3; --block: #c3c9d1;
+    --ink: #14181d; --ink2: #56606c; --line: #cfd5db; --dot: #14181d; --dot-off: #9aa3ad; --accent: #f04e16; --on-accent: #ffffff; --see: #1769d3; --ref: #a9d9cc; --ref-edge: #5fa898;
+    --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --ground: #14181d; --panel: #1b2027; --bld: #2a313a; --bld-edge: #3d4651; --block: #36404b;
+    --ink: #eceff1; --ink2: #a3adb8; --line: #2f3741; --dot: #eceff1; --dot-off: #6b7683; --accent: #ff6a36; --on-accent: #14181d; --see: #5aa7ff; --ref: #24524b; --ref-edge: #3f8a7d; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --ground: #14181d; --panel: #1b2027; --bld: #2a313a; --bld-edge: #3d4651; --block: #36404b;
+    --ink: #eceff1; --ink2: #a3adb8; --line: #2f3741; --dot: #eceff1; --dot-off: #6b7683; --accent: #ff6a36; --on-accent: #14181d; --see: #5aa7ff; --ref: #24524b; --ref-edge: #3f8a7d; color-scheme: dark }
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.45;
+         padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 28px; }
+  .wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; }
+  h1 { font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; margin: 0; font-weight: 700; }
+  header p { margin: 0; color: var(--ink2); max-width: 62ch; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+  .mapbox { position: relative; border: 1px solid var(--line); background: var(--ground); height: min(72vh, 760px); min-height: 340px; overflow: hidden; }
+  @media (max-width: 860px) { .mapbox { height: 56vh; } }
+  #map { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #map:active { cursor: grabbing; }
+  .tools { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .tools button, .step button { font: 500 15px var(--font); color: var(--ink); background: var(--panel); border: 1px solid var(--line); min-width: 44px; min-height: 44px; padding: 0 12px; cursor: pointer; }
+  .tools button:hover, .step button:hover { border-color: var(--ink2); }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .legend { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--ink2); background: var(--panel); border: 1px solid var(--line); padding: 6px 10px; max-width: calc(100% - 20px); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .k-on { background: var(--dot); } .k-off { border: 1.5px solid var(--dot-off); } .k-sel { background: var(--accent); } .k-see { background: var(--see); }
+  .legend i.k-ref { border-radius: 0; background: var(--ref); border: 1px solid var(--ref-edge); }
+  .bld { border: 1px solid var(--line); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .bld p { margin: 0; font-size: 15px; }
+  .bld .pos { margin-left: 0; text-align: left; flex: 1 1 auto; }
+  .photo { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .frame { background: var(--panel); border: 1px solid var(--line); aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .frame .none { padding: 24px; text-align: center; color: var(--ink2); max-width: 36ch; }
+  .step { display: flex; gap: 8px; align-items: center; }
+  .step button { flex: 0 0 auto; }
+  .step .pos { color: var(--ink2); font-size: 14px; font-variant-numeric: tabular-nums; margin-left: auto; text-align: right; }
+  dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; margin: 0; font-size: 15px; }
+  dt { color: var(--ink2); } dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  a { color: var(--accent); }
+  .credit { color: var(--ink2); font-size: 13px; margin: 0; max-width: 70ch; }
+</style>
+<div class="wrap">
+  <header>
+    <h1>{{TITLE}}</h1>
+    <p>Every open street photo indexed around {{PLACE}}. Tap a dot to see the photo taken there, or a building to see which photos show it and what it could be claimed for.</p>
+  </header>
+  <div class="cols">
+    <div class="mapbox">
+      <canvas id="map" aria-label="Map of photo positions. Drag to move, pinch or scroll to zoom, tap a dot to choose a photo."></canvas>
+      <div class="tools">
+        <button id="zin" type="button" aria-label="Zoom in">+</button>
+        <button id="zout" type="button" aria-label="Zoom out">−</button>
+        <button id="fit" type="button">Block</button>
+        <button id="all" type="button">All</button>
+      </div>
+      <div class="legend">
+        <span><i class="k-on"></i>photo stored here</span>
+        <span><i class="k-off"></i>on Mapillary only</span>
+        <span><i class="k-sel"></i>chosen photo, with the way it faced</span>
+        <span><i class="k-see"></i>shows the chosen building</span>
+        <span><i class="k-ref"></i>building with a wall reference</span>
+      </div>
+    </div>
+    <div class="photo">
+      <div class="bld" id="bld">
+        <p id="bldtext"></p>
+        <dl id="bldfacts" hidden></dl>
+        <div class="step" id="bldstep" hidden>
+          <button id="bprev" type="button" aria-label="Previous photo of this building">←</button>
+          <button id="bnext" type="button" aria-label="Next photo of this building">→</button>
+          <span class="pos" id="bpos"></span>
+          <button id="bclear" type="button">Clear</button>
+        </div>
+      </div>
+      <div class="frame" id="frame"></div>
+      <div class="step">
+        <button id="prev" type="button">← Earlier</button>
+        <button id="next" type="button">Later →</button>
+        <span class="pos" id="pos"></span>
+      </div>
+      <dl id="facts"></dl>
+    </div>
+  </div>
+  <p class="credit" id="credit"></p>
+</div>

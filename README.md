@@ -31,6 +31,7 @@ survey/                         one facade plan per building, and the tally of t
 tools/data-pack/                cuts a region data pack from PLATEAU, or from OpenStreetMap where no city model exists
 tools/survey/                   hands out the next building, checks plans, writes the tally
 tools/refs/                     front-on reference images of real walls, from openly licensed street photos
+tools/region-kit/               opens an area: its cell of the world grid, data pack, photo index and map page (docs/open-an-area.md)
 spec/spec.json                  the specs' tables as data, read by the visualizer (and later the validator)
 tools/spec-visualizer/          interactive map of the specs, built from spec/spec.json
 scripts/                        repo maintenance checks (check-lfs.sh, check-spec-sync.mjs)

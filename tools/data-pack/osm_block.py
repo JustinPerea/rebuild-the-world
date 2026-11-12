@@ -8,7 +8,8 @@ so tools/blockout/build.mjs can block the region out.
     python3 -I tools/data-pack/osm_block.py --region data/<region>/region.json
     python3 -I tools/data-pack/osm_block.py --region data/<region>/region.json --from saved.json
 
-The region file names the square (see data/tokyo-sumida-oshiage-2/region.json). The Overpass
+The region file names the square (see data/tokyo-sumida-oshiage-2/region.json), or a cell of
+the world grid with its edges under "bounds" (tools/region-kit/kit.py writes those). The Overpass
 answer is kept in data/raw/osm/<region id>.json, which Git ignores; --from reads such a file
 and asks nobody.
 
@@ -84,6 +85,16 @@ def outline(el):
     return pts[:-1]
 
 
+def inside(region, lat, lon, cx, cz):
+    """Whether a building's centre is in the region: by the cell's edges in degrees when the region
+    is a cell of the world grid, so that neighbouring cells share no building and leave none out."""
+    b = region.get("bounds")
+    if b:
+        return b["south"] <= lat < b["north"] and b["west"] <= lon < b["east"]
+    half = region["square_m"] / 2
+    return abs(cx) <= half and abs(cz) <= half
+
+
 def fetch(lat, lon, half_m, m_lat, m_lon):
     pad = half_m + 60           # buildings are kept by their centre, so ask a little wider
     s, n = lat - pad / m_lat, lat + pad / m_lat
@@ -103,7 +114,6 @@ def fetch(lat, lon, half_m, m_lat, m_lon):
 def build(region, answer):
     """The pack's buildings and a summary, from a region record and an Overpass answer."""
     o_lat, o_lon = region["origin"]["lat"], region["origin"]["lon"]
-    half = region["square_m"] / 2
     m_lat, m_lon = metres_per_degree(o_lat)
     local = lambda lat, lon: ((lon - o_lon) * m_lon, -(lat - o_lat) * m_lat)     # x east, z south
     start = region.get("start_block")
@@ -118,12 +128,13 @@ def build(region, answer):
             continue
         c_lat = sum(p[0] for p in pts) / len(pts); c_lon = sum(p[1] for p in pts) / len(pts)
         cx, cz = local(c_lat, c_lon)
-        if abs(cx) > half or abs(cz) > half:
+        if not inside(region, c_lat, c_lon, cx, cz):
             continue
         h, h_from, st = height_of(tags)
         sid = f"{el['type']}/{el['id']}"
         b = {
-            "place_id": "osm:" + sid, "source_id": sid, "tile": None,
+            # source_id names files (survey plans, wall references), so it carries no slash
+            "place_id": "osm:" + sid, "source_id": sid.replace("/", "_"), "tile": None,
             "centre": {"lat": round(c_lat, 7), "lon": round(c_lon, 7)},
             "ground_m": 0.0, "height_m": h, "height_from": h_from, "storeys": st,
             "usage": tags["building"] if tags["building"] != "yes" else None,
