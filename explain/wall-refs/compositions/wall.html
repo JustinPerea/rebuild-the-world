@@ -78,6 +78,20 @@
       width: 180px;
       height: 48px;
     }
+    .w-vt {
+      width: 711px;
+      height: 1360px;
+      overflow: hidden;
+      background: #000;
+    }
+    .w-vt img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 711px;
+      height: 1360px;
+      display: block;
+    }
     .w-t {
       position: absolute;
       opacity: 0;
@@ -157,11 +171,11 @@
   <div id="root" data-composition-id="wall" data-width="1920" data-height="1080">
     <div id="w-ground"></div>
 
-    <div id="w-mapc" class="w-layer clip" data-start="0" data-duration="112" data-track-index="1" data-layout-ignore>
+    <div id="w-mapc" class="w-layer clip" data-start="0" data-duration="126" data-track-index="1" data-layout-ignore>
       <canvas id="w-map" width="1920" height="1080"></canvas>
     </div>
 
-    <div id="w-photos" class="w-layer clip" data-start="0" data-duration="112" data-track-index="2" data-layout-allow-overflow data-layout-ignore>
+    <div id="w-photos" class="w-layer clip" data-start="0" data-duration="126" data-track-index="2" data-layout-allow-overflow data-layout-ignore>
       <div id="w-ph0" class="w-abs w-ph"><img src="assets/src0.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q0" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
       <div id="w-ph1" class="w-abs w-ph"><img src="assets/src1.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q1" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
       <div id="w-ph2" class="w-abs w-ph"><img src="assets/src2.jpg" alt="" /><svg viewBox="0 0 1280 960"><polygon id="w-q2" fill="none" stroke="#f04e16" pathLength="1" stroke-dasharray="1" /></svg></div>
@@ -180,6 +194,24 @@
       <img id="w-fl5" class="w-abs w-pl" src="assets/flat5.jpg" alt="" />
       <img id="w-fused" class="w-abs w-pl" src="assets/fused.jpg" alt="" />
       <img id="w-best" class="w-abs w-pl" src="assets/best.jpg" alt="" />
+      <img id="w-hid6" class="w-abs w-pl" src="assets/hid6.png" alt="" />
+      <img id="w-hid16" class="w-abs w-pl" src="assets/hid16.png" alt="" />
+      <div id="w-v0" class="w-abs w-vt"><img src="assets/v0.jpg" alt="" /><img id="w-vb0" src="assets/vb0.png" alt="" /></div>
+      <div id="w-v1" class="w-abs w-vt"><img src="assets/v1.jpg" alt="" /><img id="w-vb1" src="assets/vb1.png" alt="" /></div>
+      <div id="w-v2" class="w-abs w-vt"><img src="assets/v2.jpg" alt="" /><img id="w-vb2" src="assets/vb2.png" alt="" /></div>
+      <div id="w-v3" class="w-abs w-vt"><img src="assets/v3.jpg" alt="" /><img id="w-vb3" src="assets/vb3.png" alt="" /></div>
+      <div id="w-v4" class="w-abs w-vt"><img src="assets/v4.jpg" alt="" /><img id="w-vb4" src="assets/vb4.png" alt="" /></div>
+      <div id="w-v5" class="w-abs w-vt"><img src="assets/v5.jpg" alt="" /><img id="w-vb5" src="assets/vb5.png" alt="" /></div>
+      <div id="w-v6" class="w-abs w-vt"><img src="assets/v6.jpg" alt="" /><img id="w-vb6" src="assets/vb6.png" alt="" /></div>
+      <div id="w-v7" class="w-abs w-vt"><img src="assets/v7.jpg" alt="" /><img id="w-vb7" src="assets/vb7.png" alt="" /></div>
+      <div id="w-v8" class="w-abs w-vt"><img src="assets/v8.jpg" alt="" /><img id="w-vb8" src="assets/vb8.png" alt="" /></div>
+      <div id="w-v9" class="w-abs w-vt"><img src="assets/v9.jpg" alt="" /><img id="w-vb9" src="assets/vb9.png" alt="" /></div>
+      <div id="w-v10" class="w-abs w-vt"><img src="assets/v10.jpg" alt="" /><img id="w-vb10" src="assets/vb10.png" alt="" /></div>
+      <div id="w-v11" class="w-abs w-vt"><img src="assets/v11.jpg" alt="" /><img id="w-vb11" src="assets/vb11.png" alt="" /></div>
+      <div id="w-v12" class="w-abs w-vt"><img src="assets/v12.jpg" alt="" /><img id="w-vb12" src="assets/vb12.png" alt="" /></div>
+      <div id="w-v13" class="w-abs w-vt"><img src="assets/v13.jpg" alt="" /><img id="w-vb13" src="assets/vb13.png" alt="" /></div>
+      <div id="w-v14" class="w-abs w-vt"><img src="assets/v14.jpg" alt="" /><img id="w-vb14" src="assets/vb14.png" alt="" /></div>
+      <div id="w-v15" class="w-abs w-vt"><img src="assets/v15.jpg" alt="" /><img id="w-vb15" src="assets/vb15.png" alt="" /></div>
 
       <div id="w-cr0" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop0.jpg" alt="" /></div>
       <div id="w-cr1" class="w-abs w-cr"><div class="w-crbg"></div><img src="assets/crop1.jpg" alt="" /></div>
@@ -192,26 +224,24 @@
         <img id="w-mg0" class="w-mg" src="assets/flat0.jpg" alt="" /><img id="w-mg1" class="w-mg" src="assets/flat1.jpg" alt="" /><img id="w-mg2" class="w-mg" src="assets/flat2.jpg" alt="" />
         <img id="w-mg3" class="w-mg" src="assets/flat3.jpg" alt="" /><img id="w-mg4" class="w-mg" src="assets/flat4.jpg" alt="" /><img id="w-mg5" class="w-mg" src="assets/flat5.jpg" alt="" />
       </div>
-      <div id="w-pt0" class="w-abs w-pt" style="background-image: url(assets/flat0.jpg)"></div>
-      <div id="w-pt1" class="w-abs w-pt" style="background-image: url(assets/flat1.jpg)"></div>
-      <div id="w-pt2" class="w-abs w-pt" style="background-image: url(assets/flat2.jpg)"></div>
-      <div id="w-pt3" class="w-abs w-pt" style="background-image: url(assets/flat3.jpg)"></div>
-      <div id="w-pt4" class="w-abs w-pt" style="background-image: url(assets/flat4.jpg)"></div>
-      <div id="w-pt5" class="w-abs w-pt" style="background-image: url(assets/flat5.jpg)"></div>
+      <div id="w-pt0" class="w-abs w-pt" style="background-image: url(assets/use0.jpg)"></div>
+      <div id="w-pt1" class="w-abs w-pt" style="background-image: url(assets/use1.jpg)"></div>
+      <div id="w-pt2" class="w-abs w-pt" style="background-image: url(assets/use2.jpg)"></div>
+      <div id="w-pt3" class="w-abs w-pt" style="background-image: url(assets/use3.jpg)"></div>
+      <div id="w-pt4" class="w-abs w-pt" style="background-image: url(assets/use4.jpg)"></div>
       <div id="w-ptf" class="w-abs w-pt" style="background-image: url(assets/fused.jpg)"></div>
       <div id="w-sw0" class="w-abs w-sw"></div>
       <div id="w-sw1" class="w-abs w-sw"></div>
       <div id="w-sw2" class="w-abs w-sw"></div>
       <div id="w-sw3" class="w-abs w-sw"></div>
       <div id="w-sw4" class="w-abs w-sw"></div>
-      <div id="w-sw5" class="w-abs w-sw"></div>
     </div>
 
-    <div id="w-overc" class="w-layer clip" data-start="0" data-duration="112" data-track-index="3" data-layout-ignore>
+    <div id="w-overc" class="w-layer clip" data-start="0" data-duration="126" data-track-index="3" data-layout-ignore>
       <canvas id="w-over" width="1920" height="1080"></canvas>
     </div>
 
-    <div id="w-text" class="w-layer clip" data-start="0" data-duration="112" data-track-index="4">
+    <div id="w-text" class="w-layer clip" data-start="0" data-duration="126" data-track-index="4">
       <div id="w-open" class="w-t">Nobody took<br />this photo.</div>
       <div id="w-open-sub" class="w-t">One wall in Oshiage, Tokyo, seen square-on and to scale. 80 pixels to the metre.</div>
 
@@ -259,13 +289,15 @@
 
       <div id="w-h-h" class="w-t w-top w-h">Combine them.</div>
       <div id="w-s-h1" class="w-t w-top w-s">The wall lands in the same place in every view. Things in front of it don't.</div>
-      <div id="w-s-h2" class="w-t w-top w-s">Take one window. The wires shift between views; the window stays put.</div>
-      <div id="w-s-h3" class="w-t w-top w-s">For each cell, keep the middle value of the six.</div>
-      <div id="w-s-h4" class="w-t w-top w-s">What only some views saw drops out. The tree is in all six, so it stays.</div>
+      <div id="w-s-h2" class="w-t w-top w-s">The model has the truck and the tree in it. Each camera loses the wall behind them.</div>
+      <div id="w-s-h3" class="w-t w-top w-s">All 38 located photos are tried now. Ten taken closer fill most of the gap.</div>
+      <div id="w-s-h4" class="w-t w-top w-s">Take one spot. Five views see it clear.</div>
+      <div id="w-s-h5" class="w-t w-top w-s">Keep the middle value. What a single view saw in passing drops out.</div>
+      <div id="w-s-h6" class="w-t w-top w-s">The truck is gone. What every photo saw blocked is greyed, not guessed.</div>
 
       <div id="w-h-i" class="w-t w-top w-h">A reference to match. Not a texture to copy.</div>
       <div id="w-i1" class="w-t w-end" style="top: 262px">Builders read it to place windows and doors, and to judge the texture they make themselves.</div>
-      <div id="w-i2" class="w-t w-end" style="top: 462px">In this block, open street photos reach 48 walls of 30 buildings, all along one street.</div>
+      <div id="w-i2" class="w-t w-end" style="top: 462px">In this block, open street photos reach 48 walls, all along one street. So far 9 come out well enough to use.</div>
       <div id="w-i3" class="w-t w-end" style="top: 690px">Photos: musashino5 and lvl5 on Mapillary, CC BY-SA 4.0<br />Building outlines and heights: PLATEAU, MLIT Japan<br />Earth, Again · tools/refs/wallrefs.py</div>
     </div>
   </div>
@@ -273,7 +305,8 @@
   <script>
     (function () {
       const D = window.WALLREFS;
-      const W = 1920, HH = 1080, DUR = 112;
+      const W = 1920, HH = 1080, DUR = 126;
+      const SH = 13.6;   // seconds the two scenes about blocked views add before the middle-value scene
       const INK = "#14181d", INK2 = "#56606c", ACC = "#f04e16", GROUND = "#eceff1";
       const SEQ = [INK, "#2f6fde", "#0f9d8a", "#8b52d6"];
       const $ = (id) => document.getElementById(id);
@@ -409,7 +442,14 @@
         el.style.filter = blur > 0.05 ? `blur(${blur}px)` : "none";
       }
       const ph = [0, 1, 2, 3, 4, 5].map((k) => $("w-ph" + k)), qd = [0, 1, 2, 3, 4, 5].map((k) => $("w-q" + k));
-      const fl = [0, 1, 2, 3, 4, 5].map((k) => $("w-fl" + k)), pt = [0, 1, 2, 3, 4, 5].map((k) => $("w-pt" + k)), sw = [0, 1, 2, 3, 4, 5].map((k) => $("w-sw" + k));
+      const fl = [0, 1, 2, 3, 4, 5].map((k) => $("w-fl" + k)), pt = [0, 1, 2, 3, 4].map((k) => $("w-pt" + k)), sw = [0, 1, 2, 3, 4].map((k) => $("w-sw" + k));
+      // the views the tool combines: the six followed so far, and the ones it adds once every camera is located
+      const CV = D.combine.views, NV = CV.length;
+      const FAR = [0, 1, 2, 3, 4, 5].map((k) => CV.findIndex((v) => v.six === k)), NEAR = CV.map((v, j) => (v.six < 0 ? j : -1)).filter((j) => j >= 0);
+      const vt = CV.map((v, j) => $("w-v" + j)), vb = CV.map((v, j) => $("w-vb" + j));
+      const H6 = Math.round(D.combine.hidden6 * 100), H16 = Math.round(D.combine.hidden * 100);
+      const spotAt = `-${D.spot.x * 1.5 - 90}px -${D.spot.y * 1.5 - 90}px`;
+      pt.concat([$("w-ptf")]).forEach((el) => (el.style.backgroundPosition = spotAt));
       const mg = [0, 1, 2, 3, 4, 5].map((k) => $("w-mg" + k));
       const cols = D.spot.cols, lum = cols.map((c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]);
       const rank = lum.map((v, i) => lum.filter((u, j) => u < v || (u === v && j < i)).length);
@@ -424,8 +464,9 @@
         ["w-h-e", 45.2, 57.0], ["w-s-e1", 45.6, 49.2], ["w-s-e2", 49.2, 53.0], ["w-s-e3", 53.0, 57.0],
         ["w-h-f", 57.4, 66.0], ["w-s-f1", 58.8, 63.2], ["w-s-f2", 63.2, 66.0],
         ["w-h-g", 66.4, 81.0], ["w-s-g1", 66.9, 70.2], ["w-s-g2", 70.2, 74.4], ["w-s-g3", 74.6, 81.0],
-        ["w-h-h", 81.2, 100.3], ["w-s-h1", 81.6, 87.4], ["w-s-h2", 87.4, 91.8], ["w-s-h3", 91.8, 95.8], ["w-s-h4", 95.8, 100.3],
-        ["w-h-i", 100.7, 113], ["w-i1", 101.4, 113], ["w-i2", 103.4, 113], ["w-i3", 105.4, 113],
+        ["w-h-h", 81.2, 100.3 + SH], ["w-s-h1", 81.6, 87.4], ["w-s-h2", 87.4, 93.8], ["w-s-h3", 93.8, 100.8],
+        ["w-s-h4", 100.8, 91.8 + SH], ["w-s-h5", 91.8 + SH, 95.8 + SH], ["w-s-h6", 95.8 + SH, 100.3 + SH],
+        ["w-h-i", 100.7 + SH, 127], ["w-i1", 101.4 + SH, 127], ["w-i2", 103.4 + SH, 127], ["w-i3", 105.4 + SH, 127],
       ].map(([id, a, b]) => ({ el: $(id), a, b }));
 
       const M = $("w-map").getContext("2d"), O = $("w-over").getContext("2d");
@@ -649,33 +690,43 @@
           O.globalAlpha = a; O.font = "700 28px Inter, sans-serif"; const tw = O.measureText(txt).width;
           O.fillStyle = INK; O.fillRect(600, 290, tw + 40, 54); label(O, txt, 620, 327, "#fff", 700);
         }
-        // one window, six views
-        a = seg(t, 87.2, 87.6) * (1 - seg(t, 100.3, 100.7));
+        // what blocks each view, and how much of the wall no view sees clear
+        a = vis(t, 89.0, 100.7, 0.3, 0.3);
+        if (a > 0) { O.globalAlpha = a; O.fillStyle = ACC; O.fillRect(600, 622, 22, 22); label(O, "blocked, seen from that camera", 636, 643, INK2); }
+        a = vis(t, 95.0, 100.7, 0.3, 0.3);
+        if (a > 0) { O.globalAlpha = a; label(O, `${NEAR.length} more, taken closer`, 600, 918, INK2); }
+        a = vis(t, 91.4, 97.6, 0.3, 0.3);
+        if (a > 0) { O.globalAlpha = a; label(O, `blocked in all six: ${H6}%`, ST.x, 1000, INK2); }
+        a = vis(t, 97.8, 100.7, 0.3, 0.3);
+        if (a > 0) { O.globalAlpha = a; label(O, `blocked in all ${NV}: ${H16}%`, ST.x, 1000, INK2); }
+        // one spot, the five views that see it clear
+        const td = t - SH;
+        a = seg(td, 87.2, 87.6) * (1 - seg(td, 100.3, 100.7));
         if (a > 0) {
           const ks = ST.w / 711, bx = ST.x + (D.spot.x - 60) * ks, by = ST.y + (D.spot.y - 60) * ks, bs = 120 * ks;
           O.globalAlpha = a; O.strokeStyle = ACC; O.lineWidth = 3; O.strokeRect(bx, by, bs, bs);
-          O.globalAlpha = a * 0.5 * seg(t, 87.4, 87.8); O.lineWidth = 1.5; O.beginPath();
+          O.globalAlpha = a * 0.5 * seg(td, 87.4, 87.8); O.lineWidth = 1.5; O.beginPath();
           O.moveTo(bx + bs, by); O.lineTo(600, 290); O.moveTo(bx + bs, by + bs); O.lineTo(600, 470); O.stroke();
-          const aM = a * seg(t, 91.8, 92.1), us = io(seg(t, 92.6, 93.4));
-          if (aM > 0) for (let k = 0; k < 6; k++) {
+          const aM = a * seg(td, 91.8, 92.1), us = io(seg(td, 92.6, 93.4));
+          if (aM > 0) for (let k = 0; k < 5; k++) {
             const cx = 600 + k * 196 + 90, cy = 380;
             O.globalAlpha = aM; O.strokeStyle = "#fff"; O.lineWidth = 5; O.beginPath(); O.moveTo(cx - 13, cy); O.lineTo(cx + 13, cy); O.moveTo(cx, cy - 13); O.lineTo(cx, cy + 13); O.stroke();
             O.strokeStyle = ACC; O.lineWidth = 2.5; O.beginPath(); O.moveTo(cx - 12, cy); O.lineTo(cx + 12, cy); O.moveTo(cx, cy - 12); O.lineTo(cx, cy + 12); O.stroke();
-            O.globalAlpha = a * seg(t, 92.0 + 0.05 * k, 92.2 + 0.05 * k);
+            O.globalAlpha = a * seg(td, 92.0 + 0.05 * k, 92.2 + 0.05 * k);
             label(O, String(Math.round(lum[k])), lerp(600 + k * 196, 600 + rank[k] * 196, us) + 90, lerp(486, 600, us) + 82, INK, 400, "center");
           }
-          O.globalAlpha = a * seg(t, 93.2, 93.6); label(O, "sorted, dark to bright", 600, 582, INK2);
-          const aB = a * seg(t, 93.7, 94.0);
+          O.globalAlpha = a * seg(td, 93.2, 93.6); label(O, "sorted, dark to bright", 600, 582, INK2);
+          const aB = a * seg(td, 93.7, 94.0);
           if (aB > 0) {
             O.globalAlpha = aB; O.strokeStyle = ACC; O.lineWidth = 3; O.beginPath();
-            O.moveTo(992, 700); O.lineTo(992, 710); O.lineTo(1368, 710); O.lineTo(1368, 700); O.stroke();
-            label(O, "the middle", 1180, 748, ACC, 700, "center");
+            O.moveTo(992, 700); O.lineTo(992, 710); O.lineTo(1172, 710); O.lineTo(1172, 700); O.stroke();
+            label(O, "the middle", 1082, 748, ACC, 700, "center");
           }
-          O.globalAlpha = a * seg(t, 96.2, 96.6); label(O, "the combined view, same window", 804, 890, INK2);
+          O.globalAlpha = a * seg(td, 96.2, 96.6); label(O, "the combined view, same spot", 804, 890, INK2);
         }
         // end card
-        a = seg(t, 101.0, 101.4);
-        if (a > 0) { O.globalAlpha = a; label(O, "combined from six", ST.x, 1000, INK2); label(O, "sharpest single view", BEST.x, 1000, INK2); }
+        a = seg(t, 101.0 + SH, 101.4 + SH);
+        if (a > 0) { O.globalAlpha = a; label(O, `combined from ${NV}`, ST.x, 1000, INK2); label(O, "sharpest single view", BEST.x, 1000, INK2); }
         O.globalAlpha = 1;
       }
 
@@ -709,7 +760,7 @@
 
           // the flattened view
           let F = null, fa = 0;
-          if (t >= 71.8 && t < 97.0) {
+          if (t >= 71.8 && t < 97.0 + SH) {
             if (k === 0) { F = rl(PL, slotS(0), io(seg(t, 74.4, 75.4))); fa = seg(t, 71.8, 72.05); }
             else { F = slotS(k); fa = seg(t, tk + 1.1, tk + 1.35); }
             const u = io(seg(t, 81.2 + 0.06 * k, 82.3 + 0.06 * k));
@@ -717,22 +768,39 @@
           }
           if (F) put(fl[k], F, 711, fa, 0); else fl[k].style.opacity = 0;
 
-          // the window, cut from each view; its value; sorted
-          const aP = seg(t, 87.4 + 0.08 * k, 87.7 + 0.08 * k) * (1 - seg(t, 100.3, 100.7));
-          put(pt[k], { x: 600 + k * 196, y: 290, w: 180 }, 180, aP, (1 - seg(t, 87.4 + 0.08 * k, 87.7 + 0.08 * k)) * 8);
-          const us = io(seg(t, 92.6, 93.4)), mid = rank[k] === 2 || rank[k] === 3;
-          const aS = seg(t, 91.9 + 0.05 * k, 92.1 + 0.05 * k) * (1 - seg(t, 100.3, 100.7));
-          put(sw[k], { x: lerp(600 + k * 196, 600 + rank[k] * 196, us), y: lerp(486, 600, us), w: 180 }, 180, aS, 0);
-          sw[k].style.outline = mid && t > 93.7 ? `4px solid ${ACC}` : "none";
+          // the spot, cut from each of the five views that see it clear; its value; sorted
+          if (k < 5) {
+            const td = t - SH;
+            const aP = seg(td, 87.4 + 0.08 * k, 87.7 + 0.08 * k) * (1 - seg(td, 100.3, 100.7));
+            put(pt[k], { x: 600 + k * 196, y: 290, w: 180 }, 180, aP, (1 - seg(td, 87.4 + 0.08 * k, 87.7 + 0.08 * k)) * 8);
+            const us = io(seg(td, 92.6, 93.4)), mid = rank[k] === 2;
+            const aS = seg(td, 91.9 + 0.05 * k, 92.1 + 0.05 * k) * (1 - seg(td, 100.3, 100.7));
+            put(sw[k], { x: lerp(600 + k * 196, 600 + rank[k] * 196, us), y: lerp(486, 600, us), w: 180 }, 180, aS, 0);
+            sw[k].style.outline = mid && td > 93.7 ? `4px solid ${ACC}` : "none";
+          }
           // the flip-book: one view after another, then all six averaged
           const f = (t - 82.6) / 0.43;
           mg[k].style.opacity = (k === 0 ? 1 : clamp((f - k) / 0.25)) * lerp(1, 1 / (k + 1), seg(t, 85.4, 86.2));
         }
         const aMag = vis(t, 82.2, 87.4, 0.3, 0.3);
         put($("w-mag"), { x: 600, y: 290, w: 990 }, 990, aMag, (1 - aMag) * 8);
-        put($("w-ptf"), { x: 600, y: 790, w: 180 }, 180, seg(t, 96.0, 96.4) * (1 - seg(t, 100.3, 100.7)), 0);
-        put($("w-fused"), ST, 711, seg(t, 95.8, 96.8), 0);
-        const aBest = t < 50 ? 1 - seg(t, 6.0, 6.2) : seg(t, 100.8, 101.2);
+        // each view with what blocks it; then the views taken closer; on the stack, what no view sees clear
+        const aT = 1 - seg(t, 100.4, 100.9);
+        FAR.forEach((j, k) => {
+          const a0 = seg(t, 87.5 + 0.07 * k, 87.8 + 0.07 * k);
+          put(vt[j], { x: 600 + k * 196, y: 276, w: 170 }, 711, a0 * aT, (1 - a0) * 8);
+          vb[j].style.opacity = seg(t, 88.9 + 0.3 * k, 89.5 + 0.3 * k);
+        });
+        NEAR.forEach((j, i) => {
+          const a0 = seg(t, 94.6 + 0.14 * i, 94.9 + 0.14 * i);
+          put(vt[j], { x: 600 + i * 116.2, y: 676, w: 104 }, 711, a0 * aT, (1 - a0) * 8);
+          vb[j].style.opacity = seg(t, 95.2 + 0.14 * i, 95.7 + 0.14 * i);
+        });
+        put($("w-hid6"), ST, 711, seg(t, 91.2, 92.0) * (1 - seg(t, 97.4, 98.4)), 0);
+        put($("w-hid16"), ST, 711, seg(t, 97.4, 98.4) * aT, 0);
+        put($("w-ptf"), { x: 600, y: 790, w: 180 }, 180, seg(t, 96.0 + SH, 96.4 + SH) * (1 - seg(t, 100.3 + SH, 100.7 + SH)), 0);
+        put($("w-fused"), ST, 711, seg(t, 95.8 + SH, 96.8 + SH), 0);
+        const aBest = t < 50 ? 1 - seg(t, 6.0, 6.2) : seg(t, 100.8 + SH, 101.2 + SH);
         put($("w-best"), t < 50 ? PL : BEST, 711, aBest, t < 50 ? 0 : (1 - aBest) * 8);
         const aPair = vis(t, 32.5, 40.6, 0.3, 0.4);
         put($("w-pa"), PA, 1280, aPair, (1 - aPair) * 8); put($("w-pb"), PBR, 1280, aPair, (1 - aPair) * 8);

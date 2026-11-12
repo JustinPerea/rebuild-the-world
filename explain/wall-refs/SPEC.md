@@ -5,11 +5,11 @@ Storyline A from `STORYLINES.md`, with B's idea of throwing each photo onto the 
 GOAL:    A stranger can say how a front-on, true-scale picture of a wall is made from street photos
          nobody took front-on: find, match, place, plane, flatten, combine.
 OUTPUT:  HyperFrames, 1920x1080, 30 fps.
-TIME:    112 s = 3,360 frames. One continuous scene; the map is one diagram that grows.
+TIME:    126 s = 3,780 frames. One continuous scene; the map is one diagram that grows.
 LOOK:    Medium: a survey drawing. Ground #eceff1, flat. Buildings #d7dbe0 with #b3bac3 edges, the
          building worked on #c3c9d1. Ink #14181d, second ink #56606c. One accent, orange #f04e16:
          only the wall being worked on and what is computed for it (its outline in a photo, its
-         fitted plane, the middle value). Drive colours appear only on camera dots: 2023 ink,
+         fitted plane, the part of it a view sees blocked, the middle value). Drive colours appear only on camera dots: 2023 ink,
          2018 #2f6fde, #0f9d8a, #8b52d6. The photos are the only photographic colour.
          Type: Inter. Opening line 124 px / 700 / -3%. Step lines 64 px / 700 / -2% (60 px in the
          map column). Body 42 px / 400 (40 px in the column). Labels 28 px, never smaller.
@@ -32,16 +32,22 @@ SHOTS (seconds):
   45-57    The model misses the outlines; it slides 2 m onto them; GPS ghosts show the 6 m error.
   57-66    Push in to the wall edge: 1,633 points on a line, flat to 5 cm. Tree and truck in front.
   66-81    The line stands up as a grid. Photo 1 warps onto it, slowly. Then the other five.
-  81-99.5  The six views stack: wall sharp, truck ghosted. One window: six patches, six values,
-           sorted, the middle kept. Combined view.
-  99.5-110 Both outputs. "A reference to match. Not a texture to copy." Coverage and credits.
+  81-87.4  The six views stack: wall sharp, truck ghosted.
+  87.4-93.8  Each of the six, with the part it sees blocked in orange. On the stack: what all
+           six see blocked, 20% of the wall shown.
+  93.8-100.8 Every placed photo is tried: ten taken closer arrive, each with its blocked part.
+           On the stack the part blocked in every view shrinks to 5%.
+  100.8-114  One spot: the five views that see it clear, five values, sorted, the middle kept.
+           Combined view; what is blocked in every view is greyed.
+  114-126  Both outputs. "A reference to match. Not a texture to copy." Coverage and credits.
 BANNED:  dark void; glow; glass cards; gradients; serif display; numbered step labels; pill chips;
          corner brackets; titles that drift; every element fading and sliding up; made-up numbers;
          any Google imagery; a claim the run's own figures do not carry.
 QA:      f0 plate and line readable; f240 photo with orange outline; f600 circle and count;
          f1050 match lines join the same features; f1500 points sit on outlines after the slide;
-         f1860 inliers on a line; f2140 warp lands on the plate without a jump; f2800 swatches sorted;
-         f3200 end card legible at 360 px.
+         f1860 inliers on a line; f2140 warp lands on the plate without a jump; f2790 orange sits on the truck
+         and tree in each view; f2990 the blocked area on the stack has shrunk; f3220 swatches
+         sorted; f3600 end card legible at 360 px.
 
 Every number on screen comes from `assets/data.js`, exported from one run of `tools/refs/wallrefs.py`
 on `plateau:bldg_5b434eb5-e19c-4ccb-858a-3b2d1f6024f2`, edge 2.

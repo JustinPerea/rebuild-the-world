@@ -60,6 +60,7 @@ probe.sort(key=lambda nr: -nr[1][2] * nr[1][1].mean())
 ppm = int(max(40, min(200, round(probe[0][1][2] / 10) * 10)))
 views, vmeta = [], []
 VIS_H = 17.0   # metres of wall the film shows
+SPOT = (164, 644)   # the window the film uses for the middle value, when the run still offers it
 for k, (n, _) in enumerate(probe[:6]):
     im = reg_by[n]; r = w.rectify(rec, im, geo, origin, along, length, height, ppm)
     views.append((r[0], r[1]))
@@ -75,9 +76,36 @@ for k, (n, _) in enumerate(probe[:6]):
     crop = r[0][int((height - VIS_H) * ppm):, :]; cv2.imwrite(str(OUT / f"flat{k}.jpg"), crop, [cv2.IMWRITE_JPEG_QUALITY, 88])
     pid = n.split("/")[1][:-4]
     vmeta.append({"id": pid, "creator": by[pid]["creator"], "seq": seq_ids.index(seq[n]), "captured_at": by[pid]["captured_at"], "aspect": round(src.shape[1] / src.shape[0], 4), "corners": corners, "px_per_m": round(r[2])})
-best, fused, count = w.fuse(views)
 top = int((height - VIS_H) * ppm)
-cv2.imwrite(str(OUT / "best.jpg"), best[top:], [cv2.IMWRITE_JPEG_QUALITY, 90]); cv2.imwrite(str(OUT / "fused.jpg"), fused[top:], [cv2.IMWRITE_JPEG_QUALITY, 90])
+cv2.imwrite(str(OUT / "best.jpg"), views[0][0][top:], [cv2.IMWRITE_JPEG_QUALITY, 90])
+# ---- the combine step as the tool does it: every placed photo is tried, and blocked views are left out ----
+rel = world[:, [0, 2]] - np.asarray(origin); frame = np.stack([rel @ np.asarray(along), rel @ np.asarray(outward), world[:, 1]], 1)
+def camera(n):
+    c = geo["scale"] * geo["R"] @ reg_by[n].projection_center() + geo["t"]; q = c[[0, 2]] - np.asarray(origin)
+    return (float(q @ np.asarray(along)), float(q @ np.asarray(outward)), float(c[1]))
+tried = [(n, w.rectify(rec, reg_by[n], geo, origin, along, length, height, 20)) for n in sorted(reg_by)]
+tried = [(n, r) for n, r in tried if r is not None and r[2] >= w.MIN_SCORE]
+order = w.choose_views([(r[2], r[1], r[1] & ~w.shadow_mask(camera(n), frame, length, height, 20)) for n, r in tried])
+chosen = [tried[i][0] for i in order]; six = [n for n, _ in probe[:6]]
+cviews, cblocked, cmeta = [], [], []
+orange = lambda m: np.dstack([np.full(m.shape, 22, np.uint8), np.full(m.shape, 78, np.uint8), np.full(m.shape, 240, np.uint8), (m * 150).astype(np.uint8)])   # BGRA of #f04e16
+for j, n in enumerate(chosen):
+    r = w.rectify(rec, reg_by[n], geo, origin, along, length, height, ppm); blk = w.shadow_mask(camera(n), frame, length, height, ppm)
+    cviews.append((r[0], r[1])); cblocked.append(blk)
+    cv2.imwrite(str(OUT / f"v{j}.jpg"), r[0][top:], [cv2.IMWRITE_JPEG_QUALITY, 86]); cv2.imwrite(str(OUT / f"vb{j}.png"), orange(blk & r[1])[top:])
+    pid = n.split("/")[1][:-4]; cam_ = camera(n)
+    cmeta.append({"id": pid, "creator": by[pid]["creator"], "six": six.index(n) if n in six else -1, "cam": [round(v, 2) for v in cam_], "px_per_m": round(r[2]),
+                  "sees": round(float(r[1][top:].mean()), 3), "blocked": round(float((blk & r[1])[top:].sum() / max(1, r[1][top:].sum())), 3)})
+_, fused, count, n_clear = w.fuse(cviews, cblocked)
+hidden = (count > 0) & (n_clear == 0); fused[hidden] = (0.55 * fused[hidden] + 0.45 * 128).astype(np.uint8)
+cv2.imwrite(str(OUT / "fused.jpg"), fused[top:], [cv2.IMWRITE_JPEG_QUALITY, 90])
+plain = w.fuse(views)[1]; cv2.imwrite(str(OUT / "plain.jpg"), plain[top:], [cv2.IMWRITE_JPEG_QUALITY, 90])     # the six, with no view left out: what the tool used to write
+far = [chosen.index(n) for n in six]                      # the six the film has followed, as indexes into the chosen views
+seen6 = np.any([cviews[j][1] for j in far], 0); clear6 = np.any([cviews[j][1] & ~cblocked[j] for j in far], 0); hidden6 = seen6 & ~clear6
+cv2.imwrite(str(OUT / "hid6.png"), orange(hidden6)[top:]); cv2.imwrite(str(OUT / "hid16.png"), orange(hidden)[top:])
+combine = {"hidden6": round(float(hidden6[top:].mean()), 3), "views": cmeta, "tried": len(tried), "placed": len(reg_by), "top": w.FUSE_TOP,
+           "seen": round(float((count[top:] > 0).mean()), 3), "clear": round(float((n_clear[top:] > 0).mean()), 3), "hidden": round(float(hidden[top:].mean()), 3)}
+print(json.dumps(combine, indent=0))
 start = [x for x in walls.values() if x["in_start_block"]]
 data = {
   "wall": {"left": edge["left"], "right": edge["right"], "length_m": round(length, 2), "faces": edge["faces"], "shown_height_m": VIS_H, "px_per_m": ppm, "plane_offset_m": round(offset, 3), "plane_rms_m": round(rms, 3), "plane_points": int(inl),
@@ -145,22 +173,37 @@ L_ = np.array(edge["left"]); s_all, d_all, h_all = rel_all @ a_, rel_all @ o_, w
 near = (s_all > -1.5) & (s_all < length + 1.5) & (d_all > -2.0) & (d_all < 7.0) & (h_all > 0.2) & (h_all < height)
 X["near"] = [[round(float(a), 2), round(float(c), 3), round(float(h), 1)] for a, c, h in zip(s_all[near], d_all[near], h_all[near])]
 X["outline_along"] = [round(float(a_[0]), 4), round(float(a_[1]), 4)]; X["outline_outward"] = [round(float(o_[0]), 4), round(float(o_[1]), 4)]
-# one spot where the photos disagree: for the median demonstration
-fl = [cv2.imread(str(OUT / f"flat{k}.jpg")) for k in range(len(views))]
-lum = np.stack([cv2.blur(cv2.cvtColor(f, cv2.COLOR_BGR2GRAY).astype(np.float32), (9, 9)) for f in fl]); valid = np.stack([cv2.blur((f.sum(2) > 12).astype(np.float32), (9, 9)) > 0.99 for f in fl])
+# one spot where the views used there disagree: for the middle-value demonstration.
+# At each cell the tool uses the first FUSE_TOP views, best first, that see it unblocked.
+clear = np.stack([m & ~k_ for (_, m), k_ in zip(cviews, cblocked)])[:, top:]
+okc = np.stack([cv2.blur(c.astype(np.float32), (9, 9)) > 0.99 for c in clear])
+matched = w.match_exposure(cviews, np.stack([m & ~k_ for (_, m), k_ in zip(cviews, cblocked)]))     # what the tool takes the middle value of
+colc = [cv2.blur(v[top:], (9, 9)) for v in matched]; lumc = np.stack([cv2.cvtColor(c, cv2.COLOR_BGR2GRAY).astype(np.float32) for c in colc])
+fblur = cv2.blur(fused[top:], (9, 9))
 spots = []
-for y in range(20, lum.shape[1] - 20, 8):
-    for x in range(20, lum.shape[2] - 20, 8):
-        if not valid[:, y, x].all(): continue
-        v = np.sort(lum[:, y, x]); mid = v[1:5]
-        if mid.max() - mid.min() < 9 and (v[5] - v[4] > 45 or v[1] - v[0] > 45): spots.append((float(max(v[5] - v[4], v[1] - v[0])), x, y))
+for y in range(20, lumc.shape[1] - 20, 8):
+    for x in range(20, lumc.shape[2] - 20, 8):
+        use = np.flatnonzero(okc[:, y, x])[:w.FUSE_TOP]
+        if len(use) < w.FUSE_TOP: continue
+        v = np.sort(lumc[use, y, x]); mid = v[1:-1]
+        if mid.max() - mid.min() < 9 and (v[-1] - v[-2] > 45 or v[1] - v[0] > 45): spots.append((float(max(v[-1] - v[-2], v[1] - v[0])), x, y, [int(u) for u in use]))
 spots.sort(reverse=True)
-X["spots"] = [{"x": x, "y": y, "gap": round(g), "cols": [[int(c) for c in cv2.blur(f, (9, 9))[y, x][::-1]] for f in fl], "fused": [int(c) for c in cv2.blur(fused[top:], (9, 9))[y, x][::-1]]} for g, x, y in spots[:12]]
+X["spots"] = [{"x": x, "y": y, "gap": round(g), "use": use, "cols": [[int(c) for c in colc[u][y, x][::-1]] for u in use], "fused": [int(c) for c in fblur[y, x][::-1]]} for g, x, y, use in spots[:40]]
 data["views"] = vmeta; data["extra"] = X
 (OUT / "data.json").write_text(json.dumps(data))
-print(json.dumps({k: X[k] for k in X if k not in ("near", "pair", "spots")}, default=str)); print(len(X["near"]), {k: v for k, v in X.get("pair", {}).items() if k != "pts"}); print([(s["x"], s["y"], s["gap"]) for s in X["spots"]])
+print(json.dumps({k: X[k] for k in X if k not in ("near", "pair", "spots")}, default=str)); print(len(X["near"]), {k: v for k, v in X.get("pair", {}).items() if k != "pts"}); print([(s["x"], s["y"], s["gap"], s["use"]) for s in X["spots"]])
 print([(v["crop"], v["crop_px"], v["full_px"]) for v in vmeta])
 
+if os.environ.get("SPOT_SHEET"):   # a sheet of candidate spots, to choose SPOT by eye
+    rows = []
+    for s_ in X["spots"][:24]:
+        x, y = s_["x"], s_["y"]; cut = lambda im: cv2.resize(im[y - 60:y + 60, x - 60:x + 60], (150, 150))
+        tiles = [cut(matched[u][top:]) for u in s_["use"]] + [cut(fused[top:])]
+        row = np.hstack([np.pad(t, ((0, 0), (0, 6), (0, 0))) for t in tiles])
+        cv2.putText(row, f"{x},{y} " + " ".join(str(round(0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2])) for c in s_["cols"]) + f" use {s_['use']}", (4, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+        rows.append(row)
+    half = (len(rows) + 1) // 2
+    cv2.imwrite(os.environ["SPOT_SHEET"], np.hstack([np.vstack(rows[:half]), np.vstack(rows[half:] + [np.zeros_like(rows[0])] * (half - len(rows[half:])))]))
 # ---- what the film reads ----
 seq_of = {by[c["id"]]["sequence"]: c["seq"] for c in data["cams"]}
 given = [{"id": n.split("/")[1][:-4], "gps": [by[n.split("/")[1][:-4]]["x"], by[n.split("/")[1][:-4]]["z"]], "seq": seq_of.get(seq[n], -1), "cand": n.split("/")[1][:-4] in X["candidates"]} for n in names]
@@ -169,11 +212,14 @@ film = {
     "pf": data["points_first"], "pl": data["points_final"], "outlines": data["outlines"], "target": data["target_outline"],
     "photos": [[round(x, 1), round(z, 1)] for x, z in data["all_photos"]],
     "along": X["outline_along"], "outward": X["outline_outward"], "near": X["near"], "pair": X["pair"],
-    "spot": next(s for s in X["spots"] if s["x"] == 164 and s["y"] == 548), "within40": X["within_40m"],
+    "spot": next((s for s in X["spots"] if s["x"] == SPOT[0] and s["y"] == SPOT[1]), None) or sys.exit(f"the spot {SPOT} is not among this run's candidates: run with SPOT_SHEET=<file.jpg> and choose another"), "within40": X["within_40m"], "combine": combine,
     "creators": X["creators"], "building": X["building"],
 }
 film["pair"]["baseline_m"] = float(film["pair"]["baseline_m"])
+for i_, u in enumerate(film["spot"]["use"]):
+    cv2.imwrite(str(ASSETS / f"use{i_}.jpg"), matched[u][top:], [cv2.IMWRITE_JPEG_QUALITY, 88])
 (ASSETS / "data.js").write_text("window.WALLREFS = " + json.dumps(film, separators=(",", ":")) + ";\n")
-for n in [f"src{k}" for k in range(6)] + [f"crop{k}" for k in range(6)] + [f"flat{k}" for k in range(6)] + ["best", "fused", "pairA", "pairB"]:
-    shutil.copy(OUT / f"{n}.jpg", ASSETS / f"{n}.jpg")
+for n in [f"src{k}.jpg" for k in range(6)] + [f"crop{k}.jpg" for k in range(6)] + [f"flat{k}.jpg" for k in range(6)] + ["best.jpg", "fused.jpg", "plain.jpg", "pairA.jpg", "pairB.jpg"] \
+        + ["hid6.png", "hid16.png"] + [f"v{j}.jpg" for j in range(len(chosen))] + [f"vb{j}.png" for j in range(len(chosen))]:
+    shutil.copy(OUT / n, ASSETS / n)
 print("wrote", ASSETS / "data.js")
