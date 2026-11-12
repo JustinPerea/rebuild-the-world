@@ -2,6 +2,7 @@
 // The block survey's command line. Run from anywhere inside a clone:
 //
 //   node tools/survey/survey.mjs next            the next building to plan, and the bays used so far
+//   node tools/survey/survey.mjs show <building> one building's facts, by its source id (bldg_...)
 //   node tools/survey/survey.mjs check           check every plan file
 //   node tools/survey/survey.mjs check <file>    check one plan file
 //   node tools/survey/survey.mjs tally           what the passing plans add up to (--write saves TALLY.md)
@@ -13,7 +14,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadRegion, readPlans, nextPlace, facts, vocabulary, tally, tallyMarkdown, BAY_KINDS, ROOF_KINDS, USAGES, SKIP_REASONS } from './lib.mjs';
+import { loadRegion, readPlans, nextPlace, facts, vocabulary, tally, tallyMarkdown, BAY_KINDS, ROOF_KINDS, USAGES, SKIP_REASONS, BASES } from './lib.mjs';
 
 const argv = process.argv.slice(2);
 const flag = (name) => { const i = argv.indexOf(name); if (i < 0) return false; argv.splice(i, 1); return true; };
@@ -53,9 +54,14 @@ if (command === 'next') {
       used_so_far: vocabulary(plans),
     });
   }
+} else if (command === 'show') {
+  // One building's facts, whichever building "next" is on. For someone drafting that building alone.
+  const place = reg.places.find((p) => p.source_id === target || p.place_id === target);
+  if (!place) { console.error(`no building ${target ?? '(none given)'} in region ${region}`); process.exit(2); }
+  print({ building: facts(reg, place), allowed: { bay_kinds: BAY_KINDS, roofs: ROOF_KINDS, usages: USAGES, skip_reasons: SKIP_REASONS, bases: BASES }, used_so_far: vocabulary(readPlans(reg)) });
 } else if (command === 'check') {
   const plans = readPlans(reg);
-  const wanted = target ? path.basename(target) : null;
+  const wanted = target ? `${path.basename(target).replace(/\.json$/, '')}.json` : null;
   const picked = wanted ? plans.filter((p) => (p.place ? `${p.place.source_id}.json` : p.file) === wanted) : plans;
   if (wanted && !picked.length) { console.error(`no plan file named ${wanted} in survey/${region}/plans`); process.exit(2); }
   const failing = picked.filter((p) => p.problems.length);
@@ -63,7 +69,7 @@ if (command === 'next') {
     console.log(`FAIL ${p.place ? `${p.place.source_id}.json` : p.file}`);
     for (const m of p.problems) console.log(`  - ${m}`);
   }
-  console.log(failing.length ? `${failing.length} of ${picked.length} plan file(s) fail` : `OK: ${picked.length} plan file(s) pass`);
+  console.log(failing.length ? `${failing.length} of ${picked.length} plan file(s) fail` : wanted ? `OK: ${wanted} passes` : `OK: ${picked.length} plan file(s) pass`);
   process.exit(failing.length ? 1 : 0);
 } else if (command === 'tally') {
   const t = tally(reg, readPlans(reg));
@@ -85,6 +91,6 @@ if (command === 'next') {
     }];
   }))) + '\n');
 } else {
-  console.error('usage: node tools/survey/survey.mjs next | check [file] | tally [--write]   (options: --region <name>, --all, --repo <path>)');
+  console.error('usage: node tools/survey/survey.mjs next | show <building> | check [file] | tally [--write]   (options: --region <name>, --all, --repo <path>)');
   process.exit(2);
 }

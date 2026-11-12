@@ -24,6 +24,10 @@ const STEP = 0.05;            // sizes are multiples of this, except one wall ba
 const LENGTH_TOL = 0.01;      // a row's bays against its facade's length
 const HEIGHT_TOL = 0.03;      // base + storeys + top against the wall height
 const STOREY_MIN = 2.0, STOREY_MAX = 6.0;
+const CORNER_BAY_MIN = 0.3;    // a plain wall bay this wide stands next to every outside corner
+const REFERENCE_RE = /^edge(\d{2})_(?:best|fused)\.jpg$/;   // a wall reference, as tools/refs/wallrefs.py names it
+export const BASES = ['typical', 'reference'];
+const REFERENCE_OFFSET_MAX = 3;  // metres a wall reference may sit off along the wall
 const CLEAR_CAP = 30;
 
 const r3 = (n) => Math.round(n * 1000) / 1000;
@@ -233,6 +237,13 @@ export function checkPlan(reg, place, plan) {
     seen.add(fa.edge);
     const len = f.edges[fa.edge].length_m;
     if (!isNum(fa.length_m) || Math.abs(fa.length_m - len) > LENGTH_TOL) bad(`${at}: "length_m" must be the length of edge ${fa.edge}, ${len} m`);
+    if (fa.basis !== undefined && !BASES.includes(fa.basis)) bad(`${at}: "basis" must be one of: ${BASES.join(', ')}`);
+    if ((fa.basis ?? 'typical') === 'reference') {
+      const m = typeof fa.reference === 'string' ? REFERENCE_RE.exec(fa.reference) : null;
+      if (!m || Number(m[1]) !== fa.edge) bad(`${at}: a facade drawn from a wall reference names it in "reference", as edge${String(fa.edge).padStart(2, '0')}_fused.jpg or edge${String(fa.edge).padStart(2, '0')}_best.jpg`);
+      if (fa.reference_offset_m !== undefined && (!isNum(fa.reference_offset_m) || Math.abs(fa.reference_offset_m) > REFERENCE_OFFSET_MAX)) bad(`${at}: "reference_offset_m" is where the wall's left end sits in the image, in metres from the image's left edge, from -${REFERENCE_OFFSET_MAX} to ${REFERENCE_OFFSET_MAX}`);
+    } else if (fa.reference !== undefined || fa.reference_offset_m !== undefined) bad(`${at}: "reference" and "reference_offset_m" are only for a facade whose "basis" is "reference"`);
+    const outsideLeft = f.edges[fa.edge].corner_left_deg < 180, outsideRight = f.edges[fa.edge].corner_right_deg < 180;
     if (!Array.isArray(fa.rows) || !fa.rows.length) { bad(`${at}: "rows" must be a list with at least one row`); return; }
     const covered = new Map();
     fa.rows.forEach((row, ri) => {
@@ -266,6 +277,9 @@ export function checkPlan(reg, place, plan) {
         if (bay.kind === 'other' && (typeof bay.description !== 'string' || bay.description.trim().length < 3 || bay.description.length > 120)) bad(`${bat}: an "other" bay needs a "description" of 3 to 120 characters`);
       });
       if (!baysOk) return;
+      const endBay = (bay, which) => { if (bay.kind !== 'wall' || bay.width_m < CORNER_BAY_MIN - 1e-6) bad(`${rat}: the ${which} bay stands at an outside corner, so it must be a plain wall bay at least ${CORNER_BAY_MIN} m wide`); };
+      if (outsideLeft) endBay(row.bays[0], 'first');
+      if (outsideRight) endBay(row.bays[row.bays.length - 1], 'last');
       if (offStep > 1) bad(`${rat}: ${offStep} wall bays have a width that is not a multiple of ${STEP} m; only one wall bay in a row may take up the remainder`);
       if (Math.abs(total - len) > LENGTH_TOL) bad(`${rat}: the bays add up to ${r3(total)} m, and edge ${fa.edge} is ${len} m long`);
     });

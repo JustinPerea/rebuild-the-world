@@ -113,6 +113,10 @@ Git already ignores `data/raw/`, `data/*/refs/` and `data/*/map/`. Do not force 
 
 The claim spec proposes one home block per contributor. Nothing enforces that yet, and the owner has not confirmed it.
 
+## After the area is open: drafting its buildings
+
+An open area is a set of plain boxes. Each building then needs a blueprint before anyone can build it from atoms: a list of the wall pieces it needs and how they join. `skill/blueprint-skill.md` is the guide for drafting one building. The contributor writes a plan of each wall, from a wall reference where one exists and as a typical facade where none does, and `tools/blueprint/blueprint.mjs` turns the plan into the blueprint, the layout and the tasks. The guide and the tool are proposals, rehearsed on four buildings of Oshiage 2. The tool drafts walls only, for outlines whose corners are square.
+
 ## Parts that do not exist yet
 
 - Claiming. Opening an area does not reserve it. The claim spec's "Home blocks" section proposes one home block per contributor; the service that would record it does not exist.

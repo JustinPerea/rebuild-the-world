@@ -2,7 +2,7 @@
 
 One plan per building: how many storeys it has and what stands along each wall. The plans are counted to find out which parts the block needs most, before anyone builds them.
 
-A plan is a typical facade chosen by the builder that writes it. The outline, the heights, and the storey count and usage where the source records them, come from the region's data pack. The data pack holds no picture of any facade, so a plan does not record what the real building looks like, and nothing in it may be presented as observed. Raising a building to its true exterior (level A2 in `docs/world-model.md`) is later work, done from reference images.
+The outline, the heights, and the storey count and usage where the source records them, come from the region's data pack. The data pack holds no picture of any facade, so by default a wall in a plan is a typical facade chosen by whoever writes it, and it must not be presented as observed. A wall that has a wall reference (`tools/refs/README.md`) can be drawn from that image instead, and the plan says so with `"basis": "reference"`. `skill/blueprint-skill.md` is the guide for drafting one building that way.
 
 ## The loop
 
@@ -13,7 +13,7 @@ node tools/survey/survey.mjs check      # fix what it reports, then run "next" a
 node tools/survey/survey.mjs tally --write
 ```
 
-`next` returns the same building until its plan passes. It covers the region's start block; `--all` covers every building. Progress is the set of plan files, so the loop can stop and resume at any point.
+`next` returns the same building until its plan passes. `show <building>` prints the same facts for one building you name by its source id (`bldg_…`). It covers the region's start block; `--all` covers every building. Progress is the set of plan files, so the loop can stop and resume at any point.
 
 ## What `next` tells you
 
@@ -55,13 +55,15 @@ Every edge runs left to right for someone standing outside and looking at the wa
       "length_m": 6.236,
       "rows": [
         { "storeys": [1], "bays": [
+          { "kind": "wall", "width_m": 0.3 },
           { "kind": "shopfront", "width_m": 3.6, "opening_m": [3.4, 2.6], "sill_m": 0.2 },
           { "kind": "door", "width_m": 1.1, "opening_m": [0.85, 2.05], "sill_m": 0 },
-          { "kind": "wall", "width_m": 1.536 }
+          { "kind": "wall", "width_m": 1.236 }
         ] },
         { "storeys": [2, 3], "bays": [
-          { "kind": "wall", "width_m": 0.636 },
-          { "kind": "window", "width_m": 1.4, "opening_m": [1.25, 1.3], "sill_m": 0.85, "count": 4 }
+          { "kind": "wall", "width_m": 0.3 },
+          { "kind": "window", "width_m": 1.4, "opening_m": [1.25, 1.3], "sill_m": 0.85, "count": 4 },
+          { "kind": "wall", "width_m": 0.336 }
         ] }
       ]
     }
@@ -82,8 +84,10 @@ The example shows the shape of the file. Its sizes are placeholders: do not copy
 | `roof` | `flat`, `gable`, `hip`, `shed` or `other` |
 | `facades` | The walls that have openings. A wall that is not listed is a plain wall on every storey |
 | `facades[].length_m` | The edge's length as `next` gave it. It guards against a plan landing on the wrong edge |
-| `rows` | Each row covers one or more storeys with the same bays. Every storey is covered by exactly one row |
-| `bays` | Left to right, seen from outside. Their widths, times `count`, add up to the wall's length within 1 cm |
+| `facades[].basis`, `reference` | Optional. `"typical"` (the default) for a facade you chose. `"reference"` for one drawn from a wall reference, with `"reference"` naming the image: `edge00_fused.jpg` or `edge00_best.jpg` for edge 0 |
+| `facades[].reference_offset_m` | Optional, with `"basis": "reference"`. Where the wall's own left end sits in the image, in metres from the image's left edge (negative when it lies off the image). Bays are always measured from the wall's left end; `tools/refs/sheet.py` uses this number to draw them in the right place |
+| `rows` | Each row covers one or more storeys with the same bays. Every storey is covered by exactly one row. On a listed wall, a storey with no opening is a row with one `wall` bay as long as the wall |
+| `bays` | Left to right, seen from outside. Their widths, times `count`, add up to the wall's length within 1 cm. Where the wall ends at an outside corner (an inside angle under 180 degrees), the row's end bay is a plain `wall` bay at least 0.3 m wide: a corner post stands there |
 | `notes` | Up to 600 characters |
 | `provenance` | `author`, `tools` (the agent and the model it ran on) and `created` |
 
