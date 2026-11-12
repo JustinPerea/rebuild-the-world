@@ -74,9 +74,9 @@
       "name": "Contributor service",
       "question": "How does a contributor's agent get work and the current rules?",
       "doc": "docs/contributor-service.md",
-      "version": "v0.2",
-      "status": "new",
-      "summary": "A work order with pinned versions for every claim, an MCP server for asking what needs building, and a strict split between instructions and data."
+      "version": "v0.3",
+      "status": "revised",
+      "summary": "A work order with pinned versions for every claim, one work order for an object's whole bundle, an MCP server for asking what needs building, and a strict split between instructions and data."
     },
     {
       "id": "data",
@@ -580,7 +580,7 @@
     },
     {
       "tool": "claim",
-      "what": "Claims an object or its next atom, and returns the work order"
+      "what": "Claims an object and reserves its unbuilt atoms, or claims one atom by itself, and returns the work order"
     },
     {
       "tool": "my_work",
@@ -588,7 +588,7 @@
     },
     {
       "tool": "submit",
-      "what": "Marks the pull request ready for review"
+      "what": "Checks one asset and marks it ready for review. An object is submitted after its atoms have passed"
     },
     {
       "tool": "release",

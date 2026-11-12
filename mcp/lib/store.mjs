@@ -6,10 +6,10 @@ import { readJson, writeJsonAtomic, listDirs, isObj, TASK_ID_RE, HANDLE_RE, ASSE
 export const ACTIVE = ['Claimed', 'In review', 'Changes requested'];
 export const SIZES = ['S', 'M', 'L'];
 export const TRUST_CAPS = [
-  { objects: 1, review: 2 },
-  { objects: 2, review: 2 },
-  { objects: 3, review: 4 },
-  { objects: 5, review: Infinity },
+  { objects: 1, review: 1 },
+  { objects: 3, review: 3 },
+  { objects: 10, review: 10 },
+  { objects: 20, review: Infinity },
 ];
 const COOLDOWN_MS = 24 * 3600000;
 export const CLAIM_STATES = [...ACTIVE, 'Merged', 'Released'];
@@ -23,7 +23,9 @@ export function claimProblem(c, fileId) {
   if (!CLAIM_STATES.includes(c.state)) return 'state is not a claim state';
   if (c.expires_at != null && !isIsoDate(c.expires_at)) return 'expires_at is not an ISO date';
   if (ACTIVE.includes(c.state) && !isIsoDate(c.expires_at)) return 'an active claim needs expires_at';
-  if (c.branch != null && c.branch !== `claim/${fileId}`) return 'branch is not claim/<task_id>';
+  if (c.bundle != null && (typeof c.bundle !== 'string' || !TASK_ID_RE.test(c.bundle))) return 'bundle is not a task id';
+  const branchOwner = c.bundle != null ? c.bundle : fileId;
+  if (c.branch != null && c.branch !== `claim/${branchOwner}`) return c.bundle != null ? 'branch is not claim/<bundle>' : 'branch is not claim/<task_id>';
   if (c.versions != null) {
     if (!isObj(c.versions)) return 'versions is not an object';
     for (const [key, pin] of Object.entries(c.versions)) {
@@ -178,19 +180,38 @@ export class Store {
     }
     if (claim && claim.state === 'Merged') return { state: 'Merged' };
     const base = task.state || 'Open';
+    // An object task (one with depends_on) opens when no member is Locked or unreadable. Members
+    // that are unmerged, claimed or in review do not hold it: claiming the object reserves them.
     if (base === 'Open' && task.depends_on.length && depth < 8) {
-      const open = task.depends_on.filter((d) => {
+      const stuck = task.depends_on.filter((d) => {
         const dt = this.getTask(d);
         if (dt.error) return true;
-        return this.stateOf(dt.task, this.getClaim(d), now, depth + 1).state !== 'Merged';
+        return this.stateOf(dt.task, this.getClaim(d), now, depth + 1).state === 'Locked';
       });
-      if (open.length) return { state: 'Locked', waiting_on: open };
+      if (stuck.length) return { state: 'Locked', waiting_on: stuck };
     }
     return { state: base };
   }
 
   activeClaimsOf(handle, now = Date.now()) {
     return this.listClaims().filter((c) => c.handle === handle && ACTIVE.includes(c.state) && !((c.state === 'Claimed' || c.state === 'Changes requested') && Date.parse(c.expires_at) <= now));
+  }
+
+  // A member of a bundle whose object claim is still being worked on does not count as awaiting review.
+  isOpenBundleMember(c) {
+    if (!c.bundle || c.bundle === c.task_id) return false;
+    const o = this.getClaim(c.bundle);
+    return !!o && !o.invalid && (o.state === 'Claimed' || o.state === 'Changes requested');
+  }
+
+  // Distinct objects the handle is building now: active claims still Claimed or Changes requested.
+  objectsHeld(handle, now = Date.now()) {
+    return new Set(this.activeClaimsOf(handle, now).filter((c) => c.state === 'Claimed' || c.state === 'Changes requested').map((c) => c.object_id || c.task_id));
+  }
+
+  // Distinct objects the handle has awaiting review.
+  objectsInReview(handle) {
+    return new Set(this.listClaims().filter((c) => c.handle === handle && c.state === 'In review' && !this.isOpenBundleMember(c)).map((c) => c.object_id || c.task_id));
   }
 
   inProgressTaskIds() {

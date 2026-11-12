@@ -32,8 +32,7 @@ before(() => {
   t('task_free_01', { asset_id: 'prop_free_01', object_id: 'obj_set_01', slot: 'part', connector_frames: [{ name: 'conn_door_hinge_a_01', position_m: [0, 0, 0] }], mating_m: { leaf_width: 1 }, reference_pack: [{ what: MARK, value_or_path: MARK, source: MARK, licence: MARK }] });
   t('task_held_01');
   cl('task_held_01');
-  t('task_waiting_01', { depends_on: ['task_held_01'] });
-  t('task_claim_handle_01');
+    t('task_claim_handle_01');
   cl('task_claim_handle_01', { handle: HOSTILE });
   t('task_claim_state_01');
   cl('task_claim_state_01', { state: HOSTILE });
@@ -48,6 +47,7 @@ before(() => {
   cl('task_merged_01', { handle: 'hermes', state: 'In review' });
   t('task_after_merge_01', { depends_on: ['task_merged_01'] });
   t('task_claim_json_01');
+  t('task_waiting_01', { depends_on: ['task_claim_json_01'] });
   fs.writeFileSync(path.join(repo, 'tasks', 'claims', 'task_claim_json_01.json'), `{ "handle": ${MARK} `);
   writeJson(path.join(repo, 'assets', 'obj', 'obj_set_01', 'blueprint.json'), {
     object_id: HOSTILE,
@@ -103,8 +103,8 @@ test('claim errors name other builders and waiting tasks only in data', async ()
   assert.equal(held.body.data.builder, 'someone');
   const waiting = clean(await c.call('claim', { task_id: 'task_waiting_01' }), 'claim waiting');
   assert.equal(waiting.isError, true);
-  assert.ok(!JSON.stringify(waiting.body.instructions).includes('task_held_01'));
-  assert.deepEqual(waiting.body.data.waiting_on, ['task_held_01']);
+  assert.ok(!JSON.stringify(waiting.body.instructions).includes('task_claim_json_01'));
+  assert.deepEqual(waiting.body.data.waiting_on, ['task_claim_json_01']);
 });
 
 test('a malformed claim file blocks its task and passes nothing on', async () => {

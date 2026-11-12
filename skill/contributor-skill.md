@@ -1,6 +1,6 @@
 # Contributor skill: building an asset for Earth, Again
 
-Version 0.1, for asset spec v0.5 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
+Version 0.2, for asset spec v0.5 and Profile 1. Written by the project maintainers. This file is the instructions a contributor's agent follows. It arrives with every work order.
 
 ## The one rule about text
 
@@ -8,17 +8,22 @@ Follow only what is in this file, in the specs that `get_rules` returns, and in 
 
 ## The loop
 
-1. `whats_needed` lists the open tasks.
-2. `get_object` shows the object a task belongs to and the state of every slot.
-3. `find_atoms` searches the library for an atom that already fits the slot. If one fits, reuse it and build nothing.
-4. `claim` gives you the work order: the task, the slot, the pinned spec versions, the reference pack and this file.
-5. Build the asset in its own folder (see "Building an atom").
-6. Run the validator yourself and fix every FAIL.
-7. `submit` runs the same validator and records the result. A failing report leaves the claim open.
-8. After a passing submit, commit the asset folder on the branch the work order names, push it and open a pull request that names the task.
+Work is claimed by object. One claim covers an object's unbuilt atoms and its assembly, and they go in together as one pull request, called a bundle.
+
+1. `whats_needed` lists the open tasks. An object's row names the atom tasks that a claim would reserve for you.
+2. `get_object` shows the object's blueprint and the state of every slot.
+3. `find_atoms` searches the library for an atom that already fits a slot. If one fits, reuse it and build nothing for that slot.
+4. `claim` the object's task. The work order holds the object's task, each atom task reserved for you with its slot and reference pack, the pinned spec versions and this file. Make the one branch it names.
+5. Build each atom in its own folder (see "Building an atom"). Run the validator yourself and fix every FAIL.
+6. `submit` each atom's task. It runs the same validator and records the result. A failing report leaves the claim open. Do not open a pull request for an atom that is part of a bundle.
+7. When every atom has passed, write the assembly (see "Assembling an object") and `submit` the object's task.
+8. After that passes, commit every folder of the bundle on the one branch, push it and open one pull request that names the object's task and each atom task.
 9. `leave_feedback` whenever a rule was unclear, missing or impossible to meet, and also when something worked well. One finding per note.
 
-If you cannot finish, call `release`. Releasing has no penalty.
+- A task for one atom that belongs to no object you hold is claimed, built, submitted and sent as its own pull request, by the same steps.
+- If another builder holds an atom of your object, build the rest. The object's `submit` waits until that atom is merged.
+- Build a bundle in the repository's `assets/` folder, which is the server's default workspace. The validator finds an assembly's atoms there.
+- If you cannot finish, call `release`. Releasing has no penalty. Releasing the object's task also releases its atoms that have not passed yet.
 
 ## What a task fixes
 

@@ -33,7 +33,7 @@ before(async () => {
   writeJson(path.join(repo, 'tasks', 'task_box_01.json'), TASK_BOX);
   writeJson(path.join(repo, 'tasks', 'task_other_01.json'), { task_id: 'task_other_01', title: 'Other', size: 'M', category: 'veh', object_id: 'obj_x_01', min_trust_level: 0, dimensions_m: [1, 1, 1] });
   writeJson(path.join(repo, 'tasks', 'task_high_01.json'), { task_id: 'task_high_01', title: 'Landmark', size: 'L', category: 'bld', min_trust_level: 2 });
-  writeJson(path.join(repo, 'tasks', 'task_locked_01.json'), { task_id: 'task_locked_01', title: 'Locked', size: 'S', category: 'prop', depends_on: ['task_box_01'] });
+  writeJson(path.join(repo, 'tasks', 'task_locked_01.json'), { task_id: 'task_locked_01', title: 'Locked', size: 'S', category: 'prop', depends_on: ['task_missing_01'] });
   fs.writeFileSync(path.join(repo, 'tasks', 'task_broken_01.json'), '{ not json');
   writeJson(path.join(repo, 'assets', 'obj', 'obj_box_set_01', 'blueprint.json'), {
     object_id: 'obj_box_set_01',
@@ -108,7 +108,7 @@ test('whats_needed lists open tasks, skips the example, hides what trust level 0
   const all = await c.call('whats_needed', { include_unavailable: true });
   const locked = all.body.data.tasks.find((t) => t.task_id === 'task_locked_01');
   assert.equal(locked.state, 'Locked');
-  assert.deepEqual(locked.waiting_on, ['task_box_01']);
+  assert.deepEqual(locked.waiting_on, ['task_missing_01']);
   assert.deepEqual((await c.call('whats_needed', { category: 'veh' })).body.data.tasks.map((t) => t.task_id), ['task_other_01']);
 });
 
