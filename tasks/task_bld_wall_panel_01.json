@@ -71,8 +71,26 @@
       "value_or_path": "mat_render_cream_01 on every face.",
       "source": "assets/mat/",
       "licence": "n/a"
+    },
+    {
+      "what": "Variation",
+      "value_or_path": "Put \"variation\": { \"scale\": { \"x\": [0.05, 1.5], \"y\": [0.01, 2.2] } } in asset.json. The same panel is placed at other widths and heights (0.05 to 1.5 m wide and 0.028 to 6.16 m high), scaled along x and y only, and the validator rejects a placement outside the range you declare. Build it so that it still looks right stretched: a plain rendered surface with no modelled detail, such as trim, a groove or a texture tied to a size, that would distort.",
+      "source": "docs/asset-spec.md, \"Scale\"",
+      "licence": "n/a"
     }
   ],
+  "variation": {
+    "scale": {
+      "x": [
+        0.05,
+        1.5
+      ],
+      "y": [
+        0.01,
+        2.2
+      ]
+    }
+  },
   "connector_frames": [
     {
       "name": "conn_facade_edge_a_01",
