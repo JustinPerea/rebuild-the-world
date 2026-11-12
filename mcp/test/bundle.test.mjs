@@ -84,7 +84,7 @@ test('claiming an object writes a claim for each Open member with the shared bra
   }
   const { instructions, data } = r.body;
   assert.equal(instructions.branch, `claim/${SEDAN}`);
-  assert.equal(instructions.steps.length, 6);
+  assert.equal(instructions.steps.length, 7);
   assert.match(instructions.steps[0], new RegExp(`one branch named claim/${SEDAN}`));
   assert.match(instructions.steps[1], /Do not open a pull request per atom/);
   assert.match(instructions.steps[4], /ONE pull request/);
@@ -232,24 +232,85 @@ test('trust 1 holds three objects at once', async () => {
   assert.match(fourth.body.instructions.error, /3 object/);
 });
 
-test('releasing the object releases its Claimed members and leaves In review ones', async () => {
+test('releasing the object releases every member, and a member cannot be released alone', async () => {
   const f = fixture();
   const { c, assets, claimOf } = f;
   await c.call('claim', { task_id: SEDAN });
   writeBody(assets);
   assert.equal((await c.call('submit', { task_id: BODY, asset_path: 'veh/veh_body_01' })).body.instructions.verdict, 'PASSED');
+  const alone = await c.call('release', { task_id: DOOR });
+  assert.equal(alone.isError, true);
+  assert.match(alone.body.instructions.error, new RegExp(`Release ${SEDAN}`));
+  assert.equal(claimOf(DOOR).state, 'Claimed');
   const r = await c.call('release', { task_id: SEDAN });
   assert.equal(r.isError, false);
-  assert.match(r.body.instructions.summary, /1 member claim/);
-  assert.equal(claimOf(SEDAN).state, 'Released');
-  assert.equal(claimOf(DOOR).state, 'Released');
-  assert.equal(claimOf(BODY).state, 'In review');
-  // releasing a member alone works as before
-  const g = fixture();
-  await g.c.call('claim', { task_id: SEDAN });
-  assert.equal((await g.c.call('release', { task_id: DOOR })).isError, false);
-  assert.equal(g.claimOf(DOOR).state, 'Released');
-  assert.equal(g.claimOf(SEDAN).state, 'Claimed');
+  assert.match(r.body.instructions.summary, /2 member claim/);
+  for (const id of [SEDAN, DOOR, BODY]) assert.equal(claimOf(id).state, 'Released');
+  const open = (await c.call('whats_needed')).body.data.tasks.map((t) => t.task_id);
+  for (const id of [SEDAN, DOOR, BODY]) assert.ok(open.includes(id), `${id} is Open again`);
+});
+
+// Moves the expiry of the named claims into the past.
+function expire(repo, ids, hoursAgo = 1) {
+  for (const id of ids) {
+    const file = path.join(repo, 'tasks', 'claims', `${id}.json`);
+    const cl = JSON.parse(fs.readFileSync(file, 'utf8'));
+    writeJson(file, { ...cl, expires_at: new Date(Date.now() - hoursAgo * 3600000).toISOString() });
+  }
+}
+
+test('when the object claim expires, a member that had passed submit is Open again and another builder can take the bundle', async () => {
+  const f = fixture();
+  const { c, assets, repo, claimOf } = f;
+  await c.call('claim', { task_id: SEDAN });
+  writeBody(assets);
+  assert.equal((await c.call('submit', { task_id: BODY, asset_path: 'veh/veh_body_01' })).body.instructions.verdict, 'PASSED');
+  assert.match((await c.call('my_work')).body.data.claims.find((x) => x.task_id === BODY).state, /In review/);
+  expire(repo, [SEDAN, DOOR]);
+  const mine = (await c.call('my_work')).body.data.claims;
+  for (const id of [SEDAN, DOOR, BODY]) assert.equal(mine.find((x) => x.task_id === id).state, 'Open (claim expired)', id);
+  // the first builder can neither submit the atom nor release anything, and waits 24 hours for the object
+  const again = await c.call('submit', { task_id: BODY, asset_path: 'veh/veh_body_01' });
+  assert.equal(again.isError, true);
+  assert.match(again.body.instructions.error, /expired or been released/);
+  assert.equal((await c.call('release', { task_id: SEDAN })).isError, true);
+  assert.equal(claimOf(SEDAN).state, 'Claimed', 'release did not rewrite the expired claim');
+  const back = await c.call('claim', { task_id: SEDAN });
+  assert.equal(back.isError, true);
+  assert.match(back.body.instructions.error, /cannot reclaim it for another/);
+  // another builder gets the whole bundle
+  const other = new StdioClient(['--repo', repo, '--as', 'second', '--trust', '0']);
+  cleanups.push(async () => { await other.close(); });
+  const r = await other.call('claim', { task_id: SEDAN });
+  assert.equal(r.isError, false, JSON.stringify(r.body.instructions));
+  assert.deepEqual(r.body.instructions.reserved_atom_tasks.sort(), [BODY, DOOR]);
+  assert.deepEqual(r.body.data.bundle.waiting_on_others, []);
+  for (const id of [SEDAN, DOOR, BODY]) assert.equal(claimOf(id).handle, 'second');
+  assert.equal(claimOf(BODY).state, 'Claimed');
+  // and the first builder's objects-in-review count is empty again
+  assert.equal((await c.call('claim', { task_id: 'task_solo_01' })).isError, false);
+});
+
+test('a member that is itself an object has its own members reserved too', async () => {
+  const { c, claimOf } = fixture({
+    extra: (repo, t) => {
+      t('task_bun_hub_01', { asset_id: 'veh_hub_01', object_id: 'veh_axle_01', slot: 'hub' });
+      t('task_bun_axle_01', { size: 'M', asset_id: 'veh_axle_01', object_id: 'veh_axle_01', depends_on: ['task_bun_hub_01'], dimensions_m: undefined });
+      t('task_bun_cart_01', { size: 'L', asset_id: 'veh_cart_01', object_id: 'veh_cart_01', depends_on: ['task_bun_axle_01', 'task_solo_01'], dimensions_m: undefined });
+    },
+  });
+  const row = (await c.call('whats_needed')).body.data.tasks.find((x) => x.task_id === 'task_bun_cart_01');
+  assert.deepEqual(row.reserves.sort(), ['task_bun_axle_01', 'task_bun_hub_01', 'task_solo_01']);
+  const r = await c.call('claim', { task_id: 'task_bun_cart_01' });
+  assert.equal(r.isError, false, JSON.stringify(r.body.instructions));
+  for (const id of ['task_bun_axle_01', 'task_bun_hub_01', 'task_solo_01']) {
+    assert.equal(claimOf(id).bundle, 'task_bun_cart_01');
+    assert.equal(claimOf(id).branch, 'claim/task_bun_cart_01');
+  }
+  // the inner object waits for its own atom
+  const s = await c.call('submit', { task_id: 'task_bun_axle_01', asset_path: 'veh/veh_axle_01' });
+  assert.equal(s.isError, true);
+  assert.deepEqual(s.body.data.not_built, [{ task_id: 'task_bun_hub_01', state: 'Claimed' }]);
 });
 
 test('claiming an object whose members the caller already holds counts as the same object', async () => {
@@ -275,9 +336,18 @@ test('claim files: a bundle with branch claim/<bundle> is valid, a malformed bun
   assert.equal(r.isError, true);
   assert.match(r.body.instructions.error, /malformed/);
   assert.ok(!JSON.stringify(r.body).includes(MARK));
-  const ok = fixture({ extra: (repo) => writeJson(path.join(repo, 'tasks', 'claims', `${BODY}.json`), { ...base, bundle: SEDAN, branch: `claim/${SEDAN}` }) });
+  const member = { ...base, bundle: SEDAN, branch: `claim/${SEDAN}` };
+  const ok = fixture({
+    extra: (repo) => {
+      writeJson(path.join(repo, 'tasks', 'claims', `${BODY}.json`), member);
+      writeJson(path.join(repo, 'tasks', 'claims', `${SEDAN}.json`), { ...member, task_id: SEDAN });
+    },
+  });
   const w = await ok.c.call('claim', { task_id: BODY });
   assert.match(w.body.instructions.error, /another builder/);
+  // a member claim with no object claim behind it holds nothing
+  const orphan = fixture({ extra: (repo) => writeJson(path.join(repo, 'tasks', 'claims', `${BODY}.json`), member) });
+  assert.equal((await orphan.c.call('claim', { task_id: BODY })).isError, false);
 });
 
 test('an object whose member task cannot be read stays Locked', async () => {

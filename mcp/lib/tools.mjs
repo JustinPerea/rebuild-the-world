@@ -208,7 +208,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
   // What claiming an object task would do to each of its members, for this builder, right now.
   function planMembers(task, now) {
     const out = { reserve: [], already_merged: [], already_yours: [], waiting_on_others: [] };
-    for (const d of task.depends_on) {
+    for (const d of store.memberIds(task)) {
       const dt = store.getTask(d);
       if (dt.error) { out.waiting_on_others.push({ task_id: d, handle: null, state: 'Locked' }); continue; }
       const m = dt.task;
@@ -441,7 +441,8 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
             'data.bundle.members holds each atom task whole. Its connector_frames give each connector\'s exact position and the directions of its +Z and +Y, and its mating_m gives the sizes that must match the neighbouring atoms. Before building, read the fitting_atoms and near_matches of each member and reuse an atom where it is the same kind of part (fit rule 4 is your judgement). List each atom you looked at in asset.json "considered".',
             `When every member task is Merged or has passed submit, write the assembly folder for the object (assembly.json, asset.json, preview/ and source/) and call submit with the object task_id ${task.task_id} and that folder. The assembly is checked against the atoms in the repo assets/ folder, so build the bundle there.`,
             `After that submit passes, commit all the folders to ${branch}, push the branch and open ONE pull request that names ${task.task_id} and lists each atom task. The server does not do that for you.`,
-            'If an atom is held by another builder (data.bundle.waiting_on_others), build the rest and wait for it, or call release. If a rule is unclear or missing, call leave_feedback.',
+            `The deadline covers the whole bundle. An atom that passes submit does not stop the clock; it stops when ${task.task_id} passes submit. If the deadline passes first, every task of the bundle is Open again, the atoms that had passed included.`,
+            `If an atom is held by another builder (data.bundle.waiting_on_others), build the rest and wait for it. To give the work back, call release with ${task.task_id}: that releases the whole bundle, and one atom of it cannot be released alone. If a rule is unclear or missing, call leave_feedback.`,
           ],
           safety,
         },
@@ -500,7 +501,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const newer = [];
     const rows = claims.map((c) => {
       const expiring = c.state === 'Claimed' || c.state === 'Changes requested';
-      const expired = expiring && Date.parse(c.expires_at) <= now;
+      const expired = (expiring && Date.parse(c.expires_at) <= now) || store.bundleLapsed(c, now);
       for (const [key, pin] of Object.entries(c.versions || {})) {
         const layer = (spec.layers || []).find((l) => l.id === pin.layer);
         if (layer && layer.version !== pin.version) newer.push({ task_id: c.task_id, rule: key, document: layer.doc, pinned: pin.version, current: layer.version });
@@ -514,7 +515,7 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
         branch: c.branch,
         claimed_at: c.claimed_at,
         expires_at: c.expires_at,
-        time_left: c.state === 'In review' ? 'clock paused while in review' : expired ? 'expired' : timeLeft(c, now),
+        time_left: expired ? 'expired' : c.state === 'In review' ? 'clock paused while in review' : timeLeft(c, now),
         submitted_at: c.submitted_at ?? null,
         asset: c.asset ?? null,
         review: c.review ?? null,
@@ -569,18 +570,24 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     }
     const isObject = t.task.depends_on.length > 0;
     const isMember = !!claim.bundle && claim.bundle !== claim.task_id;
+    if (isMember && store.bundleLapsed(claim, now)) {
+      return fail(`${a.task_id} was reserved under the bundle ${claim.bundle}, and your claim on ${claim.bundle} has expired or been released, so this task is Open again. Claim ${claim.bundle} again if nobody else has (a 24-hour wait applies after an expiry).`);
+    }
     // The member atoms this builder made for the bundle. Members already Merged stay out of the pull request.
     let mineInReview = [];
     if (isObject) {
       const notBuilt = [];
       const heldByOthers = [];
-      mineInReview = [];
+      mineInReview = store.memberIds(t.task).filter((d) => {
+        const mc = store.getClaim(d);
+        return mc && !mc.invalid && mc.handle === handle && mc.state === 'In review' && mc.bundle === a.task_id;
+      });
       for (const d of t.task.depends_on) {
         const dt = store.getTask(d);
         if (dt.error) { notBuilt.push({ task_id: d, state: 'Locked' }); continue; }
         const ms = store.stateOf(dt.task, store.getClaim(d), now);
         if (ms.state === 'Merged') continue;
-        if (ms.state === 'In review' && ms.builder === handle) { mineInReview.push(d); continue; }
+        if (ms.state === 'In review' && ms.builder === handle) continue;
         if (ACTIVE.includes(ms.state) && ms.builder !== handle) heldByOthers.push({ task_id: d, handle: ms.builder ?? null, state: ms.state });
         else notBuilt.push({ task_id: d, state: ms.state });
       }
@@ -640,7 +647,9 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     return {
       instructions: {
         verdict: 'PASSED',
-        summary: `All checks passed or skipped (${report.summary.pass} passed, ${report.summary.skip} skipped). The claim is now In review and its clock is paused.`,
+        summary: isMember
+          ? `All checks passed or skipped (${report.summary.pass} passed, ${report.summary.skip} skipped). This atom is done for now. The deadline of its bundle ${claim.bundle} keeps running until that object task passes submit.`
+          : `All checks passed or skipped (${report.summary.pass} passed, ${report.summary.skip} skipped). The claim is now In review and its clock is paused.`,
         next: isMember
           ? `Do not open a pull request yet. This atom belongs to the bundle ${claim.bundle}. When every member task of that bundle has passed submit (or is Merged), call submit with the object task ${claim.bundle} and its assembly folder. A SKIP is not a pass: read the skipped checks in data.report.`
           : isObject
@@ -657,19 +666,26 @@ export function createTools({ repo, handle, workspace, trust = 0 }) {
     const claim = store.getClaim(a.task_id);
     if (!claim || claim.handle !== handle) return fail(`you hold no claim on ${a.task_id}`);
     if (!ACTIVE.includes(claim.state)) return fail(`your claim on ${a.task_id} is ${claim.state}; nothing to release`);
+    const isMember = !!claim.bundle && claim.bundle !== claim.task_id;
+    // An expired claim is already back in the pool. Releasing it would wipe the 24-hour wait.
+    if (((claim.state === 'Claimed' || claim.state === 'Changes requested') && Date.parse(claim.expires_at) <= now) || (isMember && store.bundleLapsed(claim, now))) {
+      return fail(`your claim on ${a.task_id} has already ended (it expired at ${claim.expires_at}, or the claim on its bundle ended); the task is Open again and there is nothing to release`);
+    }
+    // The claim is the object: one atom of a bundle is not given back on its own.
+    if (isMember) return fail(`${a.task_id} is reserved under the bundle ${claim.bundle}, on its branch. Release ${claim.bundle} to give the whole bundle back; one atom of it cannot be released alone. If one atom is the problem, call leave_feedback and say which.`);
     store.writeClaim({ ...claim, state: 'Released', released_at: iso(now), ...(a.reason ? { release_reason: a.reason } : {}) });
     let members = 0;
     if (claim.bundle === claim.task_id) {
       for (const m of store.listClaims()) {
         if (m.task_id === claim.task_id || m.handle !== handle || m.bundle !== claim.task_id) continue;
-        if (m.state !== 'Claimed' && m.state !== 'Changes requested') continue;
+        if (!ACTIVE.includes(m.state)) continue;
         store.writeClaim({ ...m, state: 'Released', released_at: iso(now), ...(a.reason ? { release_reason: a.reason } : {}) });
         members += 1;
       }
     }
     return {
       instructions: {
-        summary: `Released ${a.task_id}. It is Open again, with no penalty.${claim.bundle === claim.task_id ? ` Also released ${members} member claim(s) of its bundle; members already In review were left.` : ''}`,
+        summary: `Released ${a.task_id}. It is Open again, with no penalty.${claim.bundle === claim.task_id ? ` Also released the ${members} member claim(s) of its bundle, including atoms that had passed submit: an atom of a bundle is in review only through the bundle's pull request.` : ''}`,
         next: `Work on branch ${claim.branch} stays there for the next builder. If you pushed it, tell the contributor it can be left or deleted. The server does not run git.`,
       },
       data: {},

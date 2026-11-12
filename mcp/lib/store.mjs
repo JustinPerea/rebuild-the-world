@@ -173,6 +173,7 @@ export class Store {
   // The state a task is in right now, from its file and its claim.
   stateOf(task, claim, now = Date.now(), depth = 0) {
     if (claim && claim.invalid) return { state: 'Locked', claim_invalid: true };
+    if (claim && ACTIVE.includes(claim.state) && this.bundleLapsed(claim, now)) return { state: 'Open', expired_claim: true };
     if (claim && ACTIVE.includes(claim.state)) {
       const expiring = claim.state === 'Claimed' || claim.state === 'Changes requested';
       if (expiring && Date.parse(claim.expires_at) <= now) return { state: 'Open', expired_claim: true };
@@ -194,7 +195,30 @@ export class Store {
   }
 
   activeClaimsOf(handle, now = Date.now()) {
-    return this.listClaims().filter((c) => c.handle === handle && ACTIVE.includes(c.state) && !((c.state === 'Claimed' || c.state === 'Changes requested') && Date.parse(c.expires_at) <= now));
+    return this.listClaims().filter((c) => c.handle === handle && ACTIVE.includes(c.state) && !((c.state === 'Claimed' || c.state === 'Changes requested') && Date.parse(c.expires_at) <= now) && !this.bundleLapsed(c, now));
+  }
+
+  // A member claim lives only as long as the object claim it was reserved under. Once that claim has
+  // expired, been released or passed to another builder, the member is Open again, In review or not:
+  // an atom of a bundle is in review only through the bundle's one pull request.
+  bundleLapsed(c, now = Date.now()) {
+    if (!c.bundle || c.bundle === c.task_id) return false;
+    const o = this.getClaim(c.bundle);
+    if (!o) return true;
+    if (o.invalid) return false;
+    if (o.handle !== c.handle || o.bundle !== c.bundle || o.state === 'Released') return true;
+    return (o.state === 'Claimed' || o.state === 'Changes requested') && Date.parse(o.expires_at) <= now;
+  }
+
+  // Every task under an object task: its members, and the members of a member that is itself an object.
+  memberIds(task, depth = 0, seen = new Set()) {
+    for (const d of task.depends_on || []) {
+      if (seen.has(d)) continue;
+      seen.add(d);
+      const dt = this.getTask(d);
+      if (!dt.error && depth < 8) this.memberIds(dt.task, depth + 1, seen);
+    }
+    return depth ? null : [...seen].filter((d) => d !== task.task_id);
   }
 
   // A member of a bundle whose object claim is still being worked on does not count as awaiting review.
@@ -211,7 +235,7 @@ export class Store {
 
   // Distinct objects the handle has awaiting review.
   objectsInReview(handle) {
-    return new Set(this.listClaims().filter((c) => c.handle === handle && c.state === 'In review' && !this.isOpenBundleMember(c)).map((c) => c.object_id || c.task_id));
+    return new Set(this.listClaims().filter((c) => c.handle === handle && c.state === 'In review' && !this.isOpenBundleMember(c) && !this.bundleLapsed(c)).map((c) => c.object_id || c.task_id));
   }
 
   inProgressTaskIds() {

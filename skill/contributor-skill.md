@@ -23,7 +23,8 @@ Work is claimed by object. One claim covers an object's unbuilt atoms and its as
 - A task for one atom that belongs to no object you hold is claimed, built, submitted and sent as its own pull request, by the same steps.
 - If another builder holds an atom of your object, build the rest. The object's `submit` waits until that atom is merged.
 - Build a bundle in the repository's `assets/` folder, which is the server's default workspace. The validator finds an assembly's atoms there.
-- If you cannot finish, call `release`. Releasing has no penalty. Releasing the object's task also releases its atoms that have not passed yet.
+- The bundle has one deadline. An atom that passes `submit` does not stop the clock; the object's passing `submit` does. If the deadline passes first, every task of the bundle is open again.
+- If you cannot finish, call `release` with the object's task. Releasing has no penalty and gives back the whole bundle, the atoms that had passed included. One atom of a bundle cannot be released by itself.
 
 ## What a task fixes
 

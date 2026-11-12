@@ -41,7 +41,7 @@ Task, claim and blueprint files sit in the repo and can arrive in a pull request
 | `claim` | `task_id` | Claims an Open task and returns the work order. On an object task (one with `depends_on`) it also reserves every unbuilt member atom in the same call, on one shared branch, and returns each member task in `data.bundle`. |
 | `my_work` | none | Your claims, time left, review verdict, the `bundle` each belongs to, and `newer_rules` where a pinned version is behind the current one. |
 | `submit` | `task_id`, `asset_path` | Runs the validator (`validator/validate.mjs`) on the folder. Pass: the claim becomes In review. Fail: the failing checks are returned and the claim stays open. A member atom of a bundle that passes is told not to open a pull request yet. The object task can be submitted only when every member is Merged or In review under your claim, and only when the workspace is the repo `assets/` folder. If a pass would exceed your limit of objects awaiting review, the claim stays Claimed and the verdict is `PASSED_NOT_SUBMITTED`. |
-| `release` | `task_id`, `reason` | Gives the claim back with no penalty. Releasing an object task also releases its member claims that are Claimed or Changes requested. Members already In review are kept. |
+| `release` | `task_id`, `reason` | Gives the claim back with no penalty. Releasing an object task releases every member claim of its bundle, including atoms that had passed `submit`. One atom of a bundle cannot be released alone. A claim that has already expired cannot be released, so the 24-hour wait stays. |
 | `get_rules` | `document`, `heading`, `version` | One section of one document with its version. No `document` lists them; no `heading` lists the headings. |
 | `next_review`, `send_review` | none | Return "Not available in the local test." |
 | `leave_feedback` | `kind`, `slug`, `title`, `what_i_was_doing`, `what_happened`, `what_i_did`, `what_would_have_helped`; optional `agent`, `model`, `task_id`, `spec_versions` | Writes `feedback/YYYY-MM-DD-<agent>-<slug>.md` in the template from `feedback/README.md`. The kind must be one of the five listed there. The slug is lowercase letters, digits and single hyphens, so no path separators. An existing note is never overwritten. |
@@ -74,7 +74,9 @@ The task must be Open: no active claim, no member in `depends_on` that is Locked
 3. Create the branch, then build each reserved atom as its own folder in the repo `assets/` folder and `submit` it with its own task id. A failing report leaves it open. Do not open a pull request per atom.
 4. When every member is Merged or has passed `submit`, write the assembly folder and `submit` it with the object task id.
 5. After that passes, commit the object folder and the folder of each atom you built to the branch, push, and open one pull request that names the object task and those atom tasks. Atoms that were already merged are not part of it.
-6. A member held by another builder is listed under `waiting_on_others`. Build the rest and wait, or `release`.
+6. A member held by another builder is listed under `waiting_on_others`. Build the rest and wait, or `release` the object task.
+
+The bundle has one deadline, the object claim's. An atom that passes `submit` is In review only as part of the bundle: its claim lasts as long as the object claim does. If the object claim expires or is released, every task of the bundle is Open again, and another builder who claims the object reserves all of them. A member that is itself an object has its own members reserved by the same claim; that path has a test for the claim and none for a full build.
 
 ## Files the server reads and writes
 
