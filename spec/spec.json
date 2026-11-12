@@ -55,9 +55,9 @@
       "name": "Process",
       "question": "Who builds what, and how is it checked?",
       "doc": "docs/claim-system-spec.md",
-      "version": "v0.2",
+      "version": "v0.3",
       "status": "revised",
-      "summary": "Objects built atom by atom from a blueprint, the board, claims, trust levels, review gates, strikes and region unlocks."
+      "summary": "Objects built atom by atom from a blueprint, the board, claims, claiming a place from the map, trust levels, review gates, strikes, and region and block unlocks."
     },
     {
       "id": "service",

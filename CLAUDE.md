@@ -63,6 +63,7 @@ Two owner directions from 2026-11-10 shape everything: the goal is an **accurate
 - Whether brands and specific product designs can be modelled accurately (needs a lawyer).
 - All numeric values in the specs (claim windows, triangle budgets, 512 px/m, 0.5 m grid, 100-contributor gate, connector tolerance) are untested starting values. The v0.3 additions from the Pebble build (character budgets of 15,000 and 60,000 triangles, a 1 mm mating tolerance, a smallest feature of 2% of the atom, a 128-pixel texture floor) were written in by Claude from that one build and are not confirmed by the owner.
 - Whether libraries share one connector registry, how clips are named and filed, whether an effect may be a mesh atom, and whether fit goes by a size code as in Frontier Colony.
+- **Claiming from the map and unlocking in stages (owner idea, 2026-11-12).** The owner wants the photo map to be how a building is claimed, and suggested stages: claim a block and block it out, then more blocks open, then trees, cars and trains after buildings are accurate. Claim spec v0.3 holds Claude's proposal ("Claiming a place", "Blocks inside a region", "When other kinds of things open"): a building is claimed at an accuracy level, a true exterior needs a wall reference, a neighbouring block opens when a block is fully Dressed, and trees and street furniture open earlier than the owner suggested. The owner said yes to writing it up, not to its details.
 - The full list of open questions is at the end of each spec.
 
 ## The first test (owner, 2026-11-11)
