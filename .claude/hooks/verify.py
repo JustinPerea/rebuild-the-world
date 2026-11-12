@@ -12,9 +12,12 @@ import fnmatch
 import hashlib
 import json
 import os
+import re
 import shutil
+import signal
 import subprocess
 import sys
+import tempfile
 import time
 
 EDIT_TIMEOUT = 25
@@ -38,9 +41,35 @@ STOP_CHECKS = [
 ]
 
 
-def run(argv, cwd, timeout, **kw):
-    return subprocess.run(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                          timeout=timeout, **kw)
+# Checks that need a file or directory present, or they are skipped (never failed).
+REQUIRES = {"validator tests": "validator/node_modules"}
+
+
+def run(argv, cwd, timeout):
+    """Run argv; on timeout kill the whole process tree. Returns (returncode, output, timed_out)."""
+    kw = {}
+    if os.name == "nt":
+        kw["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        kw["start_new_session"] = True
+    proc = subprocess.Popen(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kw)
+    try:
+        out, _ = proc.communicate(timeout=timeout)
+        return proc.returncode, out.decode("utf-8", "replace"), False
+    except subprocess.TimeoutExpired:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except OSError:
+                pass
+        try:
+            out, _ = proc.communicate(timeout=5)
+        except Exception:
+            out = b""
+        return None, out.decode("utf-8", "replace"), True
 
 
 def git(args, cwd, check=True):
@@ -90,24 +119,122 @@ def read_stdin():
         return {}
 
 
+# ---------------------------------------------------------------- state
+
+def state_file(root):
+    git_dir = git(["rev-parse", "--git-dir"], root).decode().strip()
+    if not os.path.isabs(git_dir):
+        git_dir = os.path.join(root, git_dir)
+    return os.path.join(git_dir, "claude-verify", "state.json")
+
+
+def load_state(path):
+    state = {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            loaded = json.load(f)
+            if isinstance(loaded, dict):
+                state = loaded
+    except (OSError, ValueError):
+        pass
+    state.setdefault("last_pass", None)
+    state.setdefault("fails", {})
+    state.setdefault("edits", {})
+    return state
+
+
+def save_state(path, state):
+    d = os.path.dirname(path)
+    os.makedirs(d, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=d, prefix="state-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(state, f)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def inside(root, path):
+    """Repo-relative posix path if path is under root, else None."""
+    try:
+        rel = os.path.relpath(os.path.realpath(path), os.path.realpath(root))
+    except ValueError:  # different drive on Windows
+        return None
+    if rel == ".." or rel.startswith(".." + os.sep) or os.path.isabs(rel):
+        return None
+    return rel.replace(os.sep, "/")
+
+
 # ---------------------------------------------------------------- edit mode
+
+def is_esm_without_module_package(path, root):
+    """A .js file with import/export syntax and no package.json "type": "module" above it
+    cannot be checked by node --check (Node 20 parses it as CommonJS)."""
+    if not path.lower().endswith(".js"):
+        return False
+    d = os.path.dirname(os.path.realpath(path))
+    root_real = os.path.realpath(root)
+    while True:
+        pj = os.path.join(d, "package.json")
+        if os.path.isfile(pj):
+            try:
+                with open(pj, "r", encoding="utf-8") as f:
+                    if json.load(f).get("type") == "module":
+                        return False
+            except (OSError, ValueError):
+                pass
+            break
+        if d == root_real or os.path.dirname(d) == d:
+            break
+        d = os.path.dirname(d)
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            text = f.read()
+    except OSError:
+        return False
+    return re.search(r"^\s*(import\s*[\w{*\"']|export\s+(default|const|let|var|function|class|async|\{|\*))", text, re.M) is not None
+
 
 def edit_mode():
     data = read_stdin()
     path = (data.get("tool_input") or {}).get("file_path")
-    if not path or not os.path.isfile(path) or not path.lower().endswith(EDIT_EXTS):
+    if not path:
+        return 0
+    path = os.path.abspath(path)
+    root = project_root()
+    rel = inside(root, path)
+    if rel is None:
+        return 0
+    session = str(data.get("session_id") or "unknown")
+    try:
+        sp = state_file(root)
+        state = load_state(sp)
+        edits = state["edits"].setdefault(session, [])
+        if rel not in edits:
+            edits.append(rel)
+            save_state(sp, state)
+    except Exception as e:  # recording is best effort; never block an edit over it
+        sys.stderr.write("verify: could not record edit: %r\n" % (e,))
+    if not os.path.isfile(path) or not path.lower().endswith(EDIT_EXTS):
         return 0
     node = shutil.which("node")
     if not node:
         sys.stderr.write("verify: node not found, skipping syntax check\n")
         return 0
-    try:
-        p = run([node, "--check", path], os.path.dirname(os.path.abspath(path)), EDIT_TIMEOUT)
-    except subprocess.TimeoutExpired:
-        sys.stderr.write("verify: node --check timed out after %d s\n" % EDIT_TIMEOUT)
-        return 2
-    if p.returncode != 0:
-        sys.stderr.write("verify: syntax error in %s\n%s\n" % (path, trim(p.stdout.decode("utf-8", "replace"))))
+    if is_esm_without_module_package(path, root):
+        sys.stderr.write("verify: %s uses ESM syntax without a package.json \"type\": \"module\"; skipping node --check\n" % rel)
+        return 0
+    rc, out, timed_out = run([node, "--check", path], os.path.dirname(path), EDIT_TIMEOUT)
+    if timed_out:
+        sys.stderr.write("verify: node --check timed out after %d s, skipped\n" % EDIT_TIMEOUT)
+        return 0
+    if rc != 0:
+        sys.stderr.write("verify: syntax error in %s\n%s\n" % (rel, trim(out)))
         return 2
     return 0
 
@@ -143,26 +270,6 @@ def fingerprint(root, untracked):
     return h.hexdigest()
 
 
-def load_state(path):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            s = json.load(f)
-            if isinstance(s, dict):
-                s.setdefault("fails", {})
-                return s
-    except (OSError, ValueError):
-        pass
-    return {"last_pass": None, "fails": {}}
-
-
-def save_state(path, state):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(state, f)
-    os.replace(tmp, path)
-
-
 def hygiene(root):
     """Return a failure message or None. Local-only files must never be tracked (public repo)."""
     problems = []
@@ -195,73 +302,92 @@ def stop_mode():
     if not changed:
         return 0
 
-    git_dir = git(["rev-parse", "--git-dir"], root).decode().strip()
-    if not os.path.isabs(git_dir):
-        git_dir = os.path.join(root, git_dir)
-    state_path = os.path.join(git_dir, "claude-verify", "state.json")
+    state_path = state_file(root)
     state = load_state(state_path)
     fp = fingerprint(root, untracked)
     if state.get("last_pass") == fp:
         return 0
+    my_edits = set(state["edits"].get(session, []))
 
     start = time.time()
-    failures = []   # (label, report)
+    results = []    # (label, globs, status, report) with status "fail" or "skip"
     timings = []
 
+    def skip(label, why):
+        sys.stderr.write("verify: skipping %s: %s\n" % (label, why))
+        results.append((label, [], "skip", why))
+
     msg = hygiene(root)
-    if msg:
-        failures.append(("local-only files", msg))
+    hygiene_failed = bool(msg)
 
     for label, globs, argv, kind in STOP_CHECKS:
-        if not any(matches(p, globs) for p in changed):
+        group = [p for p in changed if matches(p, globs)]
+        if not group:
+            continue
+        need = REQUIRES.get(label)
+        if need and not os.path.exists(os.path.join(root, need)):
+            skip(label, "%s is missing (run npm ci in validator/)" % need)
             continue
         if kind == "node":
             exe = shutil.which("node")
             if not exe:
-                sys.stderr.write("verify: node not found, skipping %s\n" % label)
+                skip(label, "node not found")
                 continue
             argv = [exe] + argv[1:]
         else:
             if kind == "py-refs" and not python_has(["numpy", "cv2"]):
-                sys.stderr.write("verify: numpy or opencv missing, skipping %s\n" % label)
+                skip(label, "numpy or opencv missing")
                 continue
             argv = [sys.executable] + argv[1:]
-        # the test files for a changed path may not exist yet (e.g. site/test): skip, do not fail
-        target = argv[-1] if not argv[-1].startswith("-") else None
-        if target and target not in ("check",) and not os.path.exists(os.path.join(root, target)):
-            sys.stderr.write("verify: %s not found, skipping %s\n" % (target, label))
+        target = argv[-1]
+        if target != "check" and not os.path.exists(os.path.join(root, target)):
+            skip(label, "%s not found" % target)
             continue
         remaining = STOP_BUDGET - (time.time() - start)
-        if remaining <= 0:
-            failures.append((label, "not run: overall %d s budget used up" % STOP_BUDGET))
+        if remaining <= 1:
+            skip(label, "overall %d s budget used up" % STOP_BUDGET)
             continue
         t0 = time.time()
-        try:
-            p = run(argv, root, remaining)
-            ok, out = p.returncode == 0, p.stdout.decode("utf-8", "replace")
-        except subprocess.TimeoutExpired:
-            ok, out = False, "timed out"
+        rc, out, timed_out = run(argv, root, remaining)
         timings.append("%s %.1fs" % (label, time.time() - t0))
-        if not ok:
-            failures.append((label, "$ %s\n%s" % (" ".join(["node" if kind == "node" else "python3"] + argv[1:]), trim(focus(out), 40))))
+        if timed_out:
+            skip(label, "timed out")
+        elif rc != 0:
+            shown = " ".join(["node" if kind == "node" else "python3"] + argv[1:])
+            results.append((label, globs, "fail", "$ %s\n%s" % (shown, trim(focus(out), 40))))
 
     sys.stderr.write("verify: ran in %.1fs (%s)\n" % (time.time() - start, "; ".join(timings) or "no test checks"))
 
-    if not failures:
-        state["last_pass"] = fp
-        state["fails"] = {}
-        save_state(state_path, state)
+    fails = [r for r in results if r[2] == "fail"]
+    skipped = [r for r in results if r[2] == "skip"]
+    # A check failing in a path group this session never edited is someone else's change.
+    mine = [r for r in fails if any(matches(p, r[1]) for p in my_edits)]
+    foreign = [r for r in fails if r not in mine]
+
+    notes = []
+    for label, globs, _, _ in foreign:
+        files = [p for p in changed if matches(p, globs)]
+        notes.append("verify: %s failing on changes this session didn't make: %s" % (label, ", ".join(files[:8])))
+
+    if not hygiene_failed and not mine:
+        # Cache a pass only when every applicable check ran and passed.
+        if not fails and not skipped:
+            state["last_pass"] = fp
+            state["fails"].pop(session, None)
+            save_state(state_path, state)
+        if notes:
+            sys.stdout.write(json.dumps({"systemMessage": "; ".join(notes)}))
         return 0
 
+    blocking = ([("local-only files", msg)] if hygiene_failed else []) + [(r[0], r[3]) for r in mine]
     count = int(state["fails"].get(session, 0)) + 1
     state["fails"][session] = count
     save_state(state_path, state)
-    first = failures[0][0]
     if count > MAX_RETRIES:
-        sys.stdout.write(json.dumps({"systemMessage": "verify: %s still failing after %d attempts; report it" % (first, MAX_RETRIES)}))
+        sys.stdout.write(json.dumps({"systemMessage": "verify: %s still failing after %d attempts; report it" % (blocking[0][0], MAX_RETRIES)}))
         return 0
-    report = ["verify: %d check(s) failed (attempt %d of %d before it stops blocking)" % (len(failures), count, MAX_RETRIES)]
-    for label, text in failures:
+    report = ["verify: %d check(s) failed (attempt %d of %d before it stops blocking)" % (len(blocking), count, MAX_RETRIES)]
+    for label, text in blocking:
         report.append("--- %s" % label)
         report.append(text)
     sys.stderr.write(trim("\n".join(report), MAX_REPORT_LINES) + "\n")

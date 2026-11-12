@@ -10,7 +10,8 @@ registry/*
 spec/*
 docs/*-spec.md
 
-# Waitlist endpoint (stores emails)
+# Waitlist endpoint (stores emails). site/ is in progress in the main checkout and not committed
+# yet, so this line applies once site/ is committed.
 site/api/earth-again/*
 
 # Legal, accuracy and large-file rules
