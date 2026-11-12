@@ -249,5 +249,9 @@ test('Variation (atom): the scale range a task asks for must be allowed by asset
   assert.equal(status(ok, 'Variation').status, 'PASS', status(ok, 'Variation').messages.join('|'));
   const even = { task: { variation: { scale: [0.8, 1.2] } } };
   assert.equal(status(await run(atomIn('prop_box_06', { meta: { variation: { scale: [0.5, 1.5] } } }), even), 'Variation').status, 'PASS');
-  failing(await run(atomIn('prop_box_07', { meta: { variation: { scale: [0.9, 1.5] } } }), even), 'Variation', 'from 0.8 to 1.2');
+  const short = await run(atomIn('prop_box_07', { meta: { variation: { scale: [0.9, 1.5] } } }), even);
+  failing(short, 'Variation', 'even scale from 0.8 to 1.2');
+  assert.equal(status(short, 'Variation').messages.length, 1);
+  for (const bad of [{ scale_range: [1, 2] }, 's', [], 5, null]) failing(await run(atomIn('prop_box_08', { meta: { variation: { scale: [0.5, 2] } } }), { task: { variation: bad } }), 'Variation', "the task's \"variation\"");
+  failing(await run(atomIn('prop_box_09', { meta: { variation: null } })), 'Variation', 'must be an object');
 });

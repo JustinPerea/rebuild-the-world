@@ -168,12 +168,22 @@ export function variation(ctx) {
   if (v !== undefined) {
     touched = true;
     checkDeclared(v, 'asset.json', msgs, a.glb, ctx);
-    if (v.spans?.length) notes.push('note: spans are proposed, not built; only their shape is checked, not both ends of each range');
+    if (v?.spans?.length) notes.push('note: spans are proposed, not built; only their shape is checked, not both ends of each range');
   }
   // A task may ask for a scale range, because something already planned places the atom at other sizes.
-  const asked = ctx.task?.variation?.scale;
-  if (asked !== undefined && a.kind === 'atom') {
+  // Task files arrive in pull requests, so a misspelt or misshapen request fails here and is never passed over.
+  const tv = ctx.task?.variation;
+  const tvIsObject = tv && typeof tv === 'object' && !Array.isArray(tv);
+  if (tv !== undefined && a.kind === 'atom') {
     touched = true;
+    if (!tvIsObject) msgs.push(`the task's "variation" must be an object, found ${JSON.stringify(tv)}`);
+    else {
+      const unknown = Object.keys(tv).filter((k) => !['scale', 'spans', 'open_slots'].includes(k));
+      if (unknown.length) msgs.push(`the task's "variation" has ${unknown.map((k) => `"${k}"`).join(', ')}, which is not one of "scale", "spans", "open_slots"`);
+    }
+  }
+  const asked = tvIsObject ? tv.scale : undefined;
+  if (asked !== undefined && a.kind === 'atom') {
     const want = scaleRanges(asked), have = scaleRanges(v?.scale);
     const axes = (r, range) => (r.form === 'even' ? { lo: Array(3).fill(range[0]), hi: Array(3).fill(range[1]) } : r);
     if (!want.ok) msgs.push(`the task's variation.scale is not a scale range: ${JSON.stringify(asked)}`);
@@ -181,9 +191,9 @@ export function variation(ctx) {
     else if (want.form === 'axes' && want.canDiffer && have.form === 'even') msgs.push(`the task asks for a scale range for each axis (${JSON.stringify(asked)}), and asset.json declares an even range, which allows only one number for all three axes`);
     else {
       const w = axes(want, asked), h = axes(have, v.scale);
-      ['x', 'y', 'z'].forEach((k, i) => {
-        if (h.lo[i] > w.lo[i] + 1e-9 || h.hi[i] < w.hi[i] - 1e-9) msgs.push(`the task asks for scale ${k} from ${w.lo[i]} to ${w.hi[i]}, and asset.json allows ${h.lo[i]} to ${h.hi[i]}`);
-      });
+      const short = (i) => h.lo[i] > w.lo[i] + 1e-9 || h.hi[i] < w.hi[i] - 1e-9;
+      if (want.form === 'even' && have.form === 'even') { if (short(0)) msgs.push(`the task asks for an even scale from ${w.lo[0]} to ${w.hi[0]}, and asset.json allows ${h.lo[0]} to ${h.hi[0]}`); }
+      else ['x', 'y', 'z'].forEach((k, i) => { if (short(i)) msgs.push(`the task asks for scale ${k} from ${w.lo[i]} to ${w.hi[i]}, and asset.json allows ${h.lo[i]} to ${h.hi[i]}`); });
     }
   }
   if (a.kind === 'molecule') {
