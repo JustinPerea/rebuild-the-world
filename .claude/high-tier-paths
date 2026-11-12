@@ -2,22 +2,16 @@
 # repo-relative paths with forward slashes. "*" also matches "/". A diff that touches any of
 # these needs Justin's own OK before merge.
 
-# Admission gates
-validator/*
-registry/*
-
-# Contracts
-spec/*
-docs/*-spec.md
+# Not listed here since 2026-11-12: validator/, registry/, spec/, docs/*-spec.md and .gitattributes.
+# They are the "Contract" tier, which the lead session merges after checks and a review.
 
 # Waitlist endpoint (stores emails). site/ is in progress in the main checkout and not committed
 # yet, so this line applies once site/ is committed.
 site/api/earth-again/*
 
-# Legal, accuracy and large-file rules
+# Legal and accuracy rules
 LICENSE.md
 docs/accuracy-and-data.md
-.gitattributes
 
 # Controls that enforce these tiers (a change here could weaken them)
 .claude/high-tier-paths
