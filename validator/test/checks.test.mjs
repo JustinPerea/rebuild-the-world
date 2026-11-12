@@ -238,3 +238,16 @@ test('Variation (atom): malformed declared ranges fail; well-formed ones pass; c
   assert.equal(status(ok, 'Variation').status, 'PASS');
   assert.equal(status(await run(atomIn('prop_box_05')), 'Variation').status, 'SKIP');
 });
+
+test('Variation (atom): the scale range a task asks for must be allowed by asset.json', async () => {
+  const task = { task: { variation: { scale: { x: [0.05, 1.5], y: [0.01, 2.2] } } } };
+  failing(await run(atomIn('prop_box_01'), task), 'Variation', 'declares no valid variation.scale');
+  failing(await run(atomIn('prop_box_02', { meta: { variation: { scale: { x: [0.05, 1.5], y: [0.5, 2.2] } } } }), task), 'Variation', 'scale y from 0.01 to 2.2', 'allows 0.5 to 2.2');
+  failing(await run(atomIn('prop_box_03', { meta: { variation: { scale: { x: [0.05, 1.5] } } } }), task), 'Variation', 'scale y', 'allows 1 to 1');
+  failing(await run(atomIn('prop_box_04', { meta: { variation: { scale: [0.01, 2.2] } } }), task), 'Variation', 'even range');
+  const ok = await run(atomIn('prop_box_05', { meta: { variation: { scale: { x: [0.05, 2], y: [0.01, 2.2] } } } }), task);
+  assert.equal(status(ok, 'Variation').status, 'PASS', status(ok, 'Variation').messages.join('|'));
+  const even = { task: { variation: { scale: [0.8, 1.2] } } };
+  assert.equal(status(await run(atomIn('prop_box_06', { meta: { variation: { scale: [0.5, 1.5] } } }), even), 'Variation').status, 'PASS');
+  failing(await run(atomIn('prop_box_07', { meta: { variation: { scale: [0.9, 1.5] } } }), even), 'Variation', 'from 0.8 to 1.2');
+});

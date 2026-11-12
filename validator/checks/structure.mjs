@@ -170,6 +170,22 @@ export function variation(ctx) {
     checkDeclared(v, 'asset.json', msgs, a.glb, ctx);
     if (v.spans?.length) notes.push('note: spans are proposed, not built; only their shape is checked, not both ends of each range');
   }
+  // A task may ask for a scale range, because something already planned places the atom at other sizes.
+  const asked = ctx.task?.variation?.scale;
+  if (asked !== undefined && a.kind === 'atom') {
+    touched = true;
+    const want = scaleRanges(asked), have = scaleRanges(v?.scale);
+    const axes = (r, range) => (r.form === 'even' ? { lo: Array(3).fill(range[0]), hi: Array(3).fill(range[1]) } : r);
+    if (!want.ok) msgs.push(`the task's variation.scale is not a scale range: ${JSON.stringify(asked)}`);
+    else if (!have.ok) msgs.push(`the task asks for "variation": { "scale": ${JSON.stringify(asked)} } and asset.json declares no valid variation.scale`);
+    else if (want.form === 'axes' && want.canDiffer && have.form === 'even') msgs.push(`the task asks for a scale range for each axis (${JSON.stringify(asked)}), and asset.json declares an even range, which allows only one number for all three axes`);
+    else {
+      const w = axes(want, asked), h = axes(have, v.scale);
+      ['x', 'y', 'z'].forEach((k, i) => {
+        if (h.lo[i] > w.lo[i] + 1e-9 || h.hi[i] < w.hi[i] - 1e-9) msgs.push(`the task asks for scale ${k} from ${w.lo[i]} to ${w.hi[i]}, and asset.json allows ${h.lo[i]} to ${h.hi[i]}`);
+      });
+    }
+  }
   if (a.kind === 'molecule') {
     const an = analyze(ctx);
     const atoms = a.manifest?.atoms || [];
